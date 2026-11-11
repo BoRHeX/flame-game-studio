@@ -1,0 +1,37 @@
+{
+  "id": "ICE-P2-COUNCIL-01",
+  "role": "integrator",
+  "goal": "ONE coordinated Pass Two gameplay wave, not another disconnected module: all 25 registered studio roles each audit the canonical game and produce one concrete subsystem contract. The integrator must then produce FOUR complete, mutually compatible game files: game/main.mjs, game/missions/jobs.mjs, game/npc/operator.mjs, and game/persistence/save-slots.mjs. Make the existing workshop operator give useful, stateful physical requests; integrate a resilient three-slot local save/autosave and actual restore into the game loop; make the three missions behave differently with meaningful warnings, failure consequences and observable payouts. Preserve current world, ladder physics, analog controls, camera, player input, burner solver, flame, Web Audio and no-text iconographic intro. Do not satisfy the order by writing only scaffolding, menus or documentation. Improve physical play with at least two meaningful connected systems.",
+  "allowed_paths": [
+    "game/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "All 25 source-grounded role-specific council contributions are recorded and auditable before implementation",
+    "Four complete mutually compatible implementation files, not unintegrated stubs: game/main.mjs, game/missions/jobs.mjs, game/npc/operator.mjs, game/persistence/save-slots.mjs",
+    "Three isolated versioned save slots and autosave with actual game restore, backward-compatible/missing-data recovery and no corruption across reloads",
+    "NPC interactions have visible stateful, non-blocking choices/instructions whose effects are applied to real mission state",
+    "At least two missions gain nontrivial distinct industrial constraints and transparent success/failure/payoff conditions, Heat Hold remains fully playable",
+    "Preserve pixel-art multi-floor industrial world, joystick, ladders, camera, fullscreen, ignition, close flame observation and both process-time modes",
+    "No untrusted code execution in any provider-key job; independent Chrome/unit/acceptance gates before review-only draft PR"
+  ],
+  "required_contracts": [
+    "game/main.mjs",
+    "game/missions/jobs.mjs",
+    "game/core/clocks.mjs",
+    "game/simulation/burner.mjs",
+    "game/player/platformer.mjs",
+    "game/index.html",
+    "game/style.css",
+    "design/pass-two-operator.md"
+  ],
+  "verification_script": "studio/acceptance/pass-two-council.mjs",
+  "max_cost_usd": 2,
+  "max_attempts": 1,
+  "seed": 2120
+}
