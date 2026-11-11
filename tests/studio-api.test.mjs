@@ -1,0 +1,75 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {validateChange,validateProposal,loadOrder} from '../studio/runtime/proposal.mjs';
+import {buildBrief} from '../studio/runtime/brief.mjs';
+import {ModelBudget,callStructured,calculateUsageCost} from '../studio/runtime/runner.mjs';
+const order=loadOrder('studio/work-orders/ice-flame-polish-01.json');
+const sample=(changes)=>({schemaVersion:1,orderId:order.id,runId:'10777',sourceSha:'abc',
+ changes,summary:'test',tests:[],risks:[],costUsd:0});
+test('old design and visual constitution are explicitly in the scoped brief',()=>{
+ const b=buildBrief('studio/work-orders/ice-flame-polish-01.json');
+ assert.match(b.visualBrief,/Sweden/);
+ assert.match(b.visualBrief,/parallax/i);
+ assert.match(b.systemsBrief,/autosave/i);
+ assert.equal(b.roleBrief.role,'particle_engineer');
+ assert.ok(b.files.some(f=>f.path.includes('particles.mjs')));
+});
+test('allowed and disallowed patch paths are enforced independently of model JSON',()=>{
+ const change={path:'game/flame/new-effect.mjs',content:'export const glow = 1;\n'};
+ assert.equal(validateProposal(sample([change]),order)[0].path,change.path);
+ const bad=[
+  {path:'.github/workflows/attack.yml',content:'x'},
+  {path:'studio/runtime/runner.mjs',content:'x'},
+  {path:'game/simulation/burner.mjs',content:'x'},
+  {path:'game/flame/../../.github/secrets.yml',content:'x'},
+  {path:'game/flame/evil.sh',content:'echo hi'},
+  {path:'game/flame/.secret.json',content:'{"key":"x"}'}
+ ];
+ for(const candidate of bad)assert.throws(()=>validateProposal(sample([candidate]),order));
+ assert.throws(()=>validateProposal(sample([change,change]),order));
+ assert.throws(()=>validateProposal(sample([]),order));
+});
+test('art and orchestra role ownership matches registered work orders',()=>{
+ for(const path of ['studio/work-orders/ice-art-direction-01.json','studio/work-orders/ice-orchestra-01.json']){
+  const brief=buildBrief(path);
+  assert.ok(brief.order.allowed_paths.length>0);
+ }
+});
+test('provider token estimation is checked before any API request',async()=>{
+ const budget=new ModelBudget(.000001);
+ let called=false;
+ const fakeFetch=()=>{called=true;throw Error('should not fetch');};
+ await assert.rejects(callStructured({
+  key:'fixture-key',model:'gpt-6.1-terra',step:'test',
+  instructions:'Describe the code',input:'long '.repeat(2000),
+  schema:{type:'object',properties:{ok:{type:'boolean'}},required:['ok'],additionalProperties:false},
+  name:'fixture',max_output_tokens:5000,budget,fetchImpl:fakeFetch
+ }),/reserved budget/);
+ assert.equal(called,false);
+});
+test('API response uses structured JSON, counts tokens and never needs live credentials',async()=>{
+ const budget=new ModelBudget(1);
+ let seenBody=null;
+ const mock=async(_url,req)=>{
+  seenBody=JSON.parse(req.body);
+  return {ok:true,status:200,json:async()=>({
+    status:'completed',
+    output:[{type:'message',content:[{type:'output_text',text:'{"ok":true}'}]}],
+    usage:{input_tokens:100,output_tokens:30,input_tokens_details:{cached_tokens:10}}
+  })};
+ };
+ const answer=await callStructured({key:'dummy-key',model:'gpt-6-luna',
+  step:'test',instructions:'test instructions',input:'test input',
+  schema:{type:'object',properties:{ok:{type:'boolean'}},required:['ok'],additionalProperties:false},
+  name:'test_output',max_output_tokens:100,budget,fetchImpl:mock});
+ assert.equal(answer.ok,true);
+ assert.equal(seenBody.store,false);
+ assert.equal(seenBody.text.format.type,'json_schema');
+ assert.equal(seenBody.text.format.strict,true);
+ assert.equal(budget.calls.length,1);
+ assert.ok(budget.spent>0);
+});
+test('model usage with missing token totals fails closed',()=>{
+ assert.throws(()=>calculateUsageCost({input_tokens:100},'gpt-6.1-terra'));
+});

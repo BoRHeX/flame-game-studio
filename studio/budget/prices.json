@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "source": "https://platform.openai.com/pricing",
+  "verified_date": "2026-11-11",
+  "currency": "USD",
+  "mode": "standard",
+  "models": {
+    "gpt-6-luna": {
+      "inputPerMillion": 0.1,
+      "cachedInputPerMillion": 0.01,
+      "outputPerMillion": 0.5
+    },
+    "gpt-6.1-terra": {
+      "inputPerMillion": 1,
+      "cachedInputPerMillion": 0.05,
+      "outputPerMillion": 5
+    },
+    "gpt-6.1-sol": {
+      "inputPerMillion": 2,
+      "cachedInputPerMillion": 0.1,
+      "outputPerMillion": 10
+    }
+  },
+  "note": "Refresh rates before authorizing runs. These reference rates only cover text tokens, not image/audio tools, priority, data residency or other charges."
+}

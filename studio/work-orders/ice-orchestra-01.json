@@ -1,0 +1,22 @@
+{
+  "id": "ICE-AUDIO-001",
+  "role": "composer_conductor",
+  "goal": "Author a source-controlled composition brief for original I.C.E. sonic identity: industrial flame, liquid drum and bass with adaptive orchestral motif and region-specific mood for desert, snow and jungle. Produce data/specification only; do not claim generated audio files exist.",
+  "allowed_paths": [
+    "design/audio/"
+  ],
+  "forbidden_paths": [
+    "assets/audio/",
+    "game/",
+    "studio/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Specify instrument and motif identities for desert, ice, jungle and hub",
+    "Define layering and transitions at combustion events, with asset provenance expectations",
+    "Express tempo/key/beat grid in parseable data for the orchestration agent"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 1302
+}

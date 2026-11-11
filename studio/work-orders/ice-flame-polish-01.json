@@ -1,0 +1,22 @@
+{
+  "id": "ICE-FLAME-001",
+  "role": "particle_engineer",
+  "goal": "Improve the I.C.E. pixel particle flame renderer to produce a plausible continuous luminous root, dynamic mixing zone, coherent plume, recirculation, cooling and soot behavior. Preserve BurnerSolver as sole process authority and maintain touch performance. Do not change controls or other departments' modules.",
+  "allowed_paths": [
+    "game/flame/"
+  ],
+  "forbidden_paths": [
+    "game/simulation/",
+    "studio/",
+    "memory/canonical/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Rich, lean and healthy flame states differ visually in shape and color",
+    "Chamber background, refraction and nozzle remain visible",
+    "No unbounded allocations in the particle tick and deterministic seed remains testable"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 1202
+}
