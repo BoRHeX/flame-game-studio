@@ -1,45 +1,46 @@
 # Living delivery roadmap
 
-## Stage F0 — production foundation [IN PROGRESS]
-- [x] Isolated repository and development branch
-- [x] Canonical game brief and architecture recorded
-- [x] Role ownership and decision-memory policies
-- [x] Explicit budget defaults (enforcement not yet installed)
-- [x] Read-only GitHub test workflow
-- [ ] Verify foundation tests pass in CI
-- [ ] Validate prototype on a physical Android phone
-- [ ] Create and test cost-metered task -> agent -> branch -> PR pipeline (default disabled)
-- [ ] Benchmark one capable agent vs separated specialist workers on same tiny task
+## Stage F0 — foundation and integration [IN PROGRESS]
+- [x] Isolated GitHub repository and review branch
+- [x] Canonical game bible, architecture and subsystem definitions
+- [x] Specialist roles and four-agent orchestra
+- [x] Scoped work-order context builder with policy/permission unit checks
+- [x] Local API budget math, paid workers **disabled** (NOT durable budget enforcement)
+- [x] Deterministic pilot/main solver and three authored chamber flow maps (candidate)
+- [x] World/economy/observation clocks decoupled from presentation frame rates
+- [x] Early mobile web slice: hub, walk, manual devices, pilot ignition, three job definitions
+- [x] Automated test harness and mobile Chrome screenshot workflow (candidate)
+- [ ] New CI suite verified green
+- [ ] GitHub Pages preview successfully deployed and actually visited on mobile
+- [ ] Validate solver behavior, visuals, economy and touch controls using real gameplay
+- [ ] Establish durable atomic daily and task budgets with provider usage reconciliation
+- [ ] Activate reviewed task -> branch -> PR agent pipeline
+- [ ] Benchmark single coding agent vs specialist team
 
-## Stage F1 — first coordinated Pass One
-- [ ] Core authoritative solver with pilot/main ignition, lean/rich, accumulation, shutdown, soot, overfire
-- [ ] Chamber flow-map pipeline and pixel-particle renderer
-- [ ] Player move/interact + close-up physical valve/damper/switch interaction
-- [ ] Normal/watch clocks, 18/24 FPS, money drain and mission-clock effects
-- [ ] Backyard hub, tutorial without visible language, visual contract board
-- [ ] Backyard Light-Off, Warehouse Restart and Heat-Hold contract
-- [ ] Basic audio events, first orchestra deliverables and animated event synchronization
-- [ ] Touch/browser tests, reproducible replays, fixed budget, reliable deployment
-- [ ] Frozen mobile-playable Pass One release + full future roadmap
+## Stage F1 — first full Pass One
+- [ ] Robust player animation, physical close-up interaction, true repair/diagnostic jobs
+- [ ] Better visually diagnostic pilot/main flame in every chamber and unique hazards
+- [ ] Complete no-language intro with testable learning outcomes
+- [ ] Sound/visual event synchronization and orchestra starter assets
+- [ ] Rich mission rewards, consequences, story scaffolding and deferred feature interfaces
+- [ ] Real device performance, long-run replay, money tuning
+- [ ] Frozen, verified mobile Pass One release with three jobs
 
-## Stage F2 — game base after human review
-- [ ] Review evidence -> work orders / updated acceptance
-- [ ] Two polished missions, third still playable
-- [ ] Save/load, icon-first UI, biome modifiers and narrative state
-- [ ] Capabilities preset to max; upgrade commerce still disabled
-- [ ] Audio director integration, user playthrough acceptance
+## Stage F2 — review-led base
+- [ ] Two polished levels, third remains playable
+- [ ] Save/load, UI refinement, lore and biome effects
+- [ ] Full power preset without upgrade purchasing
+- [ ] Human review -> dated evidence -> tasks -> updated roadmap
 
-## Stage F3 — content campaign
-- [ ] Seven+ authored levels, economy, reputation, equipment gates and optional upgrades
-- [ ] NPC operator authority, characters/abilities, environmental conditions
-- [ ] Adaptive original orchestral/DnB biome themes and SFX
-- [ ] Interactive parallax, cutscenes, branching story
-- [ ] Zero-optional-upgrade viable campaign, mobile budget, save migration
+## Stage F3 — campaign
+- [ ] 7+ authored jobs; contract/character/equipment progression
+- [ ] NPC operator authority, environment and biome complexity
+- [ ] Adaptive original liquid DnB/orchestra, audio provenance
+- [ ] Parallax environments, cutscenes, alternate outcomes
+- [ ] No-optional-upgrade campaign solvability, performance and save migration
 
-## Stage F4 — final quality
-- [ ] Story/Challenge/Puzzle modes, alternate endings and one-time final job
-- [ ] Rich characters, instruments, unlocks, perks, secrets
-- [ ] End-to-end QA, legal audio provenance, profiling, polished balancing
+## Stage F4 — final
+- [ ] Story/Challenge/Puzzle modes, multiple endings, one-time final contract
+- [ ] Character/perk/tool variety, secrets, bespoke animation and polish
 
-## Mandatory gate
-No automated merge or external publish; no model API call until a measurable budget-enforcement service and least-privilege credentials exist. Release only demonstrably playable builds and keep recoverable tags.
+**Gates:** No silent main merges, paid API calls before tested durable budget enforcement, or claims of game completion from CI alone. Keep experimental BoRHeZ repo unchanged.
