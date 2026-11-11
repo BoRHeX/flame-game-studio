@@ -35,15 +35,30 @@ async function main(){
    '--no-first-run','--no-default-browser-check','--remote-debugging-port=0',
    '--user-data-dir='+profileDir,url
  ],{stdio:['ignore','ignore','pipe']});
+ // Some GitHub-hosted Chrome runners initialize silently. Accept the actual
+ // DevToolsActivePort handshake as well as stderr, without skipping browser QA.
  const debugPort=await new Promise((resolvePort,reject)=>{
-   let output='';
-   const timeout=setTimeout(()=>reject(Error('Chrome DevTools did not start: '+output.slice(-400))),16000);
+   let output='',settled=false;
+   const done=(error,port)=>{
+     if(settled)return;
+     settled=true;clearTimeout(timeout);clearInterval(poll);
+     if(error)reject(error);else resolvePort(port);
+   };
+   const timeout=setTimeout(()=>done(Error('Chrome DevTools did not start within 35 seconds: '+output.slice(-550))),35000);
+   const poll=setInterval(async()=>{
+     try{
+       const data=await readFile(join(profileDir,'DevToolsActivePort'),'utf8');
+       const port=Number(data.split(/\\r?\\n/)[0]);
+       if(Number.isInteger(port)&&port>0)done(null,port);
+     }catch{ /* Chrome has not published the port yet. */ }
+   },250);
    browser.stderr.on('data',chunk=>{
      output+=String(chunk);
-     const match=output.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//);
-     if(match){clearTimeout(timeout);resolvePort(Number(match[1]));}
+     const match=output.match(/DevTools listening on ws:\\/\\/127\\.0\\.0\\.1:(\\d+)\\//);
+     if(match)done(null,Number(match[1]));
    });
-   browser.on('exit',code=>{clearTimeout(timeout);reject(Error('Chrome exited '+code+' '+output.slice(-450)));});
+   browser.on('exit',code=>done(Error('Chrome exited '+code+' '+output.slice(-550))));
+   browser.on('error',error=>done(error));
  });
  let target;
  for(let i=0;i<40;i++){
