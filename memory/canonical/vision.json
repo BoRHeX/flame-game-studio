@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "project": "I.C.E. The Flame Game",
+  "status": "LOCKED",
+  "primary_target": "Mobile Chrome HTML game",
+  "controls": "physical in-world equipment including manual valves, dampers, switches, inspection view, player movement",
+  "first_pass_missions": 3,
+  "world_fps": 18,
+  "flame_fps": 24,
+  "observe_mode": {
+    "normal": {
+      "process": 1,
+      "mission": 1,
+      "cash_drain": 1
+    },
+    "watching": {
+      "process": "TUNABLE > 1",
+      "mission": "TUNABLE > 1",
+      "cash_drain": "TUNABLE < 1"
+    }
+  },
+  "core_loop": [
+    "observe",
+    "adjust",
+    "verify",
+    "hold"
+  ],
+  "flame_is_authoritative": true,
+  "upgrades_required_to_beat_story": false,
+  "equipment_gates_missions": true,
+  "separate_experimental_studio_must_remain_unchanged": true,
+  "ui": "No visible language for early-game storytelling/tutorial; accessible semantic labels permitted",
+  "phases": [
+    "first demo hub plus three jobs",
+    "review-led two polished jobs and core UI/save",
+    "7+ jobs complete progression campaign",
+    "story/challenge/puzzle modes final polish"
+  ]
+}

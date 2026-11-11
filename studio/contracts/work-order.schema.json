@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent work order",
+  "type": "object",
+  "required": [
+    "id",
+    "role",
+    "goal",
+    "allowed_paths",
+    "acceptance",
+    "max_cost_usd"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string"
+    },
+    "allowed_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "forbidden_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptance": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "max_cost_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "max_attempts": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "reference_commit": {
+      "type": "string"
+    },
+    "required_contracts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "events": [
+    "pilot.spark.begin",
+    "pilot.ignite",
+    "main_flame.attach",
+    "main_flame.lift",
+    "combustion.pulse",
+    "combustion.rich",
+    "combustion.lean",
+    "soot.begin",
+    "chamber.overheat",
+    "valve.rotate",
+    "mission.stable",
+    "mission.fail",
+    "biome.wind_gust"
+  ],
+  "parameters": [
+    "combustion.stability",
+    "combustion.heat_release",
+    "combustion.fuel_flow",
+    "combustion.air_flow",
+    "combustion.draft"
+  ]
+}
