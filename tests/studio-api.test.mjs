@@ -180,3 +180,48 @@ test('repeat reviewer rejection fails closed but reconciles all known API usage'
   rmSync(temp,{recursive:true,force:true});
  }
 });
+
+test('structurally invalid initial output gets one correction instead of failing immediately',async()=>{
+ const {runSession}=await import('../studio/runtime/runner.mjs');
+ const {mkdtempSync,readFileSync,rmSync}=await import('node:fs');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const temp=mkdtempSync(join(tmpdir(),'ice-shape-repair-'));
+ const old={ICE_STUDIO_ENABLED:process.env.ICE_STUDIO_ENABLED,GITHUB_RUN_ID:process.env.GITHUB_RUN_ID,
+  OPENAI_API_KEY:process.env.OPENAI_API_KEY};
+ process.env.ICE_STUDIO_ENABLED='true';
+ process.env.GITHUB_RUN_ID='98767';
+ process.env.OPENAI_API_KEY='dummy-test-only';
+ let called=0,repairInput;
+ const values=[
+  {summary:'plan',steps:['improve'],contracts:[]},
+  {summary:'invalid',changes:[],tests:[],risks:[]},
+  {summary:'repaired',changes:[{path:'game/flame/valid-shape-fixture.mjs',
+    content:'export const plume=1;\n'}],tests:['unit'],risks:[]},
+  {approved:true,concerns:[],missing_tests:[]}
+ ];
+ const mock=async(_url,options)=>{
+  const body=JSON.parse(options.body);
+  if(called===2)repairInput=body.input;
+  const value=values[called++];
+  return {ok:true,status:200,json:async()=>({
+   status:'completed',usage:{input_tokens:100,output_tokens:80,input_tokens_details:{cached_tokens:0}},
+   output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(value)}]}]
+  })};
+ };
+ try{
+  const file=join(temp,'proposal.json'),report=join(temp,'report.json');
+  const result=await runSession('studio/work-orders/ice-flame-polish-01.json',file,
+   {fetchImpl:mock,reportPath:report});
+  assert.equal(called,4);
+  assert.equal(result.revisions,1);
+  assert.match(repairInput,/Structural rejection/);
+  assert.equal(result.changes.length,1);
+  assert.equal(JSON.parse(readFileSync(report,'utf8')).modelAudit.length,4);
+ }finally{
+  for(const [name,value] of Object.entries(old)){
+   if(value===undefined)delete process.env[name];else process.env[name]=value;
+  }
+  rmSync(temp,{recursive:true,force:true});
+ }
+});

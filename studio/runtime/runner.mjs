@@ -106,12 +106,23 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     role:order.role,sourceSha:brief.sourceSha,summary:implementation.summary,
     changes:implementation.changes,tests:implementation.tests,risks:implementation.risks,
     costUsd:0,modelAudit:[]};
-   validateProposal(current,order);
-   review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
-    instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
-    input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
-      files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
-    schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
+   // Shape and path validation must be correctable, not a terminal paid-run failure.
+   // The independent reviewer still reviews every structurally valid candidate.
+   let structureError=null;
+   try{validateProposal(current,order);}
+   catch(error){structureError=String(error?.message??error).slice(0,350);}
+   if(structureError){
+    review={approved:false,concerns:[
+     'Structural rejection: '+structureError+
+     '. Return 1 to 4 complete nonempty files, each only in the allowed task paths; no unrelated files.'
+    ],missing_tests:[]};
+   }else{
+    review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
+     instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
+     input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
+       files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
+     schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
+   }
    if(review.approved){
     current.review=review;
     current.revisions=revision;
