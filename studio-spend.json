@@ -40,6 +40,14 @@
       "reservedUsd": 0.5,
       "actualUsd": 0.032345,
       "status": "settled"
+    },
+    {
+      "runId": "43070213408",
+      "orderId": "ICE-ROLE-06",
+      "date": "2026-11-11",
+      "reservedUsd": 1,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
