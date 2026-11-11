@@ -56,6 +56,14 @@
       "reservedUsd": 1,
       "actualUsd": 0.049158,
       "status": "settled"
+    },
+    {
+      "runId": "43080669564",
+      "orderId": "ICE-FLOW-001",
+      "date": "2026-11-11",
+      "reservedUsd": 0.5,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
