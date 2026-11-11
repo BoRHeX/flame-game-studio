@@ -2,27 +2,44 @@ name: Publish isolated I.C.E. playtest preview
 on:
   push:
     branches: [feature/foundation-01]
+  workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
   group: flame-playtest-pages
   cancel-in-progress: true
 jobs:
-  preview:
-    if: github.repository == 'BoRHeX/flame-game-studio'
+  verify:
+    if: github.repository == 'BoRHeX/flame-game-studio' && github.ref == 'refs/heads/feature/foundation-01'
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify combustion, missions, policy and touch controls
+        run: npm test && npm run browser:smoke
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./game
+  deploy:
+    needs: verify
+    if: github.repository == 'BoRHeX/flame-game-studio' && github.ref == 'refs/heads/feature/foundation-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: ice-playtest
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
