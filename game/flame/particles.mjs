@@ -7,7 +7,7 @@ export class FlameParticles{
     this.x=new Float32Array(capacity);this.y=new Float32Array(capacity);
     this.vx=new Float32Array(capacity);this.vy=new Float32Array(capacity);
     this.life=new Float32Array(capacity);this.maxLife=new Float32Array(capacity);
-    this.size=new Uint8Array(capacity);this.smoke=new Uint8Array(capacity);
+    this.size=new Uint8Array(capacity);this.smoke=new Uint8Array(capacity);this.lane=new Float32Array(capacity);
     this.spawnRemainder=0;
   }
   random(){this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/4294967296;}
@@ -20,6 +20,7 @@ export class FlameParticles{
     this.life[n]=0;this.maxLife[n]=0.36+r*0.73;
     this.size[n]=2+Math.floor(this.random()*4);
     this.smoke[n]=this.random()<state.soot*0.8?1:0;
+    this.lane[n]=(this.random()-.5)*2;
   }
   step(dt,state,chamber){
     if(!Number.isFinite(dt)||dt<0||dt>0.25)throw Error('invalid particle step');
@@ -51,7 +52,12 @@ export class FlameParticles{
       else if(state.mainRatio>1.15){ctx.fillStyle=age<.32?'#fff5b4':age<.67?'#ffb451':'#cf4e20';}
       else{ctx.fillStyle=age<.25?'#fffdf3':age<.55?'#fff0a0':age<.8?'#ffb34e':'#f36a29';}
       const size=Math.max(1,this.size[i]*(1-age*.6))|0;
-      ctx.fillRect(this.x[i]|0,this.y[i]|0,size,size);
+      // Pixel flare is a visual consequence of heat and mixture, not fake process state.
+      const factor=state.mainRatio>1.14?1.32:state.mainRatio<.78?.72:1;
+      const plume=Math.sin(Math.PI*age)*(19+state.heatRelease*95)*factor;
+      const px=chamber.orientation==='updraft'?this.x[i]+this.lane[i]*plume:this.x[i];
+      const py=chamber.orientation==='updraft'?this.y[i]:this.y[i]+this.lane[i]*plume;
+      ctx.fillRect(px|0,py|0,size,size);
     }
   }
   activeCount(){let n=0;for(let i=0;i<this.capacity;i++)n+=this.active[i];return n;}
