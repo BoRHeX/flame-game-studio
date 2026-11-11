@@ -1,0 +1,21 @@
+{
+  "id": "ICE-FLOW-001",
+  "role": "particle_engineer",
+  "goal": "Implement the approved ADR-0002 prerequisite in ONLY game/chambers/flow.mjs: extend flowAt(chamber, x, y, seed = 0, out) so a supplied mutable out object receives vx and vy and is returned by identity without allocating a replacement. Preserve all existing CHAMBERS data and every numerical flow formula exactly. Calls without out must still return fresh objects. Keep all existing imports and callers compatible. Do not modify the renderer yet; its allocation-free integration is a separate task. This active order overrides the broader profile's renderer-polish deliverable for this run.",
+  "target_file": "game/chambers/flow.mjs",
+  "allowed_paths": ["game/chambers/"],
+  "forbidden_paths": ["game/flame/", "game/simulation/", "studio/", "memory/", ".github/"],
+  "dependencies": [],
+  "acceptance": [
+    "Return one complete nonempty module at the exact target; preserve exported CHAMBERS and flowAt",
+    "A supplied fifth argument is mutated and returned by exact identity, without allocating another flow-result object",
+    "Default four-argument calls retain fresh-object behavior and an omitted seed remains zero",
+    "All trusted numeric fixtures for horizontal, baffled and updraft chambers remain unchanged",
+    "Do not change simulation, renderer, chamber constants, workflows or acceptance checks"
+  ],
+  "required_contracts": ["game/chambers/flow.mjs", "memory/decisions/ADR-0002-production-context-and-flow-output.md"],
+  "verification_script": "studio/acceptance/chamber-flow-output.mjs",
+  "max_cost_usd": 0.5,
+  "max_attempts": 1,
+  "seed": 2017
+}

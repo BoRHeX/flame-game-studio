@@ -4,7 +4,7 @@
 
 ## Current status
 - game/: early experimental interactive vertical slice, **not** a complete Pass One release. Includes a backyard hub, touch-to-walk, manual pilot/main fuel and air controls, draft, ignition, observation mode, three contract definitions and distinct pixel-particle chambers.
-- studio/: API-backed producer, specialist and independent reviewer, scoped source proposals, durable per-run/daily/cumulative spend ledger and review-only PR pipeline. **Paid runs remain disabled pending the GitHub secret and explicit activation.**
+- studio/: activated API-backed producer, specialist and independent reviewer, scoped source proposals, durable per-run/daily/cumulative spend ledger and review-only PR pipeline. Each paid run requires a bounded one-time request and all activation guards.
 - design/, memory/: game bible, architecture, four-agent AI orchestra, durable agent decision rules, roadmaps.
 - tests/: unit/invariant tests and Chrome touch smoke with a screenshot artifact.
 
@@ -26,7 +26,7 @@ The branch workflow runs independent tests and uploads the game files plus mobil
 ## Boundaries
 - This repository is independent of BoRHeX/kbc-rpg-prototype. Do not edit the existing experimental BoRHeZ Games Studio.
 - The production stack (TypeScript + Phaser / custom flame renderer) remains a measured decision, not an installed dependency.
-- No AI API tokens, scheduled autonomous work, production deployment or paid model calls.
+- No API tokens in source, scheduled autonomous work or automatic merging. Authorized paid runs create review-only proposals.
 - Source simulation is dimensionless gameplay design, **never real equipment guidance**.
 - Do not merge into main until an actual phone playtest and independent acceptance.
 
@@ -41,3 +41,4 @@ This branch adds the full I.C.E. visual constitution, specialist role registry, 
 See [activation instructions](studio/runtime/README.md), [visual target](design/visual-bible.md), [full product scope](design/product-systems.md) and [studio operation](studio/production-plan.md).
 
 The initial deterministic pipeline works one scoped task at a time. Art and audio are authored as code/data in the first iteration; image-model PNG/GIF production, human-quality music rendering and automatic multi-task scheduling require separate quality/cost gates.
+
