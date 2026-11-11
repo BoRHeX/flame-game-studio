@@ -93,6 +93,63 @@ async function main(){
  for(let i=0;i<60;i++){await delay(100);if(await evalJs('Boolean(window.ICE_DEBUG)')){boot=true;break;}}
  if(!boot)throw Error('Game JS did not initialize');
  await tap('#tutorial-ok');
+ const majorBuild=await evalJs("document.querySelector('meta[name=\"ice-build\"]')?.content==='20261111-major-pass-one-01'");
+ if(majorBuild){
+   const snapshot=()=>evalJs('window.ICE_DEBUG.snapshot()');
+   let state=await snapshot();
+   if(state.sceneId!=='hub'||state.worldHeight<2400||state.worldWidth<1200)
+     throw Error('Major world is not connected: '+JSON.stringify(state));
+   const layout=await evalJs("(()=>{const r=document.querySelector('#viewport').getBoundingClientRect();return {height:r.height,screen:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth+1};})()");
+   if(layout.height<layout.screen*.55||layout.overflow)throw Error('Portrait world does not dominate the screen: '+JSON.stringify(layout));
+   const buttonPoint=label=>evalJs('(()=>{const b=Array.from(document.querySelectorAll("button")).find(b=>b.getAttribute("aria-label")==='+JSON.stringify(label)+'||b.textContent.trim()==='+JSON.stringify(label)+');if(!b)throw Error("Missing control");const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,w:r.width,h:r.height};})()');
+   const hold=async(label,ms)=>{
+     const point=await buttonPoint(label);
+     if(point.w<44||point.h<44)throw Error('Small major-build touch target '+label);
+     await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:point.x,y:point.y,id:1}]});
+     await delay(ms);
+     await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+     await delay(50);
+   };
+   for(const label of ['Move left','Move right','Climb up','Climb down','Jump','Interact'])await buttonPoint(label);
+   const initialY=state.playerY,initialCamera=state.cameraY;
+   await hold('Jump',90);await delay(100);state=await snapshot();
+   if(state.playerY>=initialY-3)throw Error('Actual touch jump did not move the player');
+   for(let i=0;i<45&&!state.grounded;i++){await delay(80);state=await snapshot();}
+   if(!state.grounded)throw Error('Player did not land after touch jump');
+   const hub=await evalJs("import('./world/industrial-yard.mjs').then(m=>m.SCENES.hub)");
+   let climbed=0;
+   for(let floor=0;floor<2;floor++){
+     state=await snapshot();
+     const choices=hub.ladders.filter(l=>Math.abs(l.y+l.h-(state.playerY+52))<45)
+       .sort((a,b)=>Math.abs(a.x+a.w/2-state.playerX-14)-Math.abs(b.x+b.w/2-state.playerX-14));
+     const ladder=choices[0];if(!ladder)throw Error('No reachable upward ladder on current floor');
+     const targetX=ladder.x+ladder.w/2;
+     for(let i=0;i<30;i++){
+       state=await snapshot();const dx=targetX-state.playerX-14;
+       if(Math.abs(dx)<Math.max(6,ladder.w/2-8))break;
+       await hold(dx>0?'Move right':'Move left',Math.max(25,Math.min(220,Math.abs(dx)*3)));
+     }
+     state=await snapshot();
+     if(Math.abs(targetX-state.playerX-14)>ladder.w/2)throw Error('Held touch movement did not align with ladder');
+     const beforeY=state.playerY;
+     for(let i=0;i<36;i++){
+       await hold('Climb up',250);state=await snapshot();
+       if(state.playerY+52<=ladder.y+10)break;
+     }
+     if(beforeY-state.playerY<Math.min(250,ladder.h*.7))throw Error('Actual touch ladder climbing failed');
+     climbed+=beforeY-state.playerY;
+     if(state.cameraY<initialCamera-20)break;
+   }
+   state=await snapshot();
+   if(climbed<250||state.cameraY>=initialCamera-20)throw Error('Vertical camera did not follow exploration');
+   const worldShot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+   await mkdir('artifacts',{recursive:true});await writeFile('artifacts/mobile-world.png',Buffer.from(worldShot.data,'base64'));
+   console.log('PASS MAJOR: actual held-touch walking, edge jump/landing, ladder climb, vertical camera, portrait layout and world screenshot');
+   // Start a clean real UI session for the established mission path; never teleport test state.
+   await command('Page.reload',{ignoreCache:true});
+   for(let i=0;i<60;i++){await delay(100);if(await evalJs('Boolean(window.ICE_DEBUG)'))break;}
+   if(await evalJs("!document.querySelector('#tutorial').hidden"))await tap('#tutorial-ok');
+ }
  await tap('[data-job="backyard"]');
  let data=await evalJs('window.ICE_DEBUG.snapshot()');
  if(data.stage!=='mission'||data.job!=='backyard')throw Error('Touch job selection failed: '+JSON.stringify(data));
@@ -119,3 +176,4 @@ main().catch(e=>{console.error('FAIL browser smoke:',e.stack||e);process.exitCod
  try{web.close();}catch{}
  if(profileDir)await rm(profileDir,{recursive:true,force:true}).catch(()=>{});
 });
+

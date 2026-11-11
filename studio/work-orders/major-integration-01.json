@@ -28,7 +28,8 @@
     "Portrait world dominates screen height with compact 44px-or-larger touch controls; no horizontal scrolling or giant contract/action dashboard",
     "All three jobs remain selectable, ignite/observe/return works, solver and flame are preserved, device changes are physical/proximity based",
     "Exact existing regression IDs remain present; ICE_DEBUG snapshot includes playerY/cameraY/sceneId/worldWidth/worldHeight/grounded/climbing",
-    "Source approval only precedes mandatory no-secret execution tests; do not claim tests executed inside generation"
+    "Source approval only precedes mandatory no-secret execution tests; do not claim tests executed inside generation",
+    "The updated browser smoke detects the major build marker and verifies actual held-touch walking, jumping/landing, ladder climbing, camera scrolling and portrait layout before the original mission path; read that full script and preserve its actual UI route."
   ],
   "required_contracts": [
     "memory/decisions/ADR-0004-major-platform-world.md",
@@ -46,4 +47,3 @@
   "max_attempts": 1,
   "seed": 2022
 }
-
