@@ -1,0 +1,37 @@
+{
+  "id": "ICE-MAJOR-MOVE-001",
+  "role": "gameplay_engineer",
+  "target_file": "game/player/platformer.mjs",
+  "allowed_paths": [
+    "game/player/"
+  ],
+  "forbidden_paths": [
+    "game/world/",
+    "game/main.mjs",
+    "game/simulation/",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [
+    "ICE-MAJOR-WORLD-001"
+  ],
+  "goal": "Implement the exact PlatformPlayer module contract in ADR-0004 for the accepted tall industrial worlds. Deliver actual platformer movement: gravity, solid platform-top landing, edge-triggered jumping, ladder grab/climb/dismount, world bounds, deterministic fixed steps, a vertically/horizontally following bounded camera and physical interaction proximity. The next integrator will wire real held touch controls to input{x,y,jump}. This is the actual game controller, not a separate demo or a teleport navigation system. Use the accepted SCENES data as a read-only dependency and preserve its definitions. Keep zero timestep inert, camera viewport dimensions exact, and state fields stable. A department's active deliverable is this controller only.",
+  "acceptance": [
+    "Pass protected studio/acceptance/major-platformer.mjs without changing it",
+    "Preserve all exact constructor/method/state/input contracts in ADR-0004",
+    "Land on floors, jump on a new press only, climb to an upper deck and scroll the camera upward",
+    "Proximity rejects remote interaction; resetting scene restores its spawn and finite state",
+    "No DOM/timers/drawing/solver writes or edits outside game/player/; existing game regressions still pass"
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0004-major-platform-world.md",
+    "game/world/industrial-yard.mjs",
+    "design/game-bible.md"
+  ],
+  "verification_script": "studio/acceptance/major-platformer.mjs",
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2021
+}
+

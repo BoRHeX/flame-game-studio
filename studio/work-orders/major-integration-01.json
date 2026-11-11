@@ -1,0 +1,49 @@
+{
+  "id": "ICE-MAJOR-INTEGRATE-001",
+  "role": "integrator",
+  "allowed_paths": [
+    "game/main.mjs",
+    "game/index.html",
+    "game/style.css"
+  ],
+  "forbidden_paths": [
+    "game/world/",
+    "game/player/",
+    "game/simulation/",
+    "game/flame/",
+    "game/audio/",
+    "game/chambers/",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [
+    "ICE-MAJOR-WORLD-001",
+    "ICE-MAJOR-MOVE-001"
+  ],
+  "goal": "Create the first MAJOR playable I.C.E. build by replacing EXACTLY game/main.mjs, game/index.html and game/style.css with complete connected source. The detailed tall SCENES/drawScene and PlatformPlayer modules are now accepted dependencies: import and use them, remove placeholder drawWorld, and make the real hub/three jobs into a taller platforming adventure. Follow ADR-0004 exactly. Fill the portrait screen primarily with a higher-resolution scrolling world, use compact accessible held-touch controls plus keyboard, and wire proximity interactions to a tangible equipment close-up, board, practice burner, workbench, operator NPC and job stations. Preserve all existing burner/flame/audio/economy/mission/observe behavior, IDs and debug snapshot fields; add the new player/camera fields. Keep flame canvas 640x360 aspect-preserving in an inspection overlay while the world uses 768x1152 or viewport-adapted portrait height. Existing smoke selects a contract at the nearby hub board then sparks/observes at the nearby spawn stations, so keep that real path usable. Preserve all existing public labels required by the smoke. Numeric process telemetry is debug-only; icons and environment teach the game. Set the meta build marker to 20261111-major-pass-one-01. Return three complete files in changes, no commentary-only output, no fourth file, no new dependencies, and do not rewrite accepted department modules. Keep combined output concise (target under 30,000 characters).",
+  "acceptance": [
+    "Pass protected studio/acceptance/major-integration.mjs, full default npm tests and actual mobile Chrome touch smoke",
+    "The real game imports and visibly renders the accepted detailed worlds and controller; climbing/jumping/proximity are connected to touch input",
+    "Portrait world dominates screen height with compact 44px-or-larger touch controls; no horizontal scrolling or giant contract/action dashboard",
+    "All three jobs remain selectable, ignite/observe/return works, solver and flame are preserved, device changes are physical/proximity based",
+    "Exact existing regression IDs remain present; ICE_DEBUG snapshot includes playerY/cameraY/sceneId/worldWidth/worldHeight/grounded/climbing",
+    "Source approval only precedes mandatory no-secret execution tests; do not claim tests executed inside generation"
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0004-major-platform-world.md",
+    "game/world/industrial-yard.mjs",
+    "game/player/platformer.mjs",
+    "game/index.html",
+    "game/style.css",
+    "game/missions/jobs.mjs",
+    "game/flame/particles.mjs",
+    "game/audio/sound.mjs",
+    "scripts/browser-smoke.mjs"
+  ],
+  "verification_script": "studio/acceptance/major-integration.mjs",
+  "max_cost_usd": 1.75,
+  "max_attempts": 1,
+  "seed": 2022
+}
+
