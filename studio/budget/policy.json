@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "STUDIO_ENABLED": false,
+  "STUDIO_ENABLED": true,
   "MAX_RUN_COST_USD": 2,
   "MAX_DAILY_COST_USD": 5,
   "INITIAL_EXPERIMENT_CAP_USD": 50,
   "MAX_ATTEMPTS_PER_TASK": 1,
   "MAX_SIMULTANEOUS_PAID_WORKERS": 1,
   "ENFORCEMENT_IMPLEMENTED": true,
-  "NOTE": "Enforced ledger and API guards implemented; live paid runs remain OFF until STUDIO_ENABLED is changed and repository Actions variable ICE_STUDIO_ENABLED is true. An OpenAI project budget is also required for independent billing protection.",
+  "NOTE": "Studio may execute paid work only on manual workflow_dispatch from main, with verified repository variable ICE_STUDIO_ENABLED=true, verified OpenAI key, and durable budget reservation. No scheduling or automatic reruns. Unused/failed reservations remain charged until investigated.",
   "DURABLE_LEDGER_ENABLED": true
 }

@@ -49,7 +49,7 @@ async function api(path,{method='GET',body,token}={}){
    'X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},
   body:body?JSON.stringify(body):undefined,signal:controller.signal});
  const data=await response.json();
- if(!response.ok()) {
+ if(!response.ok) {
    const err=Error('GitHub budget ledger HTTP '+response.status+': '+(data.message||''));
    err.status=response.status;throw err;
  }

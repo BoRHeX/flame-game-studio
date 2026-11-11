@@ -32,3 +32,62 @@ test('overrun cannot silently refund an inadequate reservation',()=>{
  const s=reserveInMemory(empty,{runId:'1',orderId:'x',cap:1,date:day},on);
  assert.throws(()=>settleInMemory(s,'1',1.01));
 });
+
+test('GitHub ledger API reserves and settles with a mocked GitHub token and SHA',async()=>{
+ const {reserveGithub,settleGithub}=await import('../studio/budget/ledger.mjs');
+ const original=globalThis.fetch;
+ const saved=process.env.GITHUB_TOKEN;
+ const repo='BoRHeX/flame-game-studio';
+ let book={version:1,entries:[]},sha='initial-sha',writes=0;
+ process.env.GITHUB_TOKEN='fake-token-for-test-only';
+ globalThis.fetch=async(url,options)=>{
+  const route=new URL(url);
+  assert.equal(route.hostname,'api.github.com');
+  assert.equal(options.headers.Authorization,'Bearer fake-token-for-test-only');
+  if(route.pathname.endsWith('/git/ref/heads/ice-studio-ledger'))
+    return {ok:true,status:200,json:async()=>({object:{sha:'abc123'}})};
+  if(route.pathname.endsWith('/contents/studio-spend.json')&&options.method==='GET')
+    return {ok:true,status:200,json:async()=>({sha,content:Buffer.from(JSON.stringify(book)).toString('base64')})};
+  if(route.pathname.endsWith('/contents/studio-spend.json')&&options.method==='PUT'){
+    const payload=JSON.parse(options.body);
+    assert.equal(payload.sha,sha);
+    assert.equal(payload.branch,'ice-studio-ledger');
+    book=JSON.parse(Buffer.from(payload.content,'base64').toString('utf8'));
+    sha='next-'+(++writes);
+    return {ok:true,status:200,json:async()=>({commit:{sha}})};
+  }
+  throw Error('Unexpected GitHub API request '+route.pathname+' '+options.method);
+ };
+ try{
+  const reserved=await reserveGithub({repo,runId:'445',orderId:'ICE-FLAME-001',cap:1,now:new Date('2026-11-11T15:30:00Z')});
+  assert.equal(reserved.cap,1);
+  assert.equal(book.entries[0].status,'reserved');
+  const settled=await settleGithub({repo,runId:'445',actualUsd:0.13});
+  assert.equal(settled.actualUsd,0.13);
+  assert.equal(book.entries[0].status,'settled');
+  assert.equal(book.entries[0].actualUsd,0.13);
+  assert.equal(writes,2);
+ }finally{
+  globalThis.fetch=original;
+  if(saved===undefined)delete process.env.GITHUB_TOKEN;
+  else process.env.GITHUB_TOKEN=saved;
+ }
+});
+test('GitHub ledger stops on upstream HTTP failure without creating a reservation',async()=>{
+ const {reserveGithub}=await import('../studio/budget/ledger.mjs');
+ const original=globalThis.fetch,saved=process.env.GITHUB_TOKEN;
+ process.env.GITHUB_TOKEN='fake-token-for-test-only';
+ let calls=0;
+ globalThis.fetch=async()=>{calls++;return {ok:false,status:403,json:async()=>({message:'insufficient permission'})};};
+ try{
+  await assert.rejects(
+   reserveGithub({repo:'BoRHeX/flame-game-studio',runId:'446',orderId:'ICE-FLAME-001',cap:1}),
+   /GitHub budget ledger HTTP 403/
+  );
+  assert.equal(calls,1);
+ }finally{
+  globalThis.fetch=original;
+  if(saved===undefined)delete process.env.GITHUB_TOKEN;
+  else process.env.GITHUB_TOKEN=saved;
+ }
+});

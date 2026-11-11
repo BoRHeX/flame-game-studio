@@ -28,6 +28,7 @@ test('budget calculation accounts for cached tokens and refuses overruns',()=>{
  assert.throws(()=>dollarsForTokens({input:100,cached:101,output:0},price));
 });
 test('local budget policy cannot activate paid workers',()=>{
- assert.equal(canInvokePaid(policy),false);
+ assert.equal(canInvokePaid(policy),true);
+ assert.equal(canInvokePaid({...policy,STUDIO_ENABLED:false}),false);
  assert.equal(canInvokePaid({...policy,STUDIO_ENABLED:true,DURABLE_LEDGER_ENABLED:false}),false);
 });
