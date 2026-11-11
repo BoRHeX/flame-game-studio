@@ -7,6 +7,7 @@ import {FlameParticles} from './flame/particles.mjs';
 import {ProcessSound} from './audio/sound.mjs';
 import {SCENES,VIEWPORT,drawScene} from './world/industrial-yard.mjs';
 import {PlatformPlayer} from './player/platformer.mjs';
+import {thumbVector} from './input/thumb-joystick.mjs';
 const $=id=>document.getElementById(id);
 const world=$('world'),flame=$('flame'),viewport=$('viewport');
 const wc=world.getContext('2d',{alpha:false}),fc=flame.getContext('2d');
@@ -17,6 +18,66 @@ const buttons=[...document.querySelectorAll('[data-job]')];
 const icons={pilotFuel:'◇',pilotAir:'△',mainFuel:'◆',mainAir:'≋',draft:'↻'};
 let stage='hub',job=null,burner=null,evaluator=null,watching=false,selected=null,practice=false;
 let funds=110,frameLast=0,worldTime=0;
+const game=$('game'),controls=$('controls'),joy=$('joystick'),knob=$('joystick-knob'),pad=$('digital-pad');
+const stick={x:0,y:0,id:null};
+const prefKey='ice-pass-two-controls-v1';
+let preferences={mode:'joystick',hand:'left'};
+try{
+  const saved=JSON.parse(localStorage.getItem(prefKey)||'{}');
+  if(saved.mode==='buttons'||saved.mode==='joystick')preferences.mode=saved.mode;
+  if(saved.hand==='right'||saved.hand==='left')preferences.hand=saved.hand;
+}catch{ /* Private browsing must not stop the game. */ }
+function resetStick(){stick.x=0;stick.y=0;stick.id=null;knob.style.transform='translate(0px,0px)';}
+function saveControls(){try{localStorage.setItem(prefKey,JSON.stringify(preferences));}catch{}}
+function applyControls(){
+  controls.dataset.mode=preferences.mode;controls.dataset.hand=preferences.hand;
+  joy.hidden=preferences.mode!=='joystick';pad.hidden=preferences.mode!=='buttons';
+  $('controls-mode').setAttribute('aria-pressed',String(preferences.mode==='buttons'));
+  $('controls-mode').setAttribute('aria-label',preferences.mode==='buttons'?'Use analog joystick':'Use directional buttons');
+  $('handedness').setAttribute('aria-label',preferences.hand==='left'?'Move controls to right thumb':'Move controls to left thumb');
+  resetStick();
+}
+applyControls();
+joy.addEventListener('pointerdown',e=>{
+  if(stick.id!==null)return;
+  e.preventDefault();stick.id=e.pointerId;joy.setPointerCapture(e.pointerId);updateStick(e);
+});
+function updateStick(e){
+  if(e.pointerId!==stick.id)return;
+  const r=joy.getBoundingClientRect(),radius=Math.max(1,(Math.min(r.width,r.height)-knob.offsetWidth)/2-4);
+  const x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);
+  const v=thumbVector(x,y,radius);
+  stick.x=v.x;stick.y=v.y;
+  knob.style.transform='translate('+Math.round(stick.x*radius)+'px,'+Math.round(stick.y*radius)+'px)';
+}
+joy.addEventListener('pointermove',e=>{if(e.pointerId===stick.id){e.preventDefault();updateStick(e);}});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])
+  joy.addEventListener(type,e=>{if(e.pointerId===stick.id)resetStick();});
+$('controls-mode').addEventListener('click',()=>{
+  preferences.mode=preferences.mode==='joystick'?'buttons':'joystick';
+  clearInput();applyControls();saveControls();
+});
+$('handedness').addEventListener('click',()=>{
+  preferences.hand=preferences.hand==='left'?'right':'left';
+  clearInput();applyControls();saveControls();
+});
+function syncFullscreen(){
+  const active=document.fullscreenElement===game;
+  $('fullscreen').setAttribute('aria-pressed',String(active));
+  $('fullscreen').setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');
+  $('fullscreen').textContent=active?'⤡':'⛶';
+  resize();
+}
+$('fullscreen').addEventListener('click',async()=>{
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else if(game.requestFullscreen)await game.requestFullscreen({navigationUI:'hide'});
+    else throw new Error('unavailable');
+    $('control-status').textContent='';
+  }catch{$('control-status').textContent='Fullscreen is unavailable in this browser';}
+  syncFullscreen();
+});
+document.addEventListener('fullscreenchange',syncFullscreen);
 const playSound=()=>sound.unlock().catch(()=>{});
 function camera(){return player.camera(scene,{width:world.width,height:world.height});}
 function resize(){
@@ -25,7 +86,7 @@ function resize(){
 }
 function distance(i){const s=player.state;return Math.hypot(i.x-s.x-s.w/2,i.y-s.y-s.h/2);}
 function near(id,r=112){const i=scene.interactions.find(x=>x.id===id);return !!i&&distance(i)<=r;}
-function clearInput(){held.clear();keys.clear();pointers.clear();}
+function clearInput(){held.clear();keys.clear();pointers.clear();resetStick();}
 function setScene(next){scene=next;player.setScene(scene);clearInput();}
 function updateControls(){
   const board=stage==='hub'&&near('contracts');
@@ -99,7 +160,15 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(keyActions[k]){keys.delete(keyActions[k]);e.preventDefault();}});
 window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();frameLast=0;}});window.addEventListener('resize',resize);
-function movement(){const on=x=>held.has(x)||keys.has(x);return {x:Number(on('right'))-Number(on('left')),y:Number(on('down'))-Number(on('up')),jump:on('jump')};}
+function movement(){
+  const on=x=>held.has(x)||keys.has(x);
+  const analog=preferences.mode==='joystick'?stick:{x:0,y:0};
+  return {
+    x:Math.max(-1,Math.min(1,Number(on('right'))-Number(on('left'))+analog.x)),
+    y:Math.max(-1,Math.min(1,Number(on('down'))-Number(on('up'))+analog.y)),
+    jump:on('jump')
+  };
+}
 function physicsStep(processDt,missionDt,cashDt){
   player.update(1/60,watching||!$('tutorial').hidden||!$('device-panel').hidden?{x:0,y:0,jump:false}:movement(),scene);
   if(selected&&distance(selected)>112)closeDevice();
@@ -135,5 +204,5 @@ function frame(now){
   const frames=clocks.advance(dt,watching,physicsStep);if(frames.world)renderWorld();if(frames.flame&&watching)drawChamber();updateHUD();requestAnimationFrame(frame);
 }
 resize();updateControls();renderWorld();
-window.ICE_DEBUG=Object.freeze({snapshot:()=>{const c=camera(),s=player.state;return {stage,watching,funds,missionTime:clocks.missionTime,playerX:s.x,job:job?.id??null,solver:burner?.snapshot()??null,objective:evaluator?.progress()??0,particles:particles.activeCount(),playerY:s.y,cameraX:c.x,cameraY:c.y,sceneId:scene.id,worldWidth:scene.width,worldHeight:scene.height,grounded:s.grounded,climbing:s.climbing};}});
+window.ICE_DEBUG=Object.freeze({snapshot:()=>{const c=camera(),s=player.state;return {stage,watching,funds,missionTime:clocks.missionTime,playerX:s.x,job:job?.id??null,solver:burner?.snapshot()??null,objective:evaluator?.progress()??0,particles:particles.activeCount(),playerY:s.y,cameraX:c.x,cameraY:c.y,sceneId:scene.id,worldWidth:scene.width,worldHeight:scene.height,grounded:s.grounded,climbing:s.climbing,controls:preferences.mode,hand:preferences.hand,stickX:stick.x,stickY:stick.y,fullscreen:document.fullscreenElement===game};}});
 requestAnimationFrame(frame);

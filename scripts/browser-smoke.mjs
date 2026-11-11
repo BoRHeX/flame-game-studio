@@ -35,15 +35,30 @@ async function main(){
    '--no-first-run','--no-default-browser-check','--remote-debugging-port=0',
    '--user-data-dir='+profileDir,url
  ],{stdio:['ignore','ignore','pipe']});
+ // Some GitHub-hosted Chrome runners initialize silently. Accept the actual
+ // DevToolsActivePort handshake as well as stderr, without skipping browser QA.
  const debugPort=await new Promise((resolvePort,reject)=>{
-   let output='';
-   const timeout=setTimeout(()=>reject(Error('Chrome DevTools did not start: '+output.slice(-400))),16000);
+   let output='',settled=false;
+   const done=(error,port)=>{
+     if(settled)return;
+     settled=true;clearTimeout(timeout);clearInterval(poll);
+     if(error)reject(error);else resolvePort(port);
+   };
+   const timeout=setTimeout(()=>done(Error('Chrome DevTools did not start within 35 seconds: '+output.slice(-550))),35000);
+   const poll=setInterval(async()=>{
+     try{
+       const data=await readFile(join(profileDir,'DevToolsActivePort'),'utf8');
+       const port=Number(data.split(/\r?\n/)[0]);
+       if(Number.isInteger(port)&&port>0)done(null,port);
+     }catch{ /* Chrome has not published the port yet. */ }
+   },250);
    browser.stderr.on('data',chunk=>{
      output+=String(chunk);
      const match=output.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//);
-     if(match){clearTimeout(timeout);resolvePort(Number(match[1]));}
+     if(match)done(null,Number(match[1]));
    });
-   browser.on('exit',code=>{clearTimeout(timeout);reject(Error('Chrome exited '+code+' '+output.slice(-450)));});
+   browser.on('exit',code=>done(Error('Chrome exited '+code+' '+output.slice(-550))));
+   browser.on('error',error=>done(error));
  });
  let target;
  for(let i=0;i<40;i++){
@@ -110,6 +125,24 @@ async function main(){
      await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
      await delay(50);
    };
+   // Pass Two defaults to a real analog left-thumb joystick. Verify pointer movement,
+   // neutral return, alternate thumb-side and a usable physical D-pad fallback.
+   if((await snapshot()).controls!=='joystick')throw Error('Pass Two should boot in joystick mode');
+   const fullscreenControl=await buttonPoint('Enter fullscreen');
+   if(fullscreenControl.w<44||fullscreenControl.h<44)throw Error('Fullscreen control is not thumb accessible');
+   const joyBounds=await evalJs("(()=>{const r=document.querySelector('#joystick').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,w:r.width,h:r.height};})()");
+   if(joyBounds.w<80||joyBounds.h<80)throw Error('Joystick contact area too small');
+   const startX=state.playerX;
+   await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:joyBounds.x+joyBounds.w*.33,y:joyBounds.y,id:1}]});
+   await delay(260);await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await delay(80);
+   state=await snapshot();
+   if(state.playerX<=startX+8)throw Error('Real thumb joystick did not move the player');
+   if(state.stickX!==0||state.stickY!==0)throw Error('Joystick remained stuck after release');
+   await tap('#handedness');
+   if((await snapshot()).hand!=='right')throw Error('Handedness preference did not switch');
+   await tap('#handedness');
+   await tap('#controls-mode');
+   if((await snapshot()).controls!=='buttons')throw Error('D-pad fallback did not activate');
    for(const label of ['Move left','Move right','Climb up','Climb down','Jump','Interact'])await buttonPoint(label);
    const initialY=state.playerY,initialCamera=state.cameraY;
    await hold('Jump',90);await delay(100);state=await snapshot();

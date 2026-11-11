@@ -37,6 +37,13 @@
 - Follow-on: repair any independent CI failures, validate actual phone controls and flame, integrate tactile devices, build persistent saves, make three missions visually and mechanically distinct, then complete Pass One.
 - Codex automated GitHub PR review is at its usage limit; do not treat this as either game source approval or evidence that GitHub Actions and paid studio API are exhausted.
 
+## Pass Two commissioning (11 November 2026)
+- [x] Major Pass One preview deployed from main with independent Android Chrome acceptance (release run #43106244409); user confirmed actual physical-phone traversal, NPC response and world art.
+- [ ] Thumb-first analog movement, handedness toggle, D-pad fallback and native fullscreen: proposed in feature/pass-two-thumb-controls-20261111; require PR CI and Samsung playtest before accepting.
+- [ ] Physical valve/damper close-up: existing bounded ICE-ROLE-08 studio job #43095653405 remains queued; do not duplicate paid dispatch or call the feature integrated.
+- [ ] Follow the ordered Pass Two specification at design/pass-two-operator.md. Two near-production missions, third playable, three-slot save/autosave/recovery, menu/UI, story scaffolding, biome effects and temporarily fully capable equipment; no mandatory purchases.
+- [ ] Verify and integrate each delivered subsystem before publishing a new playtest.
+
 ## Stage F2 — review-led base
 - [ ] Two polished levels, third remains playable
 - [ ] Save/load, UI refinement, lore and biome effects
