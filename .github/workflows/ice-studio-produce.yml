@@ -1,0 +1,131 @@
+name: I.C.E. studio - propose one scoped work order
+on:
+  workflow_dispatch:
+    inputs:
+      order:
+        description: Committed scoped JSON task file under studio/work-orders/
+        required: true
+        type: string
+        default: studio/work-orders/ice-flame-polish-01.json
+permissions:
+  contents: read
+concurrency:
+  group: ice-paid-studio-reservations
+  cancel-in-progress: false
+jobs:
+  reserve:
+    if: github.repository == 'BoRHeX/flame-game-studio' && github.ref == 'refs/heads/main' && vars.ICE_STUDIO_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ORDER_PATH: ${{ inputs.order }}
+      ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reserve durable spending allowance - fail closed
+        run: |
+          case "$ORDER_PATH" in
+            studio/work-orders/*.json) ;;
+            *) echo "Invalid work order path"; exit 1 ;;
+          esac
+          node studio/budget/ledger-cli.mjs reserve "$ORDER_PATH"
+  propose:
+    needs: reserve
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
+      ORDER_PATH: ${{ inputs.order }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Producer, specialist builder and independent reviewer
+        run: node studio/runtime/runner.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ice-untrusted-proposal
+          path: artifacts/ice-proposal.json
+          if-no-files-found: error
+  reconcile:
+    needs: propose
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: ice-untrusted-proposal
+          path: artifacts
+      - name: Settle returned token usage
+        run: node studio/budget/ledger-cli.mjs settle "artifacts/ice-proposal.json"
+  verify:
+    needs: reconcile
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      ORDER_PATH: ${{ inputs.order }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: ice-untrusted-proposal
+          path: artifacts
+      - name: Apply proposed code in no-secret test runner
+        run: node studio/runtime/apply-cli.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
+      - name: Independent unit and browser tests
+        run: npm test && npm run browser:smoke
+  submit:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ORDER_PATH: ${{ inputs.order }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: ice-untrusted-proposal
+          path: artifacts
+      - name: Create isolated branch and review-only draft PR
+        run: node studio/runtime/submit.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"

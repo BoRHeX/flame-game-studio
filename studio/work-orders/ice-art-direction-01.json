@@ -1,0 +1,23 @@
+{
+  "id": "ICE-ART-001",
+  "role": "pixel_art_director",
+  "goal": "Create a reusable original pixel-art visual grammar and biome palette manifest for the backyard and snowy Swedish environment. Maintain the gameplay's editable industrial foreground, clean parallax depth, reactor observation ports, and the old I.C.E. visual brief. Do not alter gameplay or add third-party assets.",
+  "allowed_paths": [
+    "design/art/",
+    "content/biomes/"
+  ],
+  "forbidden_paths": [
+    ".github/",
+    "studio/",
+    "memory/canonical/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Visual grammar specifies logical resolution, pixel scale, color ramp, layers and equipment silhouettes",
+    "Biome manifests are data-driven and compatible with separate collision and parallax",
+    "No third-party assets or copied game art"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 1012
+}

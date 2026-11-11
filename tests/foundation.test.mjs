@@ -15,7 +15,8 @@ test('foundation locks the two animation rates and independent watch clocks',()=
 test('money cannot accidentally activate paid workers through policy',()=>{
   const p=json('../studio/budget/policy.json');
   assert.equal(p.STUDIO_ENABLED,false);
-  assert.equal(p.ENFORCEMENT_IMPLEMENTED,false);
+  assert.equal(p.ENFORCEMENT_IMPLEMENTED,true);
+  assert.equal(p.DURABLE_LEDGER_ENABLED,true);
   assert.ok(p.INITIAL_EXPERIMENT_CAP_USD<=50);
 });
 test('dedicated orchestra has all four specialist roles',()=>{

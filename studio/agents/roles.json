@@ -101,7 +101,8 @@
       "mission": "Shared palette and art language",
       "scope": [
         "assets/visual/",
-        "design/art/"
+        "design/art/",
+        "content/biomes/"
       ],
       "acceptance": "Style consistency"
     },

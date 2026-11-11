@@ -4,8 +4,9 @@
   "MAX_RUN_COST_USD": 2,
   "MAX_DAILY_COST_USD": 5,
   "INITIAL_EXPERIMENT_CAP_USD": 50,
-  "MAX_ATTEMPTS_PER_TASK": 2,
+  "MAX_ATTEMPTS_PER_TASK": 1,
   "MAX_SIMULTANEOUS_PAID_WORKERS": 1,
-  "ENFORCEMENT_IMPLEMENTED": false,
-  "NOTE": "This policy file is NOT runtime cost enforcement. No paid agents may execute until a separately tested ledger checks estimated spend before calls and actual usage afterward."
+  "ENFORCEMENT_IMPLEMENTED": true,
+  "NOTE": "Enforced ledger and API guards implemented; live paid runs remain OFF until STUDIO_ENABLED is changed and repository Actions variable ICE_STUDIO_ENABLED is true. An OpenAI project budget is also required for independent billing protection.",
+  "DURABLE_LEDGER_ENABLED": true
 }

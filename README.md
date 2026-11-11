@@ -4,7 +4,7 @@
 
 ## Current status
 - game/: early experimental interactive vertical slice, **not** a complete Pass One release. Includes a backyard hub, touch-to-walk, manual pilot/main fuel and air controls, draft, ignition, observation mode, three contract definitions and distinct pixel-particle chambers.
-- studio/: canonical scoped work orders, specialist role roster, context briefing and budget math. **No paid worker exists or is enabled.** Policies are not durable global cost enforcement.
+- studio/: API-backed producer, specialist and independent reviewer, scoped source proposals, durable per-run/daily/cumulative spend ledger and review-only PR pipeline. **Paid runs remain disabled pending the GitHub secret and explicit activation.**
 - design/, memory/: game bible, architecture, four-agent AI orchestra, durable agent decision rules, roadmaps.
 - tests/: unit/invariant tests and Chrome touch smoke with a screenshot artifact.
 
@@ -32,3 +32,12 @@ The branch workflow runs independent tests and uploads the game files plus mobil
 
 ## Next gate
 Fix observed Chrome/mobile defects, confirm meaningful lean/rich/stable visual differences, implement durable and atomic spending controls for any future model worker, and only then allow reviewed paid task-to-PR execution.
+
+
+## New API-backed production studio (review stage)
+
+This branch adds the full I.C.E. visual constitution, specialist role registry, a separately protected AI generation job, a no-secret test job and a GitHub Actions draft-PR publisher. It does **not** call paid models unless GitHub main-branch settings and the policy allow it.
+
+See [activation instructions](studio/runtime/README.md), [visual target](design/visual-bible.md), [full product scope](design/product-systems.md) and [studio operation](studio/production-plan.md).
+
+The initial deterministic pipeline works one scoped task at a time. Art and audio are authored as code/data in the first iteration; image-model PNG/GIF production, human-quality music rendering and automatic multi-task scheduling require separate quality/cost gates.
