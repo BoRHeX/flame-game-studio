@@ -8,7 +8,8 @@
   "critical_inputs": [
     "game/flame/particles.mjs",
     "game/chambers/flow.mjs",
-    "game/simulation/burner.mjs"
+    "game/simulation/burner.mjs",
+    "tests/game-systems.test.mjs"
   ],
   "handoff_to": "Particle Engineer -> Art Director, QA and Performance",
   "deliverable": "Exactly one complete source file at game/flame/particles.mjs, unless a separately approved work order overrides it.",
