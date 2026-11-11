@@ -48,13 +48,13 @@ async function main(){
    const poll=setInterval(async()=>{
      try{
        const data=await readFile(join(profileDir,'DevToolsActivePort'),'utf8');
-       const port=Number(data.split(/\\r?\\n/)[0]);
+       const port=Number(data.split(/\r?\n/)[0]);
        if(Number.isInteger(port)&&port>0)done(null,port);
      }catch{ /* Chrome has not published the port yet. */ }
    },250);
    browser.stderr.on('data',chunk=>{
      output+=String(chunk);
-     const match=output.match(/DevTools listening on ws:\\/\\/127\\.0\\.0\\.1:(\\d+)\\//);
+     const match=output.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//);
      if(match)done(null,Number(match[1]));
    });
    browser.on('exit',code=>done(Error('Chrome exited '+code+' '+output.slice(-550))));
