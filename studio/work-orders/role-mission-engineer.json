@@ -20,7 +20,8 @@
   "required_contracts": [
     "game/missions/jobs.mjs",
     "game/simulation/burner.mjs",
-    "tests/mission-playability.test.mjs"
+    "tests/mission-playability.test.mjs",
+    "memory/decisions/ADR-0005-pass-two-operator-contracts.md"
   ],
   "max_cost_usd": 1,
   "max_attempts": 1,

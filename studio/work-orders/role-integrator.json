@@ -20,7 +20,8 @@
   "required_contracts": [
     "game/main.mjs",
     "game/core/clocks.mjs",
-    "game/simulation/burner.mjs"
+    "game/simulation/burner.mjs",
+    "memory/decisions/ADR-0005-pass-two-operator-contracts.md"
   ],
   "max_cost_usd": 1,
   "max_attempts": 1,
