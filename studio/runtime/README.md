@@ -22,3 +22,8 @@ The API workflow must be installed on main for manual dispatch to appear in GitH
 Initial budget: $50 cumulative, $5/day, $2 per run and one serialized worker run. All billing rates are text-token estimates and do not represent an OpenAI account-wide spending restriction. Use OpenAI project budgets independently. A failed provider call can leave its full reservation allocated and requires explicit reconciliation.
 
 This is a production pipeline, not an independently persistent conversational mind. Art/sound specialists work through the same role contracts. Later artwork generation APIs, composited image layers and studio-orchestra synth rendering need their own cost/rights controls. No third-party artist assets should be copied without rights.
+
+
+## Assistant-managed production requests
+
+The user should not dispatch workflows. The assistant can commit a single validated request at studio/requests/next.json on main, triggering exactly one bounded API-backed run. Manual dispatch remains an optional fallback, not a user responsibility.

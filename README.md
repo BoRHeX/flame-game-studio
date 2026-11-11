@@ -41,3 +41,8 @@ This branch adds the full I.C.E. visual constitution, specialist role registry, 
 See [activation instructions](studio/runtime/README.md), [visual target](design/visual-bible.md), [full product scope](design/product-systems.md) and [studio operation](studio/production-plan.md).
 
 The initial deterministic pipeline works one scoped task at a time. Art and audio are authored as code/data in the first iteration; image-model PNG/GIF production, human-quality music rendering and automatic multi-task scheduling require separate quality/cost gates.
+
+
+## Minimal user involvement
+
+The assistant issues one-shot production requests through GitHub commits, reviews generated PRs, and handles workflow debugging. The user supplies direction and plays the game. No recurring paid run is scheduled.

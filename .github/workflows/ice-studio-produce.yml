@@ -1,5 +1,9 @@
 name: I.C.E. studio - propose one scoped work order
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'studio/requests/next.json'
   workflow_dispatch:
     inputs:
       order:
@@ -14,6 +18,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   reserve:
+    outputs:
+      order_path: ${{ steps.select.outputs.order_path }}
     if: github.repository == 'BoRHeX/flame-game-studio' && github.ref == 'refs/heads/main' && vars.ICE_STUDIO_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -21,7 +27,6 @@ jobs:
       contents: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ORDER_PATH: ${{ inputs.order }}
       ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +35,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - id: select
+        name: Validate assistant-queued or manual work order
+        env:
+          MANUAL_ORDER: ${{ inputs.order }}
+        run: node studio/orchestrator/queue.mjs
       - name: Reserve durable spending allowance - fail closed
+        env:
+          ORDER_PATH: ${{ steps.select.outputs.order_path }}
         run: |
           case "$ORDER_PATH" in
             studio/work-orders/*.json) ;;
@@ -46,7 +58,7 @@ jobs:
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.reserve.outputs.order_path }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -98,7 +110,7 @@ jobs:
     permissions:
       contents: read
     env:
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.reserve.outputs.order_path }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -124,7 +136,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.reserve.outputs.order_path }}
     steps:
       - uses: actions/checkout@v4
         with:
