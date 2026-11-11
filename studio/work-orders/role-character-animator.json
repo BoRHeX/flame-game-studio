@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-13",
+  "role": "character_animator",
+  "goal": "Create character animation data for walking, climbing, observing, valve turning, recoil and idle at 18 FPS. Include event frame markers for sound. First department contribution: game/animation/operator.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/animation/operator.mjs",
+  "allowed_paths": [
+    "game/animation/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Frame markers and mobile sprite cadence consistent with action response",
+    "Exact target file game/animation/operator.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/visual-bible.md",
+    "game/main.mjs",
+    "design/audio-orchestra.md"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2012
+}

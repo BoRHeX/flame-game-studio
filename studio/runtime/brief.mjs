@@ -4,6 +4,7 @@ import {resolve,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {compileBrief} from '../orchestrator/context.mjs';
 import {loadOrder} from './proposal.mjs';
+import {loadProfile} from '../orchestrator/roster.mjs';
 export const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const readText=(p)=>readFileSync(join(ROOT,p),'utf8');
 function ownedFiles(paths,maxFiles=7,maxChars=35000){
@@ -29,21 +30,28 @@ function ownedFiles(paths,maxFiles=7,maxChars=35000){
 export function buildBrief(orderPath){
  const order=loadOrder(orderPath);
  const roleBrief=compileBrief(order);
+ const agentProfile=loadProfile(order.role);
+ const producerProfile=loadProfile('producer');
+ const qaProfile=loadProfile('qa_architect');
  const canon=readText('design/game-bible.md');
  const vision=readText('design/visual-bible.md');
  const systems=readText('design/product-systems.md');
  const memory=readText('memory/README.md');
  const files=ownedFiles(order.allowed_paths);
  // Read-only dependencies are context, never writable agent permissions.
- const dependencyPaths=order.role==='particle_engineer'
-  ?['game/chambers/flow.mjs','game/simulation/burner.mjs','tests/game-systems.test.mjs','game/main.mjs']
-  :[];
+ const dependencyPaths=[...new Set([
+  ...agentProfile.critical_inputs,
+  ...(order.required_contracts??[]),
+  ...(order.target_file?[order.target_file]:[])
+ ])].filter(p=>/^(?:game|content|design|tests|studio|memory|assets)\/[a-zA-Z0-9_./-]+$/.test(p)&&!p.includes('..'));
  const readOnlyDependencies=dependencyPaths.filter(p=>existsSync(join(ROOT,p)))
+  .filter(p=>statSync(join(ROOT,p)).isFile())
+  .slice(0,10)
   .map(path=>({path,body:readText(path).slice(0,14000)}));
  const incidentPath='memory/incidents/'+order.id+'.md';
  const incidentNotes=existsSync(join(ROOT,incidentPath))?readText(incidentPath).slice(0,4500):'';
  return {
-  order,roleBrief,canon:canon.slice(0,13000),visualBrief:vision.slice(0,14000),
+  order,roleBrief,agentProfile,producerProfile,qaProfile,canon:canon.slice(0,13000),visualBrief:vision.slice(0,14000),
   systemsBrief:systems.slice(0,12000),memoryPolicy:memory.slice(0,3600),
   files,readOnlyDependencies,incidentNotes,sourceSha:process.env.GITHUB_SHA??'uncommitted',
   instruction:'Historical images not in source tree are NOT available to agent as image data. Do not claim to have seen or imported them.'

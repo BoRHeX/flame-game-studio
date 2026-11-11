@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-02",
+  "role": "game_director",
+  "goal": "Preserve the Flame Game's mechanic of physically observing, adjusting, verifying, and holding the burner. Reject any shortcut that replaces embodied gameplay with a settings dashboard. First department contribution: design/gameplay/interaction-pillars.md. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "design/gameplay/interaction-pillars.md",
+  "allowed_paths": [
+    "design/gameplay/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Three independent missions remain visually diagnosable and fun without relying on written tutorial text",
+    "Exact target file design/gameplay/interaction-pillars.md validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/game-bible.md",
+    "design/visual-bible.md",
+    "game/main.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2001
+}

@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-25",
+  "role": "narrative_designer",
+  "goal": "Create branching industrial narrative state, location/career arc, operator interactions and multiple endings, with one-time final job protected in save data. Story conveyed visually. First department contribution: game/narrative/story-flags.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/narrative/story-flags.mjs",
+  "allowed_paths": [
+    "game/narrative/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Story flag consistency, save compatibility, no unearned final-contract repeats",
+    "Exact target file game/narrative/story-flags.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/game-bible.md",
+    "design/product-systems.md",
+    "game/missions/jobs.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2024
+}

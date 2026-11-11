@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-16",
+  "role": "persistence_engineer",
+  "goal": "Implement versioned three-slot save/autosave interfaces, atomic browser storage writes, fallback for corrupt data, device UTC/timezone and bounded offline workshop reconciliation. First department contribution: game/persistence/save-slots.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/persistence/save-slots.mjs",
+  "allowed_paths": [
+    "game/persistence/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Three slot isolation, schema migration, capped device-time reconciliation, corruption recovery",
+    "Exact target file game/persistence/save-slots.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/product-systems.md",
+    "game/core/clocks.mjs",
+    "game/missions/jobs.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2015
+}

@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-19",
+  "role": "sound_engineer",
+  "goal": "Generate and mix original procedural pilot, main burner, valve, damper, fan, lift, puff, soot and ambience sound driven by actual process events. Unlock Web Audio from gesture. First department contribution: game/audio/process-sound.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/audio/process-sound.mjs",
+  "allowed_paths": [
+    "game/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Event-linked sounds, low mobile CPU, volume/ducking, no external copyrighted samples",
+    "Exact target file game/audio/process-sound.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/audio/sound.mjs",
+    "studio/contracts/event-catalog.json",
+    "game/simulation/burner.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2018
+}

@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "project": "I.C.E. The Flame Game",
+  "objective": "Pass One playable industrial pixel-art hub plus 3 coherent combustion missions.",
+  "task_nodes": [
+    {
+      "id": "01-producer",
+      "role": "producer",
+      "work_order": "studio/work-orders/role-producer.json",
+      "depends_on": [],
+      "state": "planned"
+    },
+    {
+      "id": "02-contracts",
+      "role": "technical_director",
+      "work_order": "studio/work-orders/role-technical-director.json",
+      "depends_on": [
+        "01-producer"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "03-combustion",
+      "role": "combustion_engineer",
+      "work_order": "studio/work-orders/role-combustion-engineer.json",
+      "depends_on": [
+        "02-contracts"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "04-flame-mapping",
+      "role": "flame_behavior_engineer",
+      "work_order": "studio/work-orders/role-flame-behavior-engineer.json",
+      "depends_on": [
+        "03-combustion"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "05-chamber",
+      "role": "chamber_designer",
+      "work_order": "studio/work-orders/role-chamber-designer.json",
+      "depends_on": [
+        "02-contracts"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "06-particles",
+      "role": "particle_engineer",
+      "work_order": "studio/work-orders/role-particle-engineer.json",
+      "depends_on": [
+        "04-flame-mapping",
+        "05-chamber"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "07-gameplay",
+      "role": "gameplay_engineer",
+      "work_order": "studio/work-orders/role-gameplay-engineer.json",
+      "depends_on": [
+        "02-contracts"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "08-missions",
+      "role": "mission_engineer",
+      "work_order": "studio/work-orders/role-mission-engineer.json",
+      "depends_on": [
+        "03-combustion",
+        "07-gameplay"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "09-pixel-art",
+      "role": "pixel_art_director",
+      "work_order": "studio/work-orders/role-pixel-art-director.json",
+      "depends_on": [
+        "01-producer"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "10-environment",
+      "role": "environment_animator",
+      "work_order": "studio/work-orders/role-environment-animator.json",
+      "depends_on": [
+        "09-pixel-art"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "11-conductor",
+      "role": "composer_conductor",
+      "work_order": "studio/work-orders/role-composer-conductor.json",
+      "depends_on": [
+        "01-producer"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "12-instrumentalist",
+      "role": "orchestrator_instrumentalist",
+      "work_order": "studio/work-orders/role-orchestrator-instrumentalist.json",
+      "depends_on": [
+        "11-conductor"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "13-sound",
+      "role": "sound_engineer",
+      "work_order": "studio/work-orders/role-sound-engineer.json",
+      "depends_on": [
+        "03-combustion",
+        "11-conductor"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "14-animation",
+      "role": "character_animator",
+      "work_order": "studio/work-orders/role-character-animator.json",
+      "depends_on": [
+        "07-gameplay",
+        "09-pixel-art"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "15-av-sync",
+      "role": "av_sync_director",
+      "work_order": "studio/work-orders/role-av-sync-director.json",
+      "depends_on": [
+        "12-instrumentalist",
+        "13-sound",
+        "14-animation"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "16-persistence",
+      "role": "persistence_engineer",
+      "work_order": "studio/work-orders/role-persistence-engineer.json",
+      "depends_on": [
+        "02-contracts"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "17-qc",
+      "role": "qa_architect",
+      "work_order": "studio/work-orders/role-qa-architect.json",
+      "depends_on": [
+        "06-particles",
+        "08-missions",
+        "16-persistence"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "18-performance",
+      "role": "performance_engineer",
+      "work_order": "studio/work-orders/role-performance-engineer.json",
+      "depends_on": [
+        "06-particles"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "19-integration",
+      "role": "integrator",
+      "work_order": "studio/work-orders/role-integrator.json",
+      "depends_on": [
+        "07-gameplay",
+        "08-missions",
+        "10-environment",
+        "15-av-sync",
+        "17-qc",
+        "18-performance"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "20-director",
+      "role": "game_director",
+      "work_order": "studio/work-orders/role-game-director.json",
+      "depends_on": [
+        "19-integration"
+      ],
+      "state": "planned"
+    },
+    {
+      "id": "21-release",
+      "role": "security_release_engineer",
+      "work_order": "studio/work-orders/role-security-release-engineer.json",
+      "depends_on": [
+        "20-director"
+      ],
+      "state": "planned"
+    }
+  ],
+  "note": "A suggested dependency DAG, not automatic concurrent API execution. Roles not in Pass One DAG remain configured in roster for later stages. Each paid task is a separate approved, bounded run and QA can reject and send a revision back to producer."
+}

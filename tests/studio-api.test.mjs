@@ -116,6 +116,7 @@ test('a rejected candidate is corrected once, reviewed independently and accepte
   {path:'game/flame/repair-test-fixture.mjs',content:"import {flowAt} from '../chambers/flow.mjs';\nexport {flowAt};\n"}
  ]};
  const responses=[plan,bad,{approved:false,concerns:['Incorrect import path'],missing_tests:[]},
+  {summary:'Repair invalid import',steps:['Use actual chamber module'],contracts:['No unverified imports']},
   good,{approved:true,concerns:[],missing_tests:[]}];
  const mock=async()=>{
   const output=responses[called++];
@@ -129,13 +130,13 @@ test('a rejected candidate is corrected once, reviewed independently and accepte
   const proposalPath=join(temp,'candidate.json'),reportPath=join(temp,'spend.json');
   const proposal=await runSession('studio/work-orders/ice-flame-polish-01.json',
    proposalPath,{fetchImpl:mock,reportPath});
-  assert.equal(called,5);
+  assert.equal(called,6);
   assert.equal(proposal.revisions,1);
   assert.equal(proposal.review.approved,true);
   assert.match(proposal.changes[0].content,/chambers\/flow/);
   const report=JSON.parse(readFileSync(reportPath,'utf8'));
   assert.equal(report.status,'accepted');
-  assert.equal(report.modelAudit.length,5);
+  assert.equal(report.modelAudit.length,6);
   assert.ok(report.costUsd>0);
  }finally{
   for(const [name,value] of Object.entries(old)){
@@ -156,10 +157,14 @@ test('repeat reviewer rejection fails closed but reconciles all known API usage'
  let called=0;
  const payload=[
   {summary:'plan',steps:['fix'],contracts:[]},
-  {summary:'bad',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=1;\n'}],tests:[],risks:[]},
+  {summary:'bad',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=1;\\n'}],tests:[],risks:[]},
   {approved:false,concerns:['Bad behavior'],missing_tests:[]},
-  {summary:'still bad',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=2;\n'}],tests:[],risks:[]},
-  {approved:false,concerns:['Still bad'],missing_tests:[]}
+  {summary:'repair 1',steps:['correct behavior'],contracts:[]},
+  {summary:'still bad',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=2;\\n'}],tests:[],risks:[]},
+  {approved:false,concerns:['Still bad'],missing_tests:[]},
+  {summary:'repair 2',steps:['complete missing checks'],contracts:[]},
+  {summary:'still broken',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=3;\\n'}],tests:[],risks:[]},
+  {approved:false,concerns:['Final rejection'],missing_tests:[]}
  ];
  const mock=async()=>{const p=payload[called++];return {ok:true,status:200,json:async()=>({
   status:'completed',usage:{input_tokens:100,output_tokens:60,input_tokens_details:{cached_tokens:0}},
@@ -169,10 +174,10 @@ test('repeat reviewer rejection fails closed but reconciles all known API usage'
   const reportPath=join(temp,'spend.json'),proposalPath=join(temp,'candidate.json');
   await assert.rejects(runSession('studio/work-orders/ice-flame-polish-01.json',
    proposalPath,{fetchImpl:mock,reportPath,rejectedPath:join(temp,'rejected.json')}),/independent review rejected/);
-  assert.equal(called,5);
+  assert.equal(called,9);
   const report=JSON.parse(readFileSync(reportPath,'utf8'));
   assert.equal(report.status,'failed');assert.equal(report.billingComplete,true);
-  assert.equal(report.modelAudit.length,5);assert.ok(report.costUsd>0);
+  assert.equal(report.modelAudit.length,9);assert.ok(report.costUsd>0);
   const rejected=JSON.parse(readFileSync(join(temp,'rejected.json'),'utf8'));
   assert.equal(rejected.candidate.orderId,'ICE-FLAME-001');
   assert.equal(rejected.review.approved,false);
@@ -199,13 +204,14 @@ test('structurally invalid initial output gets one correction instead of failing
  const values=[
   {summary:'plan',steps:['improve'],contracts:[]},
   {summary:'invalid',changes:[],tests:[],risks:[]},
+  {summary:'Repair structural output',steps:['Return exactly one file'],contracts:['Correct path']},
   {summary:'repaired',changes:[{path:'game/flame/valid-shape-fixture.mjs',
     content:'export const plume=1;\n'}],tests:['unit'],risks:[]},
   {approved:true,concerns:[],missing_tests:[]}
  ];
  const mock=async(_url,options)=>{
   const body=JSON.parse(options.body);
-  if(called===2)repairInput=body.input;
+  if(called===3)repairInput=body.input;
   const value=values[called++];
   return {ok:true,status:200,json:async()=>({
    status:'completed',usage:{input_tokens:100,output_tokens:80,input_tokens_details:{cached_tokens:0}},
@@ -216,11 +222,11 @@ test('structurally invalid initial output gets one correction instead of failing
   const file=join(temp,'proposal.json'),report=join(temp,'report.json');
   const result=await runSession('studio/work-orders/ice-flame-polish-01.json',file,
    {fetchImpl:mock,reportPath:report});
-  assert.equal(called,4);
+  assert.equal(called,5);
   assert.equal(result.revisions,1);
   assert.match(repairInput,/Structural rejection/);
   assert.equal(result.changes.length,1);
-  assert.equal(JSON.parse(readFileSync(report,'utf8')).modelAudit.length,4);
+  assert.equal(JSON.parse(readFileSync(report,'utf8')).modelAudit.length,5);
  }finally{
   for(const [name,value] of Object.entries(old)){
    if(value===undefined)delete process.env[name];else process.env[name]=value;

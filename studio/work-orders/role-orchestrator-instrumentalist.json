@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-18",
+  "role": "orchestrator_instrumentalist",
+  "goal": "Translate approved composer motifs into parseable symbolic score with original instrument stems, sequencing, beat grid, mix and cue map; do not pretend a JSON score is a mastered audio file. First department contribution: assets/audio/original-score.json. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "assets/audio/original-score.json",
+  "allowed_paths": [
+    "assets/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Machine-renderable, bounded original score, stable timing and layer toggles",
+    "Exact target file assets/audio/original-score.json validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/audio-orchestra.md",
+    "design/audio/original-themes.json",
+    "studio/contracts/event-catalog.json"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2017
+}

@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-24",
+  "role": "integrator",
+  "goal": "Implement glue interfaces that compose separately authored gameplay modules without changing their behavior, preserve public APIs, maintain deterministic update order and staging contracts. First department contribution: game/core/game-contracts.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/core/game-contracts.mjs",
+  "allowed_paths": [
+    "game/core/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Unit & browser compatibility and no silent feature removal",
+    "Exact target file game/core/game-contracts.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/main.mjs",
+    "game/core/clocks.mjs",
+    "game/simulation/burner.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2023
+}

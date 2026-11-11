@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-09",
+  "role": "mission_engineer",
+  "goal": "Author reusable contract objectives, warnings, player success/failure conditions, penalties, rewards, and transitions. Every mission must be solvable without optional perks. First department contribution: game/missions/job-templates.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/missions/job-templates.mjs",
+  "allowed_paths": [
+    "game/missions/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "All three first-pass contracts pass deterministic completion and failure tests",
+    "Exact target file game/missions/job-templates.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/missions/jobs.mjs",
+    "game/simulation/burner.mjs",
+    "tests/mission-playability.test.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2008
+}

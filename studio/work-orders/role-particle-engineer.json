@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-06",
+  "role": "particle_engineer",
+  "goal": "Create a visually continuous, performant and spatially coherent pixel flame with chamber-specific flows, typed arrays, pooling and meaningful light/soot. Retain the current renderer interface and use the full module. First department contribution: game/flame/particles.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/flame/particles.mjs",
+  "allowed_paths": [
+    "game/flame/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "No allocations per particle tick, bounded particles, authentic chamber compositing, replayable seed",
+    "Exact target file game/flame/particles.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/flame/particles.mjs",
+    "game/chambers/flow.mjs",
+    "game/simulation/burner.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2005
+}

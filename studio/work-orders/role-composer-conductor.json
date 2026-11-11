@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-17",
+  "role": "composer_conductor",
+  "goal": "Compose original I.C.E. thematic identities and adaptive liquid-DnB/orchestral sketches for Backyard, snow, desert, jungle and offshore, with explicit beat grid and process-linked tension. First department contribution: design/audio/original-themes.json. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "design/audio/original-themes.json",
+  "allowed_paths": [
+    "design/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Original motifs, BPM/key/data, documented commercial provenance, no unauthorized melody",
+    "Exact target file design/audio/original-themes.json validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/audio-orchestra.md",
+    "design/visual-bible.md",
+    "studio/contracts/event-catalog.json"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2016
+}

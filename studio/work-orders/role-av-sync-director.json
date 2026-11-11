@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-20",
+  "role": "av_sync_director",
+  "goal": "Bind actual process/animation events to Web Audio scheduling, character and environmental animation markers. Correct drift without tying audio to 18/24 FPS visual frames. First department contribution: game/audio/event-sync.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/audio/event-sync.mjs",
+  "allowed_paths": [
+    "game/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Deterministic event mapping and coherent flame sound/animation timing",
+    "Exact target file game/audio/event-sync.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "studio/contracts/event-catalog.json",
+    "game/audio/sound.mjs",
+    "game/animation/operator.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2019
+}

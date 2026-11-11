@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-12",
+  "role": "pixel_art_director",
+  "goal": "Author original industrial pixel-art inspired SVG source layers for the first hub: sky, distant skyline, structures, industrial platforms, controllable machine silhouettes, warm flame light. Keep layers individually addressable. First department contribution: assets/visual/biomes/backyard.svg. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "assets/visual/biomes/backyard.svg",
+  "allowed_paths": [
+    "assets/visual/biomes/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Editable layered scene with consistent pixel grid, no borrowed art, foreground remains independent",
+    "Exact target file assets/visual/biomes/backyard.svg validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/visual-bible.md",
+    "game/main.mjs",
+    "assets/reference/README.md"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2011
+}

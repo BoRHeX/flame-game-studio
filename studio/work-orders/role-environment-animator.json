@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-14",
+  "role": "environment_animator",
+  "goal": "Build layered scrolling industrial environments with authored biome parallax speeds, time of day, rain/snow/wind and foreground object occlusion independent of collision. First department contribution: game/world/parallax.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/world/parallax.mjs",
+  "allowed_paths": [
+    "game/world/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Deterministic camera transform, independent parallax layers and no misplaced touch targets",
+    "Exact target file game/world/parallax.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/visual-bible.md",
+    "game/main.mjs",
+    "game/chambers/flow.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2013
+}

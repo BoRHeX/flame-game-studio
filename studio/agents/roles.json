@@ -7,7 +7,8 @@
       "id": "producer",
       "mission": "Pass scope, budget, dependency graph",
       "scope": [
-        "studio/"
+        "studio/",
+        "design/production/"
       ],
       "acceptance": "Approval of small scoped work orders"
     },
@@ -15,7 +16,8 @@
       "id": "game_director",
       "mission": "Canon and consistency",
       "scope": [
-        "design/"
+        "design/",
+        "design/gameplay/"
       ],
       "acceptance": "Reject design contradictions"
     },
@@ -24,7 +26,8 @@
       "mission": "Shared interfaces and ADRs",
       "scope": [
         "design/",
-        "memory/decisions/"
+        "memory/decisions/",
+        "design/technical/"
       ],
       "acceptance": "Approve contract changes"
     },
@@ -176,7 +179,8 @@
       "id": "qa_architect",
       "mission": "Independent tests, hostile evidence",
       "scope": [
-        "tests/"
+        "tests/",
+        "tests/qa/"
       ],
       "acceptance": "Passing reproducible acceptance"
     },
@@ -193,7 +197,8 @@
       "mission": "Workflow rights, secrets, tags",
       "scope": [
         "studio/release/",
-        ".github/"
+        ".github/",
+        "design/release/"
       ],
       "acceptance": "Manual review-gated deploy"
     },

@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-23",
+  "role": "security_release_engineer",
+  "goal": "Document and enforce release acceptance criteria: least-privilege GitHub Actions, input/output validation, asset rights, security, versioned rollback and no accidental publishing. First department contribution: design/release/release-quality-gates.md. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "design/release/release-quality-gates.md",
+  "allowed_paths": [
+    "design/release/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Manual review boundaries, secrets never in generated code, rollback checklist",
+    "Exact target file design/release/release-quality-gates.md validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "studio/production-plan.md",
+    ".github/workflows/ice-studio-produce.yml",
+    "design/roadmap.md"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2022
+}
