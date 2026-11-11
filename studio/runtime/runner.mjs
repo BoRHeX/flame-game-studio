@@ -79,7 +79,7 @@ export async function callStructured({key,model,instructions,input,schema,name,m
  if(!raw||raw.length>260000)throw Error('model returned empty or oversized structured output');
  try{return JSON.parse(raw);}catch{throw Error('model output was not valid JSON');}
 }
-export async function runSession(orderPath,outPath,{fetchImpl=fetch}={}){
+export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='artifacts/ice-spend-report.json'}={}){
  if(policy.STUDIO_ENABLED!==true||policy.ENFORCEMENT_IMPLEMENTED!==true||policy.DURABLE_LEDGER_ENABLED!==true||
    process.env.ICE_STUDIO_ENABLED!=='true')throw Error('paid studio is disabled');
  const brief=buildBrief(orderPath),order=brief.order;
@@ -87,50 +87,70 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch}={}){
  const cap=Math.min(order.max_cost_usd,policy.MAX_RUN_COST_USD);
  const budget=new ModelBudget(cap);
  const key=process.env.OPENAI_API_KEY;
- const compactBrief=JSON.stringify(brief);
+ let outcome='failed';
  try{
- const plan=await callStructured({key,model:'gpt-6-luna',step:'producer',
-  instructions:'You are the I.C.E. executive producer. Read canon as immutable. Produce a very small executable plan for the assigned specialist. No additional scope. Never invent missing visual references.',
-  input:compactBrief,schema:planSchema,name:'ice_production_plan',max_output_tokens:3000,budget,fetchImpl});
- const implementation=await callStructured({key,model:'gpt-6.1-terra',step:order.role,
-  instructions:'You are a scoped I.C.E. game-development specialist. Output complete UTF-8 source files only inside allowed_paths. Do not edit workflows/tests/studio or core contracts. Preserve browser compatibility, canonical vision and existing working gameplay. Do not claim external image/audio files exist. Keep total output under four files.',
-  input:JSON.stringify({brief,plan}),schema:outputSchema,name:'ice_code_candidate',max_output_tokens:12000,budget,fetchImpl});
- const proposal={schemaVersion:1,orderId:order.id,runId:String(process.env.GITHUB_RUN_ID),
-  role:order.role,sourceSha:brief.sourceSha,
-  summary:implementation.summary,changes:implementation.changes,tests:implementation.tests,
-  risks:implementation.risks,costUsd:0,modelAudit:[]};
- validateProposal(proposal,order);
- const review=await callStructured({key,model:'gpt-6-luna',step:'independent_reviewer',
-  instructions:'You are independent I.C.E. reviewer. Reject unsafe, out-of-scope, incoherent or untestable patches. Do not overlook gameplay regressions or design-bible conflicts. Respond with strict JSON only.',
-  input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
-    files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
-  schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
- if(!review.approved)throw Error('independent reviewer rejected candidate: '+review.concerns.join('; ').slice(0,500));
- proposal.costUsd=Number(budget.spent.toFixed(7));
- proposal.modelAudit=budget.calls;
- proposal.review=review;
- mkdirSync(dirname(outPath),{recursive:true});
- writeFileSync(outPath,JSON.stringify(proposal,null,2)+'\n','utf8');
- console.log('MODEL SESSION: '+order.id+' files='+proposal.changes.length+' costUsd='+proposal.costUsd);
- return proposal;
+  const plan=await callStructured({key,model:'gpt-6-luna',step:'producer',
+   instructions:'You are the I.C.E. executive producer. Canonical game rules are immutable. Produce a small, executable plan for the specific specialist; stay within declared paths. Do not invent missing visual reference assets.',
+   input:JSON.stringify(brief),schema:planSchema,name:'ice_production_plan',
+   max_output_tokens:3000,budget,fetchImpl});
+  let implementation=await callStructured({key,model:'gpt-6.1-terra',step:order.role,
+   instructions:'You are a scoped I.C.E. development specialist. Produce complete UTF-8 source only inside allowed_paths. Respect imports, project-local geometry and existing API contracts. Do not edit workflow/test/studio code. Preserve Chrome gameplay; keep total output at most four files. Review your module imports carefully.',
+   input:JSON.stringify({brief,plan}),schema:outputSchema,name:'ice_code_candidate',
+   max_output_tokens:12000,budget,fetchImpl});
+  let review;
+  // One bounded corrective iteration. A rejected revision stops the run; never
+  // convert a rejection into an unreviewed PR and never spawn unlimited loops.
+  const maxRevisions=Math.min(1,Math.max(0,policy.MAX_REVISIONS_PER_TASK??0));
+  for(let revision=0;revision<=maxRevisions;revision++){
+   const current={schemaVersion:1,orderId:order.id,runId:String(process.env.GITHUB_RUN_ID),
+    role:order.role,sourceSha:brief.sourceSha,summary:implementation.summary,
+    changes:implementation.changes,tests:implementation.tests,risks:implementation.risks,
+    costUsd:0,modelAudit:[]};
+   validateProposal(current,order);
+   review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
+    instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
+    input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
+      files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
+    schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
+   if(review.approved){
+    current.review=review;
+    current.revisions=revision;
+    current.costUsd=Number(budget.spent.toFixed(7));
+    current.modelAudit=budget.calls;
+    mkdirSync(dirname(outPath),{recursive:true});
+    writeFileSync(outPath,JSON.stringify(current,null,2)+'\n','utf8');
+    outcome='accepted';
+    console.log('MODEL SESSION: '+order.id+' accepted after '+revision+' corrections; costUsd='+current.costUsd);
+    return current;
+   }
+   const problems=[...review.concerns,...review.missing_tests].filter(Boolean);
+   if(revision>=maxRevisions)throw Error('independent review rejected after '+revision+
+     ' corrections: '+problems.join('; ').slice(0,800));
+   if(!problems.length)throw Error('reviewer rejected candidate without actionable feedback');
+   console.log('QUALITY GATE: reviewer rejected first candidate; attempting one bounded repair.');
+   implementation=await callStructured({key,model:'gpt-6.1-terra',step:'specialist_repair',
+    instructions:'You are repairing a rejected I.C.E. patch. Address EVERY cited defect while preserving valid behavior and allowed_paths. Return all replacement files in full, not a diff. Verify imports against provided source paths, avoid hard-coded assumptions, and maintain deterministic mobile performance. No changes to CI, memory or simulation contracts.',
+    input:JSON.stringify({order,plan,original:implementation,reviewFeedback:review,
+      relevantSource:brief.files,architecture:brief.roleBrief}),
+    schema:outputSchema,name:'ice_corrected_candidate',max_output_tokens:12000,budget,fetchImpl});
+  }
+  throw Error('unreachable production state');
  }catch(error){
   const failure={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
    status:'failed',billingComplete:budget.accountingCertain,
-   costUsd:Number(budget.spent.toFixed(7)),
-   modelAudit:budget.calls,error:String(error.message).slice(0,400)};
-  mkdirSync(dirname(outPath),{recursive:true});
-  writeFileSync('artifacts/ice-spend-report.json',JSON.stringify(failure,null,2)+'\n','utf8');
+   costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls,
+   error:String(error?.message??error).slice(0,1000)};
+  mkdirSync(dirname(reportPath),{recursive:true});
+  writeFileSync(reportPath,JSON.stringify(failure,null,2)+'\n','utf8');
   throw error;
  }finally{
-  // The report is produced on success and failure. If usage cannot be verified,
-  // the ledger must keep the entire reservation rather than issue a false refund.
-  const path='artifacts/ice-spend-report.json';
-  // On failure, keep the detailed failure report already written above.
+  // Unknown usage retains the entire budget reservation in the ledger.
+  // On known usage, reconciliation should record billable calls even when QA rejects.
   if(budget.accountingCertain){
-   const report={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
-    status:'settlement_ready',billingComplete:true,
-    costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls};
-   writeFileSync(path,JSON.stringify(report,null,2)+'\n','utf8');
+   const report={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,status:outcome,
+    billingComplete:true,costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls};
+   mkdirSync(dirname(reportPath),{recursive:true});
+   writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n','utf8');
   }
  }
 }

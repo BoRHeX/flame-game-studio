@@ -97,3 +97,86 @@ test('incomplete model response still records billable reasoning tokens',async()
  assert.ok(budget.spent>0);
  assert.equal(budget.accountingCertain,true);
 });
+
+test('a rejected candidate is corrected once, reviewed independently and accepted',async()=>{
+ const {runSession}=await import('../studio/runtime/runner.mjs');
+ const {mkdtempSync,readFileSync,rmSync}=await import('node:fs');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const temp=mkdtempSync(join(tmpdir(),'ice-review-loop-'));
+ const old={ICE_STUDIO_ENABLED:process.env.ICE_STUDIO_ENABLED,
+  GITHUB_RUN_ID:process.env.GITHUB_RUN_ID,OPENAI_API_KEY:process.env.OPENAI_API_KEY};
+ process.env.ICE_STUDIO_ENABLED='true';process.env.GITHUB_RUN_ID='98765';process.env.OPENAI_API_KEY='dummy-fixture';
+ let called=0;
+ const plan={summary:'Improve flame',steps:['Improve render'],contracts:['Keep imports valid']};
+ const bad={summary:'Unreviewed output',changes:[
+  {path:'game/flame/repair-test-fixture.mjs',content:"import {x} from '../chambambers/flow.mjs';\n"}
+ ],tests:['test'],risks:[]};
+ const good={...bad,summary:'Corrected import',changes:[
+  {path:'game/flame/repair-test-fixture.mjs',content:"import {flowAt} from '../chambers/flow.mjs';\nexport {flowAt};\n"}
+ ]};
+ const responses=[plan,bad,{approved:false,concerns:['Incorrect import path'],missing_tests:[]},
+  good,{approved:true,concerns:[],missing_tests:[]}];
+ const mock=async()=>{
+  const output=responses[called++];
+  return {ok:true,status:200,json:async()=>({
+   status:'completed',usage:{input_tokens:100,output_tokens:50,
+    input_tokens_details:{cached_tokens:0}},
+   output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(output)}]}]
+  })};
+ };
+ try{
+  const proposalPath=join(temp,'candidate.json'),reportPath=join(temp,'spend.json');
+  const proposal=await runSession('studio/work-orders/ice-flame-polish-01.json',
+   proposalPath,{fetchImpl:mock,reportPath});
+  assert.equal(called,5);
+  assert.equal(proposal.revisions,1);
+  assert.equal(proposal.review.approved,true);
+  assert.match(proposal.changes[0].content,/chambers\/flow/);
+  const report=JSON.parse(readFileSync(reportPath,'utf8'));
+  assert.equal(report.status,'accepted');
+  assert.equal(report.modelAudit.length,5);
+  assert.ok(report.costUsd>0);
+ }finally{
+  for(const [name,value] of Object.entries(old)){
+   if(value===undefined)delete process.env[name];else process.env[name]=value;
+  }
+  rmSync(temp,{recursive:true,force:true});
+ }
+});
+test('repeat reviewer rejection fails closed but reconciles all known API usage',async()=>{
+ const {runSession}=await import('../studio/runtime/runner.mjs');
+ const {mkdtempSync,readFileSync,rmSync}=await import('node:fs');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const temp=mkdtempSync(join(tmpdir(),'ice-review-reject-'));
+ const old={ICE_STUDIO_ENABLED:process.env.ICE_STUDIO_ENABLED,GITHUB_RUN_ID:process.env.GITHUB_RUN_ID,
+  OPENAI_API_KEY:process.env.OPENAI_API_KEY};
+ process.env.ICE_STUDIO_ENABLED='true';process.env.GITHUB_RUN_ID='98766';process.env.OPENAI_API_KEY='dummy-fixture';
+ let called=0;
+ const payload=[
+  {summary:'plan',steps:['fix'],contracts:[]},
+  {summary:'bad',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=1;\n'}],tests:[],risks:[]},
+  {approved:false,concerns:['Bad behavior'],missing_tests:[]},
+  {summary:'still bad',changes:[{path:'game/flame/review-fixture.mjs',content:'export const test=2;\n'}],tests:[],risks:[]},
+  {approved:false,concerns:['Still bad'],missing_tests:[]}
+ ];
+ const mock=async()=>{const p=payload[called++];return {ok:true,status:200,json:async()=>({
+  status:'completed',usage:{input_tokens:100,output_tokens:60,input_tokens_details:{cached_tokens:0}},
+  output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(p)}]}]
+ })};};
+ try{
+  const reportPath=join(temp,'spend.json'),proposalPath=join(temp,'candidate.json');
+  await assert.rejects(runSession('studio/work-orders/ice-flame-polish-01.json',
+   proposalPath,{fetchImpl:mock,reportPath}),/independent review rejected/);
+  assert.equal(called,5);
+  const report=JSON.parse(readFileSync(reportPath,'utf8'));
+  assert.equal(report.status,'failed');assert.equal(report.billingComplete,true);
+  assert.equal(report.modelAudit.length,5);assert.ok(report.costUsd>0);
+ }finally{
+  for(const [name,value] of Object.entries(old)){
+   if(value===undefined)delete process.env[name];else process.env[name]=value;
+  }
+  rmSync(temp,{recursive:true,force:true});
+ }
+});
