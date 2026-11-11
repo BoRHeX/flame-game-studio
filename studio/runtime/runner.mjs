@@ -57,7 +57,7 @@ export async function callStructured({key,model,instructions,input,schema,name,m
    body:JSON.stringify(body),signal:controller.signal});
  }finally{clearTimeout(timeout);}
  const result=await response.json();
- if(!response.ok())throw Error('OpenAI API '+response.status+': '+String(result.error?.message??'provider error').slice(0,220));
+ if(!response.ok)throw Error('OpenAI API '+response.status+': '+String(result.error?.message??'provider error').slice(0,220));
  if(result.status!=='completed')throw Error('non-completed model response; no automatic paid retry');
  budget.record(result,model,step);
  const raw=textFromResponse(result);
