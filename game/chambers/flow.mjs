@@ -12,7 +12,7 @@ export function flowAt(chamber,x,y,seed=0){
   const progress=horizontal?x/640:(360-y)/360;
   const swirl=Math.sin((horizontal?y:x)*0.04+progress*8+seed)*chamber.recirculation*24;
   const baffle=chamber.baffle>0&&x>320&&y<195?chamber.baffle*24:0;
-  const thrust=(42+progress*22)*chamber.flowSpeed;
+  const thrust=(230+progress*95)*chamber.flowSpeed;
   if(horizontal)return {vx:thrust-baffle+chamber.wind*14,vy:swirl+(y-chamber.portY)*-0.014};
   return {vx:swirl+chamber.wind*11,vy:-thrust-baffle};
 }

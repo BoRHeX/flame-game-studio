@@ -103,6 +103,8 @@ async function main(){
  data=await evalJs('window.ICE_DEBUG.snapshot()');
  if(!data.watching||data.particles<=0||data.missionTime<=0)throw Error('Flame observation failed: '+JSON.stringify(data));
  if(await evalJs('getComputedStyle(document.querySelector("#flame")).display')==='none')throw Error('Flame canvas hidden while watching');
+ const chamberWall=await evalJs("Array.from(document.querySelector('#flame').getContext('2d').getImageData(30,25,1,1).data)");
+ if(chamberWall[3]<250)throw Error('Chamber artwork was erased by particle rendering');
  const shot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
  await mkdir('artifacts',{recursive:true});await writeFile('artifacts/mobile-flame.png',Buffer.from(shot.data,'base64'));
  await tap('#return');

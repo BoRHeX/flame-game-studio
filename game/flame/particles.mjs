@@ -17,7 +17,7 @@ export class FlameParticles{
     this.active[n]=1;this.x[n]=chamber.nozzle.x+(this.random()-.5)*7;
     this.y[n]=chamber.nozzle.y+(this.random()-.5)*9;
     this.vx[n]=(this.random()-.5)*21;this.vy[n]=(this.random()-.5)*21;
-    this.life[n]=0;this.maxLife[n]=0.28+r*0.64;
+    this.life[n]=0;this.maxLife[n]=0.36+r*0.73;
     this.size[n]=2+Math.floor(this.random()*4);
     this.smoke[n]=this.random()<state.soot*0.8?1:0;
   }
@@ -41,7 +41,7 @@ export class FlameParticles{
     }
   }
   draw(ctx,state,chamber){
-    ctx.clearRect(0,0,640,360);
+    // Chamber background is painted by caller: never erase the shared target.
     for(let i=0;i<this.capacity;i++){
       if(!this.active[i])continue;
       const age=this.life[i]/this.maxLife[i];
