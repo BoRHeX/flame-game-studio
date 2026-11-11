@@ -1,5 +1,6 @@
 // Independent observable checks for the visible renderer; no image snapshots supplied by the worker.
 import assert from 'node:assert/strict';
+import {isDeepStrictEqual} from 'node:util';
 import {FlameParticles} from '../../game/flame/particles.mjs';
 import {CHAMBERS} from '../../game/chambers/flow.mjs';
 const base=Object.freeze({pilotLit:true,mainLit:true,heatRelease:.65,stability:.96,soot:0,
@@ -36,9 +37,9 @@ for(const chamber of Object.values(CHAMBERS)){
  const drawing=render(a,base,chamber);
  assert.ok(drawing.length>30,'visible main plume');
  assert.equal(JSON.stringify({x:Array.from(a.x),y:Array.from(a.y),active:Array.from(a.active),seed:a.seed}),before,'draw is presentation only');
- assert.deepEqual(render(a,base,chamber),drawing,'repeat drawing is deterministic');
+ assert.ok(isDeepStrictEqual(render(a,base,chamber),drawing),'repeat drawing is deterministic');
  const off=Object.freeze({...base,pilotLit:false,mainLit:false,mainRatio:.62,heatRelease:0,soot:0});
- assert.deepEqual(render(a,off,chamber),drawing,'existing flame retains emission-time appearance at the same age');
+ assert.ok(isDeepStrictEqual(render(a,off,chamber),drawing),'existing flame retains emission-time appearance at the same age');
  const previousCursor=a.cursor;
  a.step(1/60,off,chamber);
  assert.equal(a.cursor,previousCursor,'no new particles after shutoff');
@@ -61,4 +62,22 @@ assert.equal(new Set(palettes).size,3,'lean/stable/rich visual palettes differ')
 const dark=new FlameParticles(32,2),off={...base,pilotLit:false,mainLit:false,heatRelease:0};
 dark.spawnRemainder=3;dark.step(1/60,off,CHAMBERS.backyard);
 assert.equal(dark.activeCount(),0,'shutdown discards residual emission');
-console.log('PASS ICE-FLAME-003: three chambers, emission colors, short pilot, shutdown tails, seeded replay and independent mixture palettes');
+for(const state of [{...base,mainRatio:.97,soot:1},
+ {...base,mainLit:false,mainRatio:1.45,soot:1,heatRelease:0},{...base,mainRatio:1.45,soot:0}]){
+ const pool=warmed(state,CHAMBERS.backyard);
+ assert.equal(Array.from(pool.smoke).some(Boolean),false,'soot requires burning rich main fuel with actual solver soot');
+}
+const rich={...base,mainRatio:1.45,soot:1},smoke=new FlameParticles(1,91);
+for(let i=0;i<100&&!smoke.smoke[0];i++)smoke.spawn(CHAMBERS.backyard,rich);
+assert.equal(smoke.smoke[0],1,'rich combustion can emit soot');
+function ageSmoke(fraction){
+ while(smoke.life[0]<smoke.maxLife[0]*fraction){
+  const dt=Math.min(.1,smoke.maxLife[0]*fraction-smoke.life[0]+1e-7);
+  smoke.step(dt,off,CHAMBERS.backyard);
+ }
+ return render(smoke,off,CHAMBERS.backyard);
+}
+const earlySmoke=ageSmoke(.6),lateSmoke=ageSmoke(.95);
+assert.ok(earlySmoke.length>0&&lateSmoke.length>0,'existing soot remains visible after shutdown');
+assert.ok(Math.max(...lateSmoke.map(c=>c[5]))<Math.max(...earlySmoke.map(c=>c[5])),'lingering soot fades');
+console.log('PASS ICE-FLAME-003: three chambers, emission colors, short pilot, shutdown, seeded replay, mixture palettes and soot eligibility/persistence/fade');

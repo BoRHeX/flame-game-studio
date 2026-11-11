@@ -1,10 +1,18 @@
 {
   "id": "ICE-AUDIO-002",
   "role": "sound_engineer",
-  "goal": "Replace the demonstration sawtooth buzz with original procedural combustion sound in EXISTING game/audio/sound.mjs, preserving ProcessSound and its current main.mjs caller. Build a reusable looping seeded noise buffer, lowpass/bandpass filtering and quiet controllable pilot hiss/main roar. Heat release changes intensity, instability adds mild pulsing/filter movement, observation focuses volume, ignition click remains brief. Stay responsive and restrained on mobile. This task creates process sound, not a music composition or third-party samples. Keep the module compact, preferably under 12,000 characters. The current class is already connected to gameplay, so improve it directly.",
+  "goal": "Replace the demonstration sawtooth buzz with original procedural combustion sound in EXISTING game/audio/sound.mjs, preserving ProcessSound and its current main.mjs caller. Build a reusable looping seeded noise buffer, lowpass/bandpass filtering and quiet controllable pilot hiss/main roar. Heat release changes intensity, instability adds mild pulsing/filter movement, observation focuses volume, ignition click remains brief. Stay responsive and restrained on mobile. This task creates process sound, not a music composition or third-party samples. Keep the module compact, preferably under 12,000 characters. The current class is already connected to gameplay, so improve it directly. Continue from the preserved specialist candidate in memory/candidates/burner-sound-002.json and keep its valid process audio and transient cleanup. The model review stage is PRE-EXECUTION; unit/browser/acceptance execution follows in the isolated verification job. Do not claim those downstream tests have already run.",
   "target_file": "game/audio/sound.mjs",
-  "allowed_paths": ["game/audio/"],
-  "forbidden_paths": ["game/simulation/", "game/main.mjs", "studio/", "memory/", ".github/"],
+  "allowed_paths": [
+    "game/audio/"
+  ],
+  "forbidden_paths": [
+    "game/simulation/",
+    "game/main.mjs",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
   "dependencies": [],
   "acceptance": [
     "Preserve ProcessSound constructor, async unlock(), update(state,watching), click(), stop(), plus context/enabled and gain as a master GainNode",
@@ -14,7 +22,13 @@
     "stop fades master gain to zero; click is brief with bounded nodes and cleanup; no timers, node accumulation or audio when stopped",
     "Use actual available state fields and events only; preserve solver and gameplay behavior. Pass independent fake-Web-Audio acceptance plus real mobile Chrome smoke"
   ],
-  "required_contracts": ["game/audio/sound.mjs", "game/main.mjs", "game/simulation/burner.mjs", "design/audio-orchestra.md"],
+  "required_contracts": [
+    "game/audio/sound.mjs",
+    "game/main.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio-orchestra.md",
+    "memory/candidates/burner-sound-002.json"
+  ],
   "verification_script": "studio/acceptance/burner-sound.mjs",
   "max_cost_usd": 0.75,
   "max_attempts": 1,

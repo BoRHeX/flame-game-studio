@@ -1,10 +1,18 @@
 {
   "id": "ICE-FLAME-003",
   "role": "particle_engineer",
-  "goal": "Deliver a visibly improved industrial pixel flame in the EXISTING renderer game/flame/particles.mjs. Render a coherent anchored blue/white root and luminous colored plume, with readable stable/lean/rich differences, compact pilot-only flame, richer soot only from burning rich main fuel, and natural tails after shutoff. Store emission-time mode/mixture/heat in pooled per-particle arrays so old main flame does not instantly become blue pilot flame or change mixture color when controls change. Integrate ADR-0002 by keeping ONE reusable flow output object per pool and passing it as flowAt's fifth argument. The helper is already integrated. No new per-particle objects or new dependencies. Keep the complete module compact, preferably below 12,000 characters. This is the actual visible game renderer, not a new disconnected demo.",
+  "goal": "Deliver a visibly improved industrial pixel flame in the EXISTING renderer game/flame/particles.mjs. Render a coherent anchored blue/white root and luminous colored plume, with readable stable/lean/rich differences, compact pilot-only flame, richer soot only from burning rich main fuel, and natural tails after shutoff. Store emission-time mode/mixture/heat in pooled per-particle arrays so old main flame does not instantly become blue pilot flame or change mixture color when controls change. Integrate ADR-0002 by keeping ONE reusable flow output object per pool and passing it as flowAt's fifth argument. The helper is already integrated. No new per-particle objects or new dependencies. Keep the complete module compact, preferably below 12,000 characters. This is the actual visible game renderer, not a new disconnected demo. Continue from the preserved specialist candidate in memory/candidates/flame-visible-003.json. Its source already passed the first local behavioral checks; preserve its valid work and address any real remaining source defects. The model review stage is PRE-EXECUTION; actual unit/browser/acceptance execution follows in the isolated verification job. Do not claim those downstream checks have already run.",
   "target_file": "game/flame/particles.mjs",
-  "allowed_paths": ["game/flame/"],
-  "forbidden_paths": ["game/chambers/", "game/simulation/", "studio/", "memory/", ".github/"],
+  "allowed_paths": [
+    "game/flame/"
+  ],
+  "forbidden_paths": [
+    "game/chambers/",
+    "game/simulation/",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
   "dependencies": [],
   "acceptance": [
     "Preserve exported FlameParticles constructor(capacity,seed), random, clear, spawn, step, draw and activeCount, and existing typed x/y/active arrays",
@@ -15,7 +23,14 @@
     "Draw with compact pixel fillRect layers, optional Canvas save/restore and alpha/composite changes; preserve the caller's chamber artwork and context state, never clear or repaint the whole background",
     "Pass trusted flame-visible acceptance, all existing tests and actual mobile Chrome smoke. No API, workflow, simulation or gameplay balance changes"
   ],
-  "required_contracts": ["game/flame/particles.mjs", "game/chambers/flow.mjs", "game/main.mjs", "tests/game-systems.test.mjs", "memory/decisions/ADR-0002-production-context-and-flow-output.md"],
+  "required_contracts": [
+    "game/flame/particles.mjs",
+    "game/chambers/flow.mjs",
+    "game/main.mjs",
+    "tests/game-systems.test.mjs",
+    "memory/decisions/ADR-0002-production-context-and-flow-output.md",
+    "memory/candidates/flame-visible-003.json"
+  ],
   "verification_script": "studio/acceptance/flame-visible.mjs",
   "max_cost_usd": 0.75,
   "max_attempts": 1,

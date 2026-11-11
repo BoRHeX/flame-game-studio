@@ -53,10 +53,24 @@ try{
  sound.update({...main,pilotLit:false,mainLit:false,heatRelease:0},true);
  assert.equal(sound.gain.gain.value,0,'closed burner is silent');
  sound.update(main,true);sound.stop();assert.equal(sound.gain.gain.value,0,'stop silences all layers');
- sound.click();assert.ok(nodes.length-steadyNodes<=6,'bounded ignition transient');
- for(const n of nodes)if(n.onended)n.onended();
+ sound.update(main,true);assert.equal(sound.gain.gain.value,0,'updates do not restart stopped audio');
+ await sound.unlock();sound.update(main,true);
+ let start=nodes.length;sound.click();
+ let transient=nodes.slice(start),tone=transient.find(n=>n.kind==='oscillator');
+ assert.ok(tone?.onended,'natural completion cleanup is registered');
+ assert.ok(transient.length<=6,'bounded ignition transient');
+ tone.onended();assert.ok(transient.every(n=>n.disconnected),'natural completion disconnects transient nodes');
+ const transientStart=nodes.length;
+ for(let i=0;i<30;i++){
+  sound.click();
+  assert.ok(nodes.slice(transientStart).filter(n=>!n.disconnected).length<=2,'repeated ignition clicks replace previous transient');
+ }
+ sound.stop();
+ assert.ok(nodes.slice(transientStart).every(n=>n.disconnected),'stop during click cleans up every transient node');
+ const stoppedNodes=nodes.length;sound.click();
+ assert.equal(nodes.length,stoppedNodes,'stopped sound cannot create a transient');
  for(const b of buffers)assert.ok(b.getChannelData(0).every(Number.isFinite),'finite noise samples');
- console.log('PASS ICE-AUDIO-002: original filtered noise, reusable graph, mobile unlock, process volume, shutdown silence and 600 allocation-free node updates');
+ console.log('PASS ICE-AUDIO-002: original filtered noise, reusable graph, mobile unlock, process volume, shutdown silence, 600 node-stable updates and transient cleanup');
 }finally{
  for(const [key,value] of Object.entries(original)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
 }
