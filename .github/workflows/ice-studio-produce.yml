@@ -7,13 +7,39 @@ on:
         required: true
         type: string
         default: studio/work-orders/ice-flame-polish-01.json
+  push:
+    branches: [main]
+    paths:
+      - 'studio/requests/*.json'
 permissions:
   contents: read
 concurrency:
   group: ice-paid-studio-reservations
   cancel-in-progress: false
 jobs:
+  prepare:
+    if: github.repository == 'BoRHeX/flame-game-studio' && github.ref == 'refs/heads/main' && vars.ICE_STUDIO_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      order: ${{ steps.request.outputs.order }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: request
+        name: Validate one-time commit request or manual work order
+        env:
+          MANUAL_ORDER: ${{ inputs.order }}
+        run: node studio/runtime/select-request.mjs >> "$GITHUB_OUTPUT"
   reserve:
+    needs: prepare
     if: github.repository == 'BoRHeX/flame-game-studio' && github.ref == 'refs/heads/main' && vars.ICE_STUDIO_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -21,7 +47,7 @@ jobs:
       contents: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.prepare.outputs.order }}
       ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +64,7 @@ jobs:
           esac
           node studio/budget/ledger-cli.mjs reserve "$ORDER_PATH"
   propose:
-    needs: reserve
+    needs: [prepare, reserve]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -46,7 +72,7 @@ jobs:
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.prepare.outputs.order }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,7 +95,7 @@ jobs:
           path: artifacts/ice-proposal.json
           if-no-files-found: error
   reconcile:
-    needs: [reserve, propose]
+    needs: [prepare, reserve, propose]
     if: ${{ always() && needs.reserve.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -91,14 +117,14 @@ jobs:
       - name: Settle returned token usage (or keep reservation on unknown billing)
         run: node studio/budget/ledger-cli.mjs settle "artifacts/ice-spend-report.json"
   verify:
-    needs: [propose, reconcile]
+    needs: [prepare, propose, reconcile]
     if: ${{ needs.propose.result == 'success' && needs.reconcile.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
     env:
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.prepare.outputs.order }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -115,7 +141,7 @@ jobs:
       - name: Independent unit and browser tests
         run: npm test && npm run browser:smoke
   submit:
-    needs: verify
+    needs: [prepare, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
@@ -124,7 +150,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ORDER_PATH: ${{ inputs.order }}
+      ORDER_PATH: ${{ needs.prepare.outputs.order }}
     steps:
       - uses: actions/checkout@v4
         with:
