@@ -111,11 +111,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch}={}){
  proposal.review=review;
  mkdirSync(dirname(outPath),{recursive:true});
  writeFileSync(outPath,JSON.stringify(proposal,null,2)+'\n','utf8');
- console.log('MODEL SESSION: '+order.id+' files='+proposal.changes.length+' charged estimate=
-if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
- await runSession(process.argv[2],process.argv[3]??'artifacts/ice-proposal.json');
-}
-+proposal.costUsd);
+ console.log('MODEL SESSION: '+order.id+' files='+proposal.changes.length+' costUsd='+proposal.costUsd);
  return proposal;
  }catch(error){
   const failure={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
