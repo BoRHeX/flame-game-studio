@@ -51,7 +51,7 @@ export function buildBrief(orderPath,{executionMode='dry_run'}={}){
   ...(order.required_contracts??[]),
   ...(order.verification_script?[order.verification_script]:[]),
   ...(order.target_file?[order.target_file]:[])
- ])].filter(p=>/^(?:game|content|design|tests|studio|memory|assets)\/[a-zA-Z0-9_./-]+$/.test(p)&&!p.includes('..'));
+ ])].filter(p=>/^(?:game|content|design|tests|scripts|studio|memory|assets)\/[a-zA-Z0-9_./-]+$/.test(p)&&!p.includes('..'));
  const readOnlyDependencies=dependencyPaths.filter(p=>existsSync(join(ROOT,p)))
   .filter(p=>statSync(join(ROOT,p)).isFile())
   .slice(0,24)
