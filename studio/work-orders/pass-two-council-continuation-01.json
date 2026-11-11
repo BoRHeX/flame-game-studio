@@ -1,0 +1,38 @@
+{
+  "id": "ICE-P2-CONT-01",
+  "role": "integrator",
+  "goal": "Continue the accepted, fully recorded 25-specialist council from GitHub Actions run 43120683621 WITHOUT rerunning the advisors. Independently commission four real source-code specialist sessions, each owning exactly one complete game module: (1) mission_engineer rewrites game/missions/jobs.mjs with genuinely distinct, solvable contracts; (2) npc_engineer creates game/npc/operator.mjs as a useful operator command/hint state machine; (3) persistence_engineer creates game/persistence/save-slots.mjs as a versioned, three-slot real storage adapter with recoverable backups; (4) integrator rewrites game/main.mjs, integrating all previous modules into actual playable world mechanics, NPC dialogue/cause/effect, save/load/autosave, missions, while preserving existing joystick, fullscreen, ladders, audio, flame, clocks and player controls. Source QA can request one scoped repair. Four modules are connected and independently testable, not standalone stubs.",
+  "allowed_paths": [
+    "game/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Reuse and prove all 25 previously recorded specialist handoffs without spending tokens to recreate them",
+    "Four coding sessions from mission, NPC, persistence and integrator roles each deliver their owned full UTF-8 module with an independently documented handoff",
+    "game/main.mjs actually connects NPC and versioned three-slot local save/restore, including autosave on tab hide; no unused scaffolding",
+    "All three authored missions remain physically solvable and two have meaningfully different failure/warning and reward behavior",
+    "Recover damaged save slots without losing unrelated slots; avoid trusting device date for authoritative money",
+    "Preserve real world industrial platforming, thumb controls, fullscreen, flame, sound, simulation time modes, mission and economy state",
+    "Code accepted only after independent source QA and separate no-secret unit/Chrome/Pass Two acceptance; no automatic merge"
+  ],
+  "required_contracts": [
+    "game/main.mjs",
+    "game/missions/jobs.mjs",
+    "game/simulation/burner.mjs",
+    "game/core/clocks.mjs",
+    "game/player/platformer.mjs",
+    "game/style.css",
+    "game/index.html",
+    "design/game-bible.md",
+    "design/pass-two-operator.md"
+  ],
+  "verification_script": "studio/acceptance/pass-two-council.mjs",
+  "max_cost_usd": 2,
+  "max_attempts": 1,
+  "seed": 2121
+}
