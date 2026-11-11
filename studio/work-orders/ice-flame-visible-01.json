@@ -1,0 +1,23 @@
+{
+  "id": "ICE-FLAME-003",
+  "role": "particle_engineer",
+  "goal": "Deliver a visibly improved industrial pixel flame in the EXISTING renderer game/flame/particles.mjs. Render a coherent anchored blue/white root and luminous colored plume, with readable stable/lean/rich differences, compact pilot-only flame, richer soot only from burning rich main fuel, and natural tails after shutoff. Store emission-time mode/mixture/heat in pooled per-particle arrays so old main flame does not instantly become blue pilot flame or change mixture color when controls change. Integrate ADR-0002 by keeping ONE reusable flow output object per pool and passing it as flowAt's fifth argument. The helper is already integrated. No new per-particle objects or new dependencies. Keep the complete module compact, preferably below 12,000 characters. This is the actual visible game renderer, not a new disconnected demo.",
+  "target_file": "game/flame/particles.mjs",
+  "allowed_paths": ["game/flame/"],
+  "forbidden_paths": ["game/chambers/", "game/simulation/", "studio/", "memory/", ".github/"],
+  "dependencies": [],
+  "acceptance": [
+    "Preserve exported FlameParticles constructor(capacity,seed), random, clear, spawn, step, draw and activeCount, and existing typed x/y/active arrays",
+    "Use the actual flowAt import and reusable fifth output argument; preserve chamber flows and logical 640x360 canvas coordinates (chambers have no width/height fields)",
+    "Use pooled emission-time attributes to retain existing particles' colors across shutdown and ratio changes; no new particles when neither pilot nor main is lit",
+    "Pilot plume is materially shorter than main plume; stable, lean and rich draws differ at the same heat input; rich soot can linger and fade",
+    "Keep particle count bounded, seed replay deterministic, draw free of RNG/state advancement, finite geometry and full extinction within 2 seconds after shutoff",
+    "Draw with compact pixel fillRect layers, optional Canvas save/restore and alpha/composite changes; preserve the caller's chamber artwork and context state, never clear or repaint the whole background",
+    "Pass trusted flame-visible acceptance, all existing tests and actual mobile Chrome smoke. No API, workflow, simulation or gameplay balance changes"
+  ],
+  "required_contracts": ["game/flame/particles.mjs", "game/chambers/flow.mjs", "game/main.mjs", "tests/game-systems.test.mjs", "memory/decisions/ADR-0002-production-context-and-flow-output.md"],
+  "verification_script": "studio/acceptance/flame-visible.mjs",
+  "max_cost_usd": 0.75,
+  "max_attempts": 1,
+  "seed": 2018
+}
