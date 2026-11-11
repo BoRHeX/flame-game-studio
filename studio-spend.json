@@ -112,6 +112,14 @@
       "reservedUsd": 1,
       "actualUsd": 0.036624,
       "status": "settled"
+    },
+    {
+      "runId": "43091762683",
+      "orderId": "ICE-MAJOR-INTEGRATE-001",
+      "date": "2026-11-11",
+      "reservedUsd": 1.75,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
