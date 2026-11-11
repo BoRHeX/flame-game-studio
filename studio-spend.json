@@ -64,6 +64,14 @@
       "reservedUsd": 0.5,
       "actualUsd": 0.018464,
       "status": "settled"
+    },
+    {
+      "runId": "43083672372",
+      "orderId": "ICE-FLAME-003",
+      "date": "2026-11-11",
+      "reservedUsd": 0.75,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
