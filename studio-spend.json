@@ -14,8 +14,8 @@
       "orderId": "ICE-FLAME-001",
       "date": "2026-11-11",
       "reservedUsd": 1,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.016574,
+      "status": "settled"
     }
   ]
 }
