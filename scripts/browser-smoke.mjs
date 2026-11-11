@@ -129,7 +129,7 @@ async function main(){
    // neutral return, alternate thumb-side and a usable physical D-pad fallback.
    if((await snapshot()).controls!=='joystick')throw Error('Pass Two should boot in joystick mode');
    const fullscreenControl=await buttonPoint('Enter fullscreen');
-   if(fullscreenControl.w<30||fullscreenControl.h<30)throw Error('Fullscreen control is not thumb accessible');
+   if(fullscreenControl.w<44||fullscreenControl.h<44)throw Error('Fullscreen control is not thumb accessible');
    const joyBounds=await evalJs("(()=>{const r=document.querySelector('#joystick').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,w:r.width,h:r.height};})()");
    if(joyBounds.w<80||joyBounds.h<80)throw Error('Joystick contact area too small');
    const startX=state.playerX;
