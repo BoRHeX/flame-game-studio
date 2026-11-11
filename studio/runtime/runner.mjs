@@ -106,12 +106,23 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     role:order.role,sourceSha:brief.sourceSha,summary:implementation.summary,
     changes:implementation.changes,tests:implementation.tests,risks:implementation.risks,
     costUsd:0,modelAudit:[]};
-   validateProposal(current,order);
-   review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
-    instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
-    input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
-      files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
-    schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
+   let invalidCandidate=null;
+   try{validateProposal(current,order);}
+   catch(error){invalidCandidate=String(error.message);}
+   if(invalidCandidate){
+    // Validation is an independent gate; the agent gets one chance to repair
+    // an invalid file count/path before consuming a separate reviewer call.
+    review={approved:false,
+      concerns:['Candidate failed source validation: '+invalidCandidate+
+       '. Return one to four COMPLETE source files with unique allowed paths.'],
+      missing_tests:[]};
+   }else{
+    review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
+     instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
+     input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
+       files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
+     schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
+   }
    if(review.approved){
     current.review=review;
     current.revisions=revision;

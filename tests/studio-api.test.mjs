@@ -180,3 +180,44 @@ test('repeat reviewer rejection fails closed but reconciles all known API usage'
   rmSync(temp,{recursive:true,force:true});
  }
 });
+
+test('invalid file count routes to one bounded repair without exposing it to publishing',async()=>{
+ const {runSession}=await import('../studio/runtime/runner.mjs');
+ const {mkdtempSync,readFileSync,rmSync}=await import('node:fs');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const temp=mkdtempSync(join(tmpdir(),'ice-invalid-candidate-'));
+ const saved={ICE_STUDIO_ENABLED:process.env.ICE_STUDIO_ENABLED,GITHUB_RUN_ID:process.env.GITHUB_RUN_ID,
+  OPENAI_API_KEY:process.env.OPENAI_API_KEY};
+ process.env.ICE_STUDIO_ENABLED='true';process.env.GITHUB_RUN_ID='99122';process.env.OPENAI_API_KEY='test-only';
+ const fiveFiles=Array.from({length:5},(_,i)=>({path:'game/flame/fixture-'+i+'.mjs',content:'export const x = '+i+';\n'}));
+ const generated=[
+  {summary:'plan',steps:['repair'],contracts:['one to four files']},
+  {summary:'invalid five-file patch',changes:fiveFiles,tests:[],risks:[]},
+  {summary:'corrected patch',changes:[{path:'game/flame/final-fixture.mjs',content:'export const checked = true;\n'}],tests:['test'],risks:[]},
+  {approved:true,concerns:[],missing_tests:[]}
+ ];
+ let count=0;
+ const mock=async()=>({ok:true,status:200,json:async()=>({
+  status:'completed',
+  usage:{input_tokens:100,output_tokens:60,input_tokens_details:{cached_tokens:0}},
+  output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(generated[count++])}]}]
+ })});
+ try{
+  const reportPath=join(temp,'spend.json');
+  const r=await runSession('studio/work-orders/ice-flame-polish-01.json',
+   join(temp,'proposal.json'),{fetchImpl:mock,reportPath});
+  assert.equal(count,4);
+  assert.equal(r.revisions,1);
+  assert.equal(r.changes.length,1);
+  assert.equal(r.review.approved,true);
+  const report=JSON.parse(readFileSync(reportPath,'utf8'));
+  assert.equal(report.status,'accepted');
+  assert.equal(report.modelAudit.length,4);
+ }finally{
+  for(const [k,v] of Object.entries(saved)){
+   if(v===undefined)delete process.env[k];else process.env[k]=v;
+  }
+  rmSync(temp,{recursive:true,force:true});
+ }
+});
