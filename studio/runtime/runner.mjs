@@ -15,6 +15,16 @@ const outputSchema={type:'object',properties:{
  tests:{type:'array',items:{type:'string'}},
  risks:{type:'array',items:{type:'string'}}
 },required:['summary','changes','tests','risks'],additionalProperties:false};
+const oneFileSchema={type:'object',properties:{
+ summary:{type:'string'},content:{type:'string'},
+ tests:{type:'array',items:{type:'string'}},risks:{type:'array',items:{type:'string'}}
+},required:['summary','content','tests','risks'],additionalProperties:false};
+export function normalizeAgentDraft(draft,order){
+ if(!order.target_file)return draft;
+ return {summary:draft.summary,changes:[{path:order.target_file,content:draft.content}],
+  tests:draft.tests,risks:draft.risks};
+}
+
 const planSchema={type:'object',properties:{summary:{type:'string'},steps:{type:'array',items:{type:'string'}},contracts:{type:'array',items:{type:'string'}}},required:['summary','steps','contracts'],additionalProperties:false};
 const reviewSchema={type:'object',properties:{approved:{type:'boolean'},concerns:{type:'array',items:{type:'string'}},missing_tests:{type:'array',items:{type:'string'}}},required:['approved','concerns','missing_tests'],additionalProperties:false};
 const textFromResponse=(r)=>(r.output??[]).filter(x=>x.type==='message').flatMap(m=>m.content??[]).filter(c=>c.type==='output_text').map(c=>c.text).join('');
@@ -93,10 +103,14 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
    instructions:'You are the I.C.E. executive producer. Canonical game rules are immutable. Produce a small, executable plan for the specific specialist; stay within declared paths. Do not invent missing visual reference assets.',
    input:JSON.stringify(brief),schema:planSchema,name:'ice_production_plan',
    max_output_tokens:3000,budget,fetchImpl});
-  let implementation=await callStructured({key,model:'gpt-6.1-terra',step:order.role,
-   instructions:'You are a scoped I.C.E. development specialist. Produce complete UTF-8 source only inside allowed_paths. Respect imports, project-local geometry and existing API contracts. Do not edit workflow/test/studio code. Preserve Chrome gameplay; keep total output at most four files. Review your module imports carefully.',
-   input:JSON.stringify({brief,plan}),schema:outputSchema,name:'ice_code_candidate',
-   max_output_tokens:12000,budget,fetchImpl});
+  const singleFile=Boolean(order.target_file);
+  let implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:order.role,
+   instructions:'You are a scoped I.C.E. development specialist. Respect existing imports, geometry, and simulation. No new dependencies. Preserve mobile Chrome gameplay. '+
+    (singleFile?'Return ONLY the complete text content for the required target file '+order.target_file+
+      ' in the content field. Do not create, name or modify any other files. Content must be nonempty, executable source; output is one full file, not a diff.':
+      'Produce complete UTF-8 source files only inside allowed paths, at most four files.'),
+   input:JSON.stringify({brief,plan}),schema:singleFile?oneFileSchema:outputSchema,name:'ice_code_candidate',
+   max_output_tokens:12000,budget,fetchImpl}),order);
   let review;
   // One bounded corrective iteration. A rejected revision stops the run; never
   // convert a rejection into an unreviewed PR and never spawn unlimited loops.
@@ -139,11 +153,16 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
      ' corrections: '+problems.join('; ').slice(0,800));
    if(!problems.length)throw Error('reviewer rejected candidate without actionable feedback');
    console.log('QUALITY GATE: reviewer rejected first candidate; attempting one bounded repair.');
-   implementation=await callStructured({key,model:'gpt-6.1-terra',step:'specialist_repair',
-    instructions:'You are repairing a rejected I.C.E. patch. Address EVERY cited defect while preserving valid behavior and allowed_paths. Return all replacement files in full, not a diff. Verify imports against provided source paths, avoid hard-coded assumptions, and maintain deterministic mobile performance. No changes to CI, memory or simulation contracts.',
+   implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:'specialist_repair',
+    instructions:'Repair EVERY cited defect while preserving good behavior and tested source interfaces. '+
+     (singleFile?'Return ONLY the COMPLETE corrected source in the content field for '+order.target_file+
+       '. Do not output a changes array, a patch or additional files.':
+       'Return all replacement files in full, not a diff; at most four scoped files.')+
+     ' Preserve deterministic mobile performance; never change CI, memory or simulation contracts.',
     input:JSON.stringify({order,plan,original:implementation,reviewFeedback:review,
       relevantSource:brief.files,architecture:brief.roleBrief}),
-    schema:outputSchema,name:'ice_corrected_candidate',max_output_tokens:12000,budget,fetchImpl});
+    schema:singleFile?oneFileSchema:outputSchema,name:'ice_corrected_candidate',
+    max_output_tokens:12000,budget,fetchImpl}),order);
   }
   throw Error('unreachable production state');
  }catch(error){

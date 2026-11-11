@@ -21,6 +21,12 @@ export function validateWorkOrder(order,rootDir=DEFAULT_ROOT){
  const role=roles.find(x=>x.id===order.role);
  if(!role)throw Error('unknown agent role');
  if(!Number.isFinite(order.max_cost_usd)||order.max_cost_usd<0)throw Error('invalid cost allowance');
+ if(order.target_file!==undefined){
+  normalizePath(order.target_file);
+  if(order.target_file.endsWith('/'))throw Error('target file must be a file');
+  if(!order.allowed_paths.some(p=>order.target_file.startsWith(p)))throw Error('target file outside allowed scope');
+  if(!role.scope.some(p=>order.target_file.startsWith(p)))throw Error('target file outside role ownership');
+ }
  for(const p of order.allowed_paths){
    normalizePath(p);
    if(!role.scope.some(allowed=>p===allowed||p.startsWith(allowed)))throw Error('scope outside role ownership: '+p);

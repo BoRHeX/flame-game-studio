@@ -35,6 +35,8 @@ export function validateProposal(proposal,order,root=PROJECT_ROOT){
  if(typeof proposal.runId!=='string'||!/^\d+$/.test(proposal.runId))throw Error('invalid run id');
  if(!Array.isArray(proposal.changes)||proposal.changes.length<1||proposal.changes.length>4)
   throw Error('limit proposal to four files');
+ if(order.target_file&&(proposal.changes.length!==1||proposal.changes[0]?.path!==order.target_file))
+  throw Error('proposal must change only target file: '+order.target_file);
  const names=new Set();
  const manifest=proposal.changes.map(c=>{
    const validated=validateChange(c,order,root);

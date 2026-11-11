@@ -1,0 +1,24 @@
+{
+  "id": "ICE-FLAME-002",
+  "role": "particle_engineer",
+  "goal": "Polish ONLY game/flame/particles.mjs. Keep its public FlameParticles interface unchanged, preserve the authoritative solver and authored chamber flows, and improve continuous plume silhouette and stable temperature/color behavior. Do not touch other files, generate assets, or alter gameplay balance.",
+  "allowed_paths": [
+    "game/flame/"
+  ],
+  "target_file": "game/flame/particles.mjs",
+  "forbidden_paths": [
+    "game/simulation/",
+    "studio/",
+    "memory/canonical/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "One complete, syntactically valid game/flame/particles.mjs source file",
+    "Preserve deterministic seeded behavior and pooled particles",
+    "Maintain existing import '../chambers/flow.mjs' and existing public methods",
+    "Mobile Chrome tests and burn-state unit tests remain green"
+  ],
+  "max_cost_usd": 0.5,
+  "max_attempts": 1,
+  "seed": 2012
+}
