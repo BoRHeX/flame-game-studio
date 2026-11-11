@@ -56,13 +56,21 @@ jobs:
           node-version: '22'
       - name: Producer, specialist builder and independent reviewer
         run: node studio/runtime/runner.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
+      - name: Preserve spend record even on incomplete response
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ice-spend-report
+          path: artifacts/ice-spend-report.json
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: ice-untrusted-proposal
           path: artifacts/ice-proposal.json
           if-no-files-found: error
   reconcile:
-    needs: propose
+    needs: [reserve, propose]
+    if: ${{ always() && needs.reserve.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -78,12 +86,13 @@ jobs:
           node-version: '22'
       - uses: actions/download-artifact@v4
         with:
-          name: ice-untrusted-proposal
+          name: ice-spend-report
           path: artifacts
-      - name: Settle returned token usage
-        run: node studio/budget/ledger-cli.mjs settle "artifacts/ice-proposal.json"
+      - name: Settle returned token usage (or keep reservation on unknown billing)
+        run: node studio/budget/ledger-cli.mjs settle "artifacts/ice-spend-report.json"
   verify:
-    needs: reconcile
+    needs: [propose, reconcile]
+    if: ${{ needs.propose.result == 'success' && needs.reconcile.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
