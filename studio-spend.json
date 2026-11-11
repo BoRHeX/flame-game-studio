@@ -128,6 +128,14 @@
       "reservedUsd": 2,
       "actualUsd": 0.083026,
       "status": "settled"
+    },
+    {
+      "runId": "43121969257",
+      "orderId": "ICE-P2-CONT-01",
+      "date": "2026-11-11",
+      "reservedUsd": 2,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
