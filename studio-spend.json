@@ -104,6 +104,14 @@
       "reservedUsd": 1.25,
       "actualUsd": 0.050797,
       "status": "settled"
+    },
+    {
+      "runId": "43091104649",
+      "orderId": "ICE-MAJOR-MOVE-001",
+      "date": "2026-11-11",
+      "reservedUsd": 1,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
