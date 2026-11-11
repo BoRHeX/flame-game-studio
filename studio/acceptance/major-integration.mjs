@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import './major-world.mjs';
+import './major-platformer.mjs';
+const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
+const html=read('game/index.html'),main=read('game/main.mjs'),css=read('game/style.css');
+assert.match(html,/20261111-major-pass-one-01/,'identify actual major build');
+assert.match(html,/<canvas[^>]*id=["']world["'][^>]*width=["']768["']/,'higher-resolution world canvas');
+const height=Number(html.match(/<canvas[^>]*id=["']world["'][^>]*height=["'](\d+)/)?.[1]);assert.ok(height>=1024,'portrait world height');
+assert.match(main,/industrial-yard\.mjs/);assert.match(main,/platformer\.mjs/);
+assert.match(main,/drawScene\s*\(/);assert.match(main,/new PlatformPlayer\s*\(/);
+for(const label of ['Move left','Move right','Climb up','Climb down','Jump','Interact'])assert.ok(html.includes(label),'accessible touch input '+label);
+for(const field of ['playerY','cameraY','sceneId','worldWidth','worldHeight','grounded','climbing'])assert.ok(main.includes(field),'testable world state '+field);
+for(const id of ['tutorial-ok','device-slider','spark','observe','return','reset','progress','flame'])assert.ok(html.includes('id="'+id+'"')||html.includes("id='"+id+"'"),'retained interaction '+id);
+assert.match(css,/dvh|svh/,'phone-height layout');
+assert.doesNotMatch(css,/#viewport\s*\{[^}]*aspect-ratio\s*:\s*16\s*\/\s*9/,'world is not the old letterbox');
+console.log('PASS MAJOR INTEGRATION: connected tall world, controller, compact touch inputs and retained combustion UI');

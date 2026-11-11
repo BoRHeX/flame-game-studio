@@ -18,6 +18,8 @@
 - [ ] Benchmark single coding agent vs specialist team
 
 ## Stage F1 — first full Pass One
+- [ ] First MAJOR world build: detailed tall hub and three job locations, four reachable floors, ladders/jumping, following camera and 768px native portrait world (ADR-0004)
+- [ ] Compact touch controls and actual proximity-based world/equipment integration, with numeric process HUD hidden outside debug mode
 - [x] First integrated renderer update: compact pilot, emission-time mixture colors, shutdown tails and reusable flow output
 - [x] Original filtered process-audio update: pilot/main layers, state-driven volume and bounded ignition transient cleanup
 - [ ] Robust player animation, physical close-up interaction, true repair/diagnostic jobs

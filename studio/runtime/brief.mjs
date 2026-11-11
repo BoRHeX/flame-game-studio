@@ -7,7 +7,7 @@ import {loadOrder} from './proposal.mjs';
 import {loadProfile} from '../orchestrator/roster.mjs';
 export const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const readText=(p)=>readFileSync(join(ROOT,p),'utf8');
-function ownedFiles(paths,maxFiles=7,maxChars=35000){
+function ownedFiles(paths,maxFiles=10,maxChars=90000){
  let remaining=maxChars;
  const found=[];
  for(const path of paths){
@@ -20,7 +20,7 @@ function ownedFiles(paths,maxFiles=7,maxChars=35000){
        for(const name of readdirSync(current).sort())if(!name.startsWith('.'))pending.push(join(current,name));
      }else if(s.isFile()&&/\.(?:mjs|ts|js|json|md|css|html|svg|yaml|yml)$/.test(current)){
        const body=readFileSync(current,'utf8');
-       if(body.length>12000)continue; // never silently truncate live source modules
+       if(Buffer.byteLength(body)>85000)continue; // matches the accepted proposal file ceiling
        if(body.length<=remaining){found.push({path:relative(ROOT,current).replace(/\\/g,'/'),body});remaining-=body.length;}
      }
    }
@@ -54,8 +54,8 @@ export function buildBrief(orderPath,{executionMode='dry_run'}={}){
  ])].filter(p=>/^(?:game|content|design|tests|studio|memory|assets)\/[a-zA-Z0-9_./-]+$/.test(p)&&!p.includes('..'));
  const readOnlyDependencies=dependencyPaths.filter(p=>existsSync(join(ROOT,p)))
   .filter(p=>statSync(join(ROOT,p)).isFile())
-  .slice(0,10)
-  .map(path=>({path,body:readText(path).slice(0,14000)}));
+  .slice(0,24)
+  .map(path=>({path,body:readText(path)}));
  const incidentPath='memory/incidents/'+order.id+'.md';
  const incidentNotes=existsSync(join(ROOT,incidentPath))?readText(incidentPath).slice(0,4500):'';
  const activeDecisions=ownedFiles(['memory/decisions/'],10,24000)

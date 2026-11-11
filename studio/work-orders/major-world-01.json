@@ -1,0 +1,37 @@
+{
+  "id": "ICE-MAJOR-WORLD-001",
+  "role": "environment_animator",
+  "target_file": "game/world/industrial-yard.mjs",
+  "allowed_paths": [
+    "game/world/"
+  ],
+  "forbidden_paths": [
+    "game/main.mjs",
+    "game/player/",
+    "game/simulation/",
+    "game/flame/",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Create the first MAJOR I.C.E. platform-world and art module at game/world/industrial-yard.mjs, following the exact shared exports/data/render contract in ADR-0004. The user finds the current rectangular hub incredibly simple. Invent a compelling, detailed industrial pixel-art composition: tall Backyard Burner home/workshop with upper catwalks, ladders, pipes, a contract board, home burner, equipment bench and pixel-art operator NPC, plus distinct backyard/warehouse/vertical-heater job locations. Use layered parallax, material shading, fine rivets/grates/fittings, lamps, atmospheric depth, animated machinery and a detailed animated helmeted player. The studio chooses art, palette, composition and scenery. Four reachable walkable floor heights per world and real collision data independent of art are essential. Export VIEWPORT, SCENES and drawScene exactly as frozen in ADR-0004. The new native portrait view is 768x1152; scene height is at least 2400. This is a substantial finished module consumed by the next two specialist tasks; it need not replace main.mjs in this department's stage. No placeholder replacement with larger rectangles, no emoji character, no externally fetched assets. Keep full source compact enough for the context system, preferably under 30,000 characters.",
+  "acceptance": [
+    "Pass protected studio/acceptance/major-world.mjs without changing it",
+    "All four scene IDs and world/render contracts in ADR-0004 are implemented in one complete module",
+    "Four floor heights connect by actual ladders; bounded collision/interactions and valid spawn positions",
+    "Substantial original industrial pixel art with at least 16 material/palette colors, layered depth and PPE character animation",
+    "No module-import DOM dependency, no external resources, no process simulation writes; existing game regressions still pass"
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0004-major-platform-world.md",
+    "design/game-bible.md",
+    "design/visual-bible.md",
+    "design/production/major-pass-one.md"
+  ],
+  "verification_script": "studio/acceptance/major-world.mjs",
+  "max_cost_usd": 1.25,
+  "max_attempts": 1,
+  "seed": 2020
+}
+
