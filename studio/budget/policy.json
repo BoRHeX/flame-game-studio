@@ -7,7 +7,7 @@
   "MAX_ATTEMPTS_PER_TASK": 1,
   "MAX_SIMULTANEOUS_PAID_WORKERS": 1,
   "ENFORCEMENT_IMPLEMENTED": true,
-  "NOTE": "Production uses one bounded reviewer-driven repair (up to five model calls) per manual work order, under the same API cost reservation. Reviewer rejection never bypasses validation. No automated workflow reruns or merges.",
+  "NOTE": "Role-specific producer/specialist/QA sessions with up to two producer-guided corrections per one-shot task; independent tests, no unbounded retry or auto-merge. API reservation safeguards remain in place.",
   "DURABLE_LEDGER_ENABLED": true,
-  "MAX_REVISIONS_PER_TASK": 1
+  "MAX_REVISIONS_PER_TASK": 2
 }

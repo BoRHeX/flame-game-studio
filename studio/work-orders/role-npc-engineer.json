@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-11",
+  "role": "npc_engineer",
+  "goal": "Define an operator who can accept/refuse/defer physical commands based on proximity, authority, job role and availability. NPC delays must never make required objectives impossible. First department contribution: game/npc/operator.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/npc/operator.mjs",
+  "allowed_paths": [
+    "game/npc/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Finite command states, eventual response, documented refusal recovery",
+    "Exact target file game/npc/operator.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/main.mjs",
+    "design/game-bible.md",
+    "game/missions/jobs.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2010
+}

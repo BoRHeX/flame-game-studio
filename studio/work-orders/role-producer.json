@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-01",
+  "role": "producer",
+  "goal": "Build a task dependency graph from the game bible, sort work by blocking contracts and human-visible quality, and write bounded acceptance gates. Never rewrite the game vision. First department contribution: design/production/pass-one-dag.json. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "design/production/pass-one-dag.json",
+  "allowed_paths": [
+    "design/production/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Small, executable, non-contradictory dependencies and measurable outcomes",
+    "Exact target file design/production/pass-one-dag.json validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/game-bible.md",
+    "design/roadmap.md",
+    "studio/production-plan.md"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2000
+}

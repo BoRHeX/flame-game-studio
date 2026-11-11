@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {validateWorkOrder,normalizePath} from '../orchestrator/context.mjs';
 const PROJECT_ROOT=fileURLToPath(new URL('../../',import.meta.url));
-const WRITABLE=['game/','content/','design/art/','design/audio/','assets/visual/','assets/audio/'];
+const WRITABLE=['game/','content/','design/art/','design/audio/','design/production/','design/gameplay/','design/technical/','design/release/','assets/visual/','assets/audio/','tests/qa/','tests/performance/'];
 const TEXT_EXT=new Set(['.mjs','.js','.ts','.json','.html','.css','.svg','.md','.txt','.yaml','.yml']);
 const suffix=(p)=>p.slice(p.lastIndexOf('.'));
 export function validateChange(change,order,root=PROJECT_ROOT){

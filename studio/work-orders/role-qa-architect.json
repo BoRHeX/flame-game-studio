@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-21",
+  "role": "qa_architect",
+  "goal": "Write independent deterministic property/regression tests for ignition, mission solvability, save boundaries and touch event contracts. Never relax existing assertions to make failures green. First department contribution: tests/qa/mission-contract.test.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "tests/qa/mission-contract.test.mjs",
+  "allowed_paths": [
+    "tests/qa/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Tests reproduce real observed failure and reject regressions in existing gameplay",
+    "Exact target file tests/qa/mission-contract.test.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/simulation/burner.mjs",
+    "game/missions/jobs.mjs",
+    "tests/game-systems.test.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2020
+}

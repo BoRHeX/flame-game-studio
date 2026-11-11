@@ -102,12 +102,12 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
  let rejectedCandidate=null,reviewFeedback=null;
  try{
   const plan=await callStructured({key,model:'gpt-6-luna',step:'producer',
-   instructions:'You are the I.C.E. executive producer. Canonical game rules are immutable. Produce a small, executable plan for the specific specialist; stay within declared paths. Do not invent missing visual reference assets.',
+   instructions:brief.producerProfile.system_instructions+' Canonical game rules are immutable. Provide an executable, correctly scoped specialist plan. Do not invent missing visual reference assets.',
    input:JSON.stringify(brief),schema:planSchema,name:'ice_production_plan',
    max_output_tokens:3000,budget,fetchImpl});
   const singleFile=Boolean(order.target_file);
   let implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:order.role,
-   instructions:'You are a scoped I.C.E. development specialist. Respect existing imports, geometry, and simulation. No new dependencies. Preserve mobile Chrome gameplay. '+
+   instructions:brief.agentProfile.system_instructions+' Respect existing imports, geometry, and simulation. No new dependencies. Preserve mobile Chrome gameplay. '+
     (singleFile?'Return ONLY the complete text content for the required target file '+order.target_file+
       ' in the content field. Do not create, name or modify any other files. Content must be nonempty, executable source; output is one full file, not a diff.':
       'Produce complete UTF-8 source files only inside allowed paths, at most four files.'),
@@ -116,7 +116,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
   let review;
   // One bounded corrective iteration. A rejected revision stops the run; never
   // convert a rejection into an unreviewed PR and never spawn unlimited loops.
-  const maxRevisions=Math.min(1,Math.max(0,policy.MAX_REVISIONS_PER_TASK??0));
+  const maxRevisions=Math.min(2,Math.max(0,policy.MAX_REVISIONS_PER_TASK??0));
   for(let revision=0;revision<=maxRevisions;revision++){
    const current={schemaVersion:1,orderId:order.id,runId:String(process.env.GITHUB_RUN_ID),
     role:order.role,sourceSha:brief.sourceSha,summary:implementation.summary,
@@ -135,7 +135,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     ],missing_tests:[]};
    }else{
     review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
-     instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
+     instructions:brief.qaProfile.system_instructions+' Be an independent code reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatible source contracts. Inspect submitted changes and name actionable defects.',
      input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
        files:implementation.changes,tests:implementation.tests,risks:implementation.risks,
        readOnlyDependencies:brief.readOnlyDependencies,incidentNotes:brief.incidentNotes}),
@@ -157,14 +157,22 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
    if(revision>=maxRevisions)throw Error('independent review rejected after '+revision+
      ' corrections: '+problems.join('; ').slice(0,800));
    if(!problems.length)throw Error('reviewer rejected candidate without actionable feedback');
-   console.log('QUALITY GATE: reviewer rejected first candidate; attempting one bounded repair.');
-   implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:'specialist_repair',
-    instructions:'Repair EVERY cited defect while preserving good behavior and tested source interfaces. '+
+   console.log('QUALITY GATE: review rejected candidate; Producer triaging one bounded repair.');
+   const remediation=await callStructured({key,model:'gpt-6-luna',step:'producer_triage_'+revision,
+    instructions:brief.producerProfile.system_instructions+
+      ' You have a rejected specialist output and independent QA feedback. Make a short, testable correction plan for the SAME specialist. Preserve good work, respect file ownership and point out root causes. Do not weaken QA criteria.',
+    input:JSON.stringify({role:order.role,profile:brief.agentProfile,goal:order.goal,
+      acceptance:order.acceptance,priorPlan:plan,reviewFeedback:review,
+      original:implementation,readOnlyDependencies:brief.readOnlyDependencies}),
+    schema:planSchema,name:'ice_producer_remediation',max_output_tokens:1700,budget,fetchImpl});
+   implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:'specialist_repair_'+(revision+1),
+    instructions:brief.agentProfile.system_instructions+
+      ' Repair EVERY cited defect and follow the Producer remediation plan while preserving valid behavior and source contracts. '+
      (singleFile?'Return ONLY the COMPLETE corrected source in the content field for '+order.target_file+
-       '. Do not output a changes array, a patch or additional files.':
+       '. Do not output a changes array, a diff or additional files.':
        'Return all replacement files in full, not a diff; at most four scoped files.')+
      ' Preserve deterministic mobile performance; never change CI, memory or simulation contracts.',
-    input:JSON.stringify({order,plan,original:implementation,reviewFeedback:review,
+    input:JSON.stringify({order,plan,remediation,original:implementation,reviewFeedback:review,
       relevantSource:brief.files,readOnlyDependencies:brief.readOnlyDependencies,
       incidentNotes:brief.incidentNotes,architecture:brief.roleBrief}),
     schema:singleFile?oneFileSchema:outputSchema,name:'ice_corrected_candidate',

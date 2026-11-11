@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-03",
+  "role": "technical_director",
+  "goal": "Set enforceable interfaces for burner, chamber flow, renderer, event bus, saves, and screen transitions. Avoid monolithic scripts and do not change frozen contracts casually. First department contribution: design/technical/subsystem-contracts.md. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "design/technical/subsystem-contracts.md",
+  "allowed_paths": [
+    "design/technical/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Interfaces typed in documentation, deterministic testability, and backward-compatible integration",
+    "Exact target file design/technical/subsystem-contracts.md validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "design/architecture.md",
+    "game/simulation/burner.mjs",
+    "game/flame/particles.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2002
+}

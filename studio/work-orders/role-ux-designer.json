@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-15",
+  "role": "ux_designer",
+  "goal": "Build accessible icon-first customizable controls, handedness, touch sensitivity, reliable screen sizing, user feedback and unobtrusive mission HUD. No early tutorial prose. First department contribution: game/ui/control-mapping.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "game/ui/control-mapping.mjs",
+  "allowed_paths": [
+    "game/ui/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Config survives resize, keyboard/touch parity, icon meaning discoverable",
+    "Exact target file game/ui/control-mapping.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/index.html",
+    "game/style.css",
+    "game/main.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2014
+}

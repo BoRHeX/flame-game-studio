@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-07",
+  "role": "chamber_designer",
+  "goal": "Author a separate chamber scene as data: pipes, nozzle, burner, inlet/outlet, mixing, recirculation, draft and obstructions. Represent physically coherent gameplay rather than CFD. First department contribution: content/chambers/backyard.json. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "content/chambers/backyard.json",
+  "allowed_paths": [
+    "content/chambers/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Data-only chamber with accessible geometry, distinct hazards, no code-coupled coordinates",
+    "Exact target file content/chambers/backyard.json validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/chambers/flow.mjs",
+    "game/missions/jobs.mjs",
+    "design/architecture.md"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2006
+}

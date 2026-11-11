@@ -1,0 +1,28 @@
+{
+  "id": "ICE-ROLE-22",
+  "role": "performance_engineer",
+  "goal": "Create reproducible headless and real-mobile performance probes: particle count, simulation ticks, memory, launch size, touch latency, screenshot evidence. First department contribution: tests/performance/flame-budget.test.mjs. Stay within this single file and report any missing cross-department contracts rather than changing someone else's module.",
+  "target_file": "tests/performance/flame-budget.test.mjs",
+  "allowed_paths": [
+    "tests/performance/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/canonical/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "acceptance": [
+    "Declared budgets, no claims about actual Android without device evidence",
+    "Exact target file tests/performance/flame-budget.test.mjs validates and is independently reviewed",
+    "No new third-party binary art or audio, untracked API secrets or unreviewed contracts"
+  ],
+  "required_contracts": [
+    "game/flame/particles.mjs",
+    "game/chambers/flow.mjs",
+    "tests/game-systems.test.mjs"
+  ],
+  "max_cost_usd": 1,
+  "max_attempts": 1,
+  "seed": 2021
+}
