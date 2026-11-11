@@ -14,7 +14,7 @@
 - [ ] GitHub Pages preview successfully deployed and actually visited on mobile
 - [ ] Validate solver behavior, visuals, economy and touch controls using real gameplay
 - [x] Activate bounded paid generation with independent review and correction limits
-- [ ] Demonstrate an accepted task -> tested candidate -> draft PR production run
+- [x] Demonstrate an accepted task -> tested candidate -> draft PR production run (ICE-FLOW-001, run 43080669564, PR #14; code awaits integration)
 - [ ] Benchmark single coding agent vs specialist team
 
 ## Stage F1 — first full Pass One
