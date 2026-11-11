@@ -78,8 +78,8 @@
       "orderId": "ICE-AUDIO-002",
       "date": "2026-11-11",
       "reservedUsd": 0.75,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.073021,
+      "status": "settled"
     }
   ]
 }
