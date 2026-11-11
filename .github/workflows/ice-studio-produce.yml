@@ -82,6 +82,13 @@ jobs:
           node-version: '22'
       - name: Producer, specialist builder and independent reviewer
         run: node studio/runtime/runner.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
+      - name: Preserve rejected candidate without executing it
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ice-rejected-proposal
+          path: artifacts/ice-rejected-candidate.json
+          if-no-files-found: ignore
       - name: Preserve spend record even on incomplete response
         if: always()
         uses: actions/upload-artifact@v4

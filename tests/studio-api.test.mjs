@@ -168,11 +168,14 @@ test('repeat reviewer rejection fails closed but reconciles all known API usage'
  try{
   const reportPath=join(temp,'spend.json'),proposalPath=join(temp,'candidate.json');
   await assert.rejects(runSession('studio/work-orders/ice-flame-polish-01.json',
-   proposalPath,{fetchImpl:mock,reportPath}),/independent review rejected/);
+   proposalPath,{fetchImpl:mock,reportPath,rejectedPath:join(temp,'rejected.json')}),/independent review rejected/);
   assert.equal(called,5);
   const report=JSON.parse(readFileSync(reportPath,'utf8'));
   assert.equal(report.status,'failed');assert.equal(report.billingComplete,true);
   assert.equal(report.modelAudit.length,5);assert.ok(report.costUsd>0);
+  const rejected=JSON.parse(readFileSync(join(temp,'rejected.json'),'utf8'));
+  assert.equal(rejected.candidate.orderId,'ICE-FLAME-001');
+  assert.equal(rejected.review.approved,false);
  }finally{
   for(const [name,value] of Object.entries(old)){
    if(value===undefined)delete process.env[name];else process.env[name]=value;

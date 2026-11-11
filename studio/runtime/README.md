@@ -22,3 +22,8 @@ The API workflow must be installed on main for manual dispatch to appear in GitH
 Initial budget: $50 cumulative, $5/day, $2 per run and one serialized worker run. All billing rates are text-token estimates and do not represent an OpenAI account-wide spending restriction. Use OpenAI project budgets independently. A failed provider call can leave its full reservation allocated and requires explicit reconciliation.
 
 This is a production pipeline, not an independently persistent conversational mind. Art/sound specialists work through the same role contracts. Later artwork generation APIs, composited image layers and studio-orchestra synth rendering need their own cost/rights controls. No third-party artist assets should be copied without rights.
+
+## Operational requirement: minimal player GitHub work
+The assistant starts single bounded jobs by committing a new request under studio/requests/ on main. The player should not be asked to activate GitHub Actions. The player is needed only for inaccessible credentials or permissions and playing the next accepted game build.
+
+Forensic rejected candidate JSON and reviewer reasons are preserved as an untrusted CI artifact, not applied or executed. Read-only source dependencies and prior incident evidence are part of the task brief.

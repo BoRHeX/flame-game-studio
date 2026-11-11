@@ -89,7 +89,8 @@ export async function callStructured({key,model,instructions,input,schema,name,m
  if(!raw||raw.length>260000)throw Error('model returned empty or oversized structured output');
  try{return JSON.parse(raw);}catch{throw Error('model output was not valid JSON');}
 }
-export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='artifacts/ice-spend-report.json'}={}){
+export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='artifacts/ice-spend-report.json',
+ rejectedPath='artifacts/ice-rejected-candidate.json'}={}){
  if(policy.STUDIO_ENABLED!==true||policy.ENFORCEMENT_IMPLEMENTED!==true||policy.DURABLE_LEDGER_ENABLED!==true||
    process.env.ICE_STUDIO_ENABLED!=='true')throw Error('paid studio is disabled');
  const brief=buildBrief(orderPath),order=brief.order;
@@ -98,6 +99,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
  const budget=new ModelBudget(cap);
  const key=process.env.OPENAI_API_KEY;
  let outcome='failed';
+ let rejectedCandidate=null,reviewFeedback=null;
  try{
   const plan=await callStructured({key,model:'gpt-6-luna',step:'producer',
    instructions:'You are the I.C.E. executive producer. Canonical game rules are immutable. Produce a small, executable plan for the specific specialist; stay within declared paths. Do not invent missing visual reference assets.',
@@ -120,6 +122,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     role:order.role,sourceSha:brief.sourceSha,summary:implementation.summary,
     changes:implementation.changes,tests:implementation.tests,risks:implementation.risks,
     costUsd:0,modelAudit:[]};
+   rejectedCandidate=current;
    // Shape and path validation must be correctable, not a terminal paid-run failure.
    // The independent reviewer still reviews every structurally valid candidate.
    let structureError=null;
@@ -134,9 +137,11 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
      instructions:'Independent I.C.E. reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatibility with source contracts. Inspect the submitted changes, not just the summary. Return strict JSON with actionable concerns.',
      input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
-       files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
+       files:implementation.changes,tests:implementation.tests,risks:implementation.risks,
+       readOnlyDependencies:brief.readOnlyDependencies,incidentNotes:brief.incidentNotes}),
      schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
    }
+   reviewFeedback=review;
    if(review.approved){
     current.review=review;
     current.revisions=revision;
@@ -160,12 +165,21 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
        'Return all replacement files in full, not a diff; at most four scoped files.')+
      ' Preserve deterministic mobile performance; never change CI, memory or simulation contracts.',
     input:JSON.stringify({order,plan,original:implementation,reviewFeedback:review,
-      relevantSource:brief.files,architecture:brief.roleBrief}),
+      relevantSource:brief.files,readOnlyDependencies:brief.readOnlyDependencies,
+      incidentNotes:brief.incidentNotes,architecture:brief.roleBrief}),
     schema:singleFile?oneFileSchema:outputSchema,name:'ice_corrected_candidate',
     max_output_tokens:12000,budget,fetchImpl}),order);
   }
   throw Error('unreachable production state');
  }catch(error){
+  // Preserve rejected source strictly as inert JSON; never execute in the model job.
+  if(rejectedCandidate){
+   const snapshot={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
+    sourceSha:brief.sourceSha,candidate:rejectedCandidate,review:reviewFeedback,
+    reason:String(error?.message??error).slice(0,1300)};
+   mkdirSync(dirname(rejectedPath),{recursive:true});
+   writeFileSync(rejectedPath,JSON.stringify(snapshot,null,2)+'\n','utf8');
+  }
   const failure={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
    status:'failed',billingComplete:budget.accountingCertain,
    costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls,
