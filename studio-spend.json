@@ -120,6 +120,14 @@
       "reservedUsd": 1.75,
       "actualUsd": 0.068845,
       "status": "settled"
+    },
+    {
+      "runId": "43120683621",
+      "orderId": "ICE-P2-COUNCIL-01",
+      "date": "2026-11-11",
+      "reservedUsd": 2,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
