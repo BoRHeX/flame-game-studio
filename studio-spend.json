@@ -96,6 +96,14 @@
       "reservedUsd": 0.75,
       "actualUsd": 0.027892,
       "status": "settled"
+    },
+    {
+      "runId": "43090238600",
+      "orderId": "ICE-MAJOR-WORLD-001",
+      "date": "2026-11-11",
+      "reservedUsd": 1.25,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
