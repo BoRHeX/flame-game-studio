@@ -16,6 +16,8 @@ if(action==='reserve'){
  console.log(JSON.stringify(await reserveGithub({repo,runId,orderId:order.id,cap})));
 }else if(action==='settle'){
  const report=JSON.parse(readFileSync(value,'utf8'));
- if(report.runId!==String(runId))throw Error('proposal run mismatch');
+ if(report.runId!==String(runId))throw Error('spend report run mismatch');
+ if(report.billingComplete!==true)throw Error('unknown API usage: retain full reserved allowance');
+ if(!Number.isFinite(report.costUsd)||report.costUsd<0)throw Error('invalid spend report');
  console.log(JSON.stringify(await settleGithub({repo,runId,actualUsd:report.costUsd})));
 }else throw Error('usage: reserve <order-path> | settle <report-json>');

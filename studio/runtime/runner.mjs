@@ -27,7 +27,7 @@ export function calculateUsageCost(usage,model){
  return dollarsForTokens({input,cached,output},p);
 }
 export class ModelBudget{
- constructor(cap){if(!Number.isFinite(cap)||cap<=0)throw Error('invalid run cap');this.cap=cap;this.spent=0;this.calls=[];}
+ constructor(cap){if(!Number.isFinite(cap)||cap<=0)throw Error('invalid run cap');this.cap=cap;this.spent=0;this.calls=[];this.accountingCertain=true;}
  bound(body,model){
   const p=prices[model];if(!p)throw Error('model not on approved price list');
   // Extremely conservative text-input bound: every UTF-8 byte treated as an input token.
@@ -47,6 +47,7 @@ export class ModelBudget{
 export async function callStructured({key,model,instructions,input,schema,name,max_output_tokens,budget,step,fetchImpl=fetch}){
  if(!key)throw Error('OPENAI_API_KEY not configured');
  const body={model,instructions,input,max_output_tokens,store:false,
+  reasoning:{effort:'low'},
   text:{format:{type:'json_schema',name,strict:true,schema}}};
  budget.bound(body,model);
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),180000);
@@ -55,11 +56,25 @@ export async function callStructured({key,model,instructions,input,schema,name,m
   response=await fetchImpl('https://api.openai.com/v1/responses',{
    method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
    body:JSON.stringify(body),signal:controller.signal});
+ }catch(error){
+  // A request without a returned usage record might still be billable.
+  budget.accountingCertain=false;
+  throw error;
  }finally{clearTimeout(timeout);}
- const result=await response.json();
- if(!response.ok)throw Error('OpenAI API '+response.status+': '+String(result.error?.message??'provider error').slice(0,220));
- if(result.status!=='completed')throw Error('non-completed model response; no automatic paid retry');
+ let result;
+ try{result=await response.json();}
+ catch(error){budget.accountingCertain=false;throw error;}
+ if(!response.ok){
+  budget.accountingCertain=false;
+  throw Error('OpenAI API '+response.status+': '+String(result.error?.message??'provider error').slice(0,220));
+ }
+ if(!result.usage){budget.accountingCertain=false;throw Error('missing auditable provider usage for '+step);}
  budget.record(result,model,step);
+ if(result.status!=='completed'){
+  const reason=String(result.incomplete_details?.reason??'unknown');
+  throw Error('model '+step+' incomplete ('+reason+'); input='+result.usage.input_tokens+
+    ', output='+result.usage.output_tokens+'; no automatic paid retry');
+ }
  const raw=textFromResponse(result);
  if(!raw||raw.length>260000)throw Error('model returned empty or oversized structured output');
  try{return JSON.parse(raw);}catch{throw Error('model output was not valid JSON');}
@@ -73,9 +88,10 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch}={}){
  const budget=new ModelBudget(cap);
  const key=process.env.OPENAI_API_KEY;
  const compactBrief=JSON.stringify(brief);
+ try{
  const plan=await callStructured({key,model:'gpt-6-luna',step:'producer',
   instructions:'You are the I.C.E. executive producer. Read canon as immutable. Produce a very small executable plan for the assigned specialist. No additional scope. Never invent missing visual references.',
-  input:compactBrief,schema:planSchema,name:'ice_production_plan',max_output_tokens:900,budget,fetchImpl});
+  input:compactBrief,schema:planSchema,name:'ice_production_plan',max_output_tokens:3000,budget,fetchImpl});
  const implementation=await callStructured({key,model:'gpt-6.1-terra',step:order.role,
   instructions:'You are a scoped I.C.E. game-development specialist. Output complete UTF-8 source files only inside allowed_paths. Do not edit workflows/tests/studio or core contracts. Preserve browser compatibility, canonical vision and existing working gameplay. Do not claim external image/audio files exist. Keep total output under four files.',
   input:JSON.stringify({brief,plan}),schema:outputSchema,name:'ice_code_candidate',max_output_tokens:12000,budget,fetchImpl});
@@ -88,15 +104,39 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch}={}){
   instructions:'You are independent I.C.E. reviewer. Reject unsafe, out-of-scope, incoherent or untestable patches. Do not overlook gameplay regressions or design-bible conflicts. Respond with strict JSON only.',
   input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
     files:implementation.changes,tests:implementation.tests,risks:implementation.risks}),
-  schema:reviewSchema,name:'ice_independent_review',max_output_tokens:1100,budget,fetchImpl});
+  schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
  if(!review.approved)throw Error('independent reviewer rejected candidate: '+review.concerns.join('; ').slice(0,500));
  proposal.costUsd=Number(budget.spent.toFixed(7));
  proposal.modelAudit=budget.calls;
  proposal.review=review;
  mkdirSync(dirname(outPath),{recursive:true});
  writeFileSync(outPath,JSON.stringify(proposal,null,2)+'\n','utf8');
- console.log('MODEL SESSION: '+order.id+' files='+proposal.changes.length+' charged estimate=$'+proposal.costUsd);
+ console.log('MODEL SESSION: '+order.id+' files='+proposal.changes.length+' charged estimate=
+if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
+ await runSession(process.argv[2],process.argv[3]??'artifacts/ice-proposal.json');
+}
++proposal.costUsd);
  return proposal;
+ }catch(error){
+  const failure={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
+   status:'failed',billingComplete:budget.accountingCertain,
+   costUsd:Number(budget.spent.toFixed(7)),
+   modelAudit:budget.calls,error:String(error.message).slice(0,400)};
+  mkdirSync(dirname(outPath),{recursive:true});
+  writeFileSync('artifacts/ice-spend-report.json',JSON.stringify(failure,null,2)+'\n','utf8');
+  throw error;
+ }finally{
+  // The report is produced on success and failure. If usage cannot be verified,
+  // the ledger must keep the entire reservation rather than issue a false refund.
+  const path='artifacts/ice-spend-report.json';
+  // On failure, keep the detailed failure report already written above.
+  if(budget.accountingCertain){
+   const report={runId:String(process.env.GITHUB_RUN_ID),orderId:order.id,
+    status:'settlement_ready',billingComplete:true,
+    costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls};
+   writeFileSync(path,JSON.stringify(report,null,2)+'\n','utf8');
+  }
+ }
 }
 if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
  await runSession(process.argv[2],process.argv[3]??'artifacts/ice-proposal.json');

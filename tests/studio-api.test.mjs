@@ -73,3 +73,27 @@ test('API response uses structured JSON, counts tokens and never needs live cred
 test('model usage with missing token totals fails closed',()=>{
  assert.throws(()=>calculateUsageCost({input_tokens:100},'gpt-6.1-terra'));
 });
+
+test('incomplete model response still records billable reasoning tokens',async()=>{
+ const budget=new ModelBudget(1);
+ let request;
+ const fakeFetch=async(_url,opts)=>{
+  request=JSON.parse(opts.body);
+  return {ok:true,status:200,json:async()=>({
+   status:'incomplete',incomplete_details:{reason:'max_output_tokens'},
+   output:[{type:'reasoning',summary:[]}],
+   usage:{input_tokens:1600,output_tokens:900,
+    input_tokens_details:{cached_tokens:0},output_tokens_details:{reasoning_tokens:900}}
+  })};
+ };
+ await assert.rejects(callStructured({
+  key:'fixture',model:'gpt-6-luna',step:'producer',
+  instructions:'Produce a plan',input:'test input',schema:{
+   type:'object',properties:{ok:{type:'boolean'}},required:['ok'],additionalProperties:false
+  },name:'test_plan',max_output_tokens:3000,budget,fetchImpl:fakeFetch
+ }),/incomplete \(max_output_tokens\)/);
+ assert.equal(request.reasoning.effort,'low');
+ assert.equal(budget.calls.length,1);
+ assert.ok(budget.spent>0);
+ assert.equal(budget.accountingCertain,true);
+});
