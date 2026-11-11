@@ -134,8 +134,8 @@
       "orderId": "ICE-P2-CONT-01",
       "date": "2026-11-11",
       "reservedUsd": 2,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.023382,
+      "status": "settled"
     }
   ]
 }
