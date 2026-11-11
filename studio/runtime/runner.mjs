@@ -135,9 +135,12 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     ],missing_tests:[]};
    }else{
     review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
-     instructions:brief.qaProfile.system_instructions+' Be an independent code reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatible source contracts. Inspect submitted changes and name actionable defects.',
+     instructions:brief.qaProfile.system_instructions+' Perform PRE-EXECUTION SOURCE REVIEW, not release approval. This credentialed generation job must never execute generated code. Unit, browser and trusted work-order acceptance tests run AFTER your source approval in the separate no-secret verification job and must pass before any PR is created. Assess the code and test coverage now; do not reject merely because those downstream tests have not run, and do not demand that the specialist edit protected acceptance files. Existing independent acceptance checks can cover a change without worker-authored tests. Reject actual code defects, uncovered behavior, invalid imports, incompatible contracts, fabricated assets or out-of-scope changes. Approval means eligible for independent execution checks, never approved for release.',
      input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
        execution:brief.execution,activeDecisions:brief.activeDecisions,
+       verification:{stage:'pre_execution_source_review',testsExecuted:false,
+        pendingChecks:['unit suite','mobile Chrome smoke',...(order.verification_script?[order.verification_script]:[])],
+        requiredBefore:'draft PR creation',generatedCodeExecutionAllowed:false},
        files:implementation.changes,tests:implementation.tests,risks:implementation.risks,
        readOnlyDependencies:brief.readOnlyDependencies,incidentNotes:brief.incidentNotes}),
      schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
