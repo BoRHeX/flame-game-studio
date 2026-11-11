@@ -72,6 +72,14 @@
       "reservedUsd": 0.75,
       "actualUsd": 0.095845,
       "status": "settled"
+    },
+    {
+      "runId": "43083677134",
+      "orderId": "ICE-AUDIO-002",
+      "date": "2026-11-11",
+      "reservedUsd": 0.75,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
