@@ -26,7 +26,7 @@ test('all three proposed contracts have a no-upgrade success path',()=>{
  }
 });
 test('improper air/fuel balance produces a genuine mission failure condition',()=>{
- const {objective,state}=run('backyard',{mainAir:0.01});
+ const {objective,state}=run('backyard',{mainAir:0.01},10000);
  assert.equal(objective.status,'failed');
  assert.equal(state.mainLit,false);
 });
