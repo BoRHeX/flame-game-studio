@@ -126,8 +126,8 @@
       "orderId": "ICE-P2-COUNCIL-01",
       "date": "2026-11-11",
       "reservedUsd": 2,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.083026,
+      "status": "settled"
     }
   ]
 }
