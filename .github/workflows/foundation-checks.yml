@@ -19,6 +19,8 @@ jobs:
           node-version: '22'
       - name: Unit / invariant / agent policy tests
         run: npm test
+      - name: Major-world integration acceptance (independent release prerequisite)
+        run: node studio/acceptance/major-integration.mjs
       - name: Agent context dry-run (must not call paid provider)
         run: npm run studio:dry-run > /tmp/flame-studio-brief.json
       - name: Chrome touch + page smoke
