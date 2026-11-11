@@ -34,10 +34,18 @@ export function buildBrief(orderPath){
  const systems=readText('design/product-systems.md');
  const memory=readText('memory/README.md');
  const files=ownedFiles(order.allowed_paths);
+ // Read-only dependencies are context, never writable agent permissions.
+ const dependencyPaths=order.role==='particle_engineer'
+  ?['game/chambers/flow.mjs','game/simulation/burner.mjs','tests/game-systems.test.mjs','game/main.mjs']
+  :[];
+ const readOnlyDependencies=dependencyPaths.filter(p=>existsSync(join(ROOT,p)))
+  .map(path=>({path,body:readText(path).slice(0,14000)}));
+ const incidentPath='memory/incidents/'+order.id+'.md';
+ const incidentNotes=existsSync(join(ROOT,incidentPath))?readText(incidentPath).slice(0,4500):'';
  return {
   order,roleBrief,canon:canon.slice(0,13000),visualBrief:vision.slice(0,14000),
   systemsBrief:systems.slice(0,12000),memoryPolicy:memory.slice(0,3600),
-  files,sourceSha:process.env.GITHUB_SHA??'uncommitted',
+  files,readOnlyDependencies,incidentNotes,sourceSha:process.env.GITHUB_SHA??'uncommitted',
   instruction:'Historical images not in source tree are NOT available to agent as image data. Do not claim to have seen or imported them.'
  };
 }
