@@ -69,6 +69,7 @@ jobs:
     timeout-minutes: 55
     permissions:
       contents: read
+      actions: read
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
@@ -80,13 +81,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Recover 25 completed specialist handoffs from immutable prior run
+        if: env.ORDER_PATH == 'studio/work-orders/pass-two-council-continuation-01.json'
+        uses: actions/download-artifact@v4
+        with:
+          name: ice-council-evidence
+          repository: BoRHeX/flame-game-studio
+          run-id: 43120683621
+          github-token: ${{ github.token }}
+          path: artifacts
       - name: Producer, specialist builder and independent reviewer
         run: |
-          if [ "$ORDER_PATH" = "studio/work-orders/pass-two-council-build-01.json" ]; then
-            node studio/runtime/council-wave.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
-          else
-            node studio/runtime/runner.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
-          fi
+          case "$ORDER_PATH" in
+            studio/work-orders/pass-two-council-build-01.json)
+              node studio/runtime/council-wave.mjs "$ORDER_PATH" "artifacts/ice-proposal.json" ;;
+            studio/work-orders/pass-two-council-continuation-01.json)
+              node studio/runtime/council-continuation.mjs "$ORDER_PATH" "artifacts/ice-proposal.json" ;;
+            *)
+              node studio/runtime/runner.mjs "$ORDER_PATH" "artifacts/ice-proposal.json" ;;
+          esac
       - name: Preserve evidence of all 25 actual council sessions
         if: always()
         uses: actions/upload-artifact@v4
