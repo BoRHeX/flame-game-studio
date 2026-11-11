@@ -40,6 +40,8 @@ for(const chamber of Object.values(CHAMBERS)){
  assert.ok(isDeepStrictEqual(render(a,base,chamber),drawing),'repeat drawing is deterministic');
  const off=Object.freeze({...base,pilotLit:false,mainLit:false,mainRatio:.62,heatRelease:0,soot:0});
  assert.ok(isDeepStrictEqual(render(a,off,chamber),drawing),'existing flame retains emission-time appearance at the same age');
+ const pilotTransition=Object.freeze({...off,pilotLit:true});
+ assert.ok(isDeepStrictEqual(render(a,pilotTransition,chamber),drawing),'main-to-pilot transition retains already emitted main flame appearance');
  const previousCursor=a.cursor;
  a.step(1/60,off,chamber);
  assert.equal(a.cursor,previousCursor,'no new particles after shutoff');
@@ -71,10 +73,12 @@ const rich={...base,mainRatio:1.45,soot:1},smoke=new FlameParticles(1,91);
 for(let i=0;i<100&&!smoke.smoke[0];i++)smoke.spawn(CHAMBERS.backyard,rich);
 assert.equal(smoke.smoke[0],1,'rich combustion can emit soot');
 function ageSmoke(fraction){
- while(smoke.life[0]<smoke.maxLife[0]*fraction){
+ for(let count=0;smoke.life[0]<smoke.maxLife[0]*fraction&&count<32;count++){
   const dt=Math.min(.1,smoke.maxLife[0]*fraction-smoke.life[0]+1e-7);
   smoke.step(dt,off,CHAMBERS.backyard);
  }
+ assert.equal(smoke.activeCount(),1,'soot survives until the requested fade sample');
+ assert.ok(smoke.life[0]>=smoke.maxLife[0]*fraction,'bounded aging reaches the requested sample');
  return render(smoke,off,CHAMBERS.backyard);
 }
 const earlySmoke=ageSmoke(.6),lateSmoke=ageSmoke(.95);

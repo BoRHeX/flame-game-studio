@@ -1,6 +1,6 @@
 # First verified paid studio delivery: ICE-FLOW-001
 Date: 2026-11-11
-Status: VERIFIED_DRAFT_PR; not merged or deployed
+Status: INTEGRATED (PR #14, commit b040cce21d2696f4611c2a01917577d8fc6e623e)
 
 ## Evidence
 - Workflow: https://github.com/BoRHeX/flame-game-studio/actions/runs/43080669564
@@ -17,7 +17,7 @@ Status: VERIFIED_DRAFT_PR; not merged or deployed
 - Model-reported cost: $0.0184643; ledger settlement: $0.018464 against a $0.50 reservation.
 
 ## Result
-The generated helper implements ADR-0002's optional reusable flow output without changing chamber values or flow formulas. Its draft PR is a tested integration candidate. Main and the published playtest still use the original helper until that PR is reviewed and merged. A renderer task depending on the new argument must start from an integrated commit or an explicitly reviewed candidate branch.
+The generated helper implements ADR-0002's optional reusable flow output without changing chamber values or flow formulas. It was reviewed and merged in PR #14, then consumed by the renderer integrated in PR #18. This supersedes the original draft-only state recorded by the first run. Preview distribution follows the reviewed build's deployment check.
 
 ## Lesson
 Paid sessions need current execution metadata rather than the context compiler's dry-run flags. A department goal must not be imposed on a prerequisite task with incompatible file permissions. Resolve shared interface blockers explicitly, then run an independently authored acceptance check outside the model's secret-bearing job. Keep failed candidates and billing records as evidence; do not repeat identical blocked tasks.

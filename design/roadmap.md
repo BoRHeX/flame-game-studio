@@ -14,10 +14,12 @@
 - [ ] GitHub Pages preview successfully deployed and actually visited on mobile
 - [ ] Validate solver behavior, visuals, economy and touch controls using real gameplay
 - [x] Activate bounded paid generation with independent review and correction limits
-- [x] Demonstrate an accepted task -> tested candidate -> draft PR production run (ICE-FLOW-001, run 43080669564, PR #14; code awaits integration)
+- [x] Demonstrate an accepted task -> tested candidate -> PR -> integration production run (ICE-FLOW-001 PR #14, visible renderer PR #18 and audio PR #19)
 - [ ] Benchmark single coding agent vs specialist team
 
 ## Stage F1 — first full Pass One
+- [x] First integrated renderer update: compact pilot, emission-time mixture colors, shutdown tails and reusable flow output
+- [x] Original filtered process-audio update: pilot/main layers, state-driven volume and bounded ignition transient cleanup
 - [ ] Robust player animation, physical close-up interaction, true repair/diagnostic jobs
 - [ ] Better visually diagnostic pilot/main flame in every chamber and unique hazards
 - [ ] Complete no-language intro with testable learning outcomes
