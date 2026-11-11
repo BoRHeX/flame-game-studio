@@ -1,216 +1,139 @@
-// I.C.E. mobile vertical slice: hub, manual devices, authored chambers and three contracts.
-// Zero remote services. All visible in-game instruction is iconographic.
+// Major development preview: traversal and physical interactions around the existing process.
 import {GameClocks} from './core/clocks.mjs';
 import {BurnerSolver} from './simulation/burner.mjs';
 import {JOBS,MissionEvaluator} from './missions/jobs.mjs';
 import {CHAMBERS} from './chambers/flow.mjs';
 import {FlameParticles} from './flame/particles.mjs';
 import {ProcessSound} from './audio/sound.mjs';
-const $=(id)=>document.getElementById(id);
-const world=$('world'),flame=$('flame'),view=$('viewport'),wc=world.getContext('2d',{alpha:false}),fc=flame.getContext('2d');
-const cashOutput=$('cash'),clockOutput=$('mission-clock'),tempOutput=$('temperature'),result=$('result');
-const panel=$('device-panel'),slider=$('device-slider'),symbol=$('device-symbol');
-const progress=$('progress'),progressFill=$('progress-fill');
-const missionButtons=Array.from(document.querySelectorAll('[data-job]'));
-const DEVICES=Object.freeze([
-  {id:'pilotFuel',x:97,icon:'◇',label:'Pilot fuel valve'},
-  {id:'pilotAir',x:205,icon:'△',label:'Pilot air damper'},
-  {id:'mainFuel',x:310,icon:'◆',label:'Main fuel valve'},
-  {id:'mainAir',x:423,icon:'≋',label:'Main air damper'},
-  {id:'draft',x:536,icon:'↻',label:'Draft damper'}
-]);
+import {SCENES,VIEWPORT,drawScene} from './world/industrial-yard.mjs';
+import {PlatformPlayer} from './player/platformer.mjs';
+const $=id=>document.getElementById(id);
+const world=$('world'),flame=$('flame'),viewport=$('viewport');
+const wc=world.getContext('2d',{alpha:false}),fc=flame.getContext('2d');
 const clocks=new GameClocks(),particles=new FlameParticles(),sound=new ProcessSound();
-const player={x:70,target:70,y:269,speed:165};
-let stage='hub',job=null,burner=null,evaluator=null,watching=false,selected=null,pending=null;
-let funds=110,frameLast=0,shownTutorial=true;
-function playSound(){sound.unlock().catch(()=>{});}
+let scene=SCENES.hub;
+const player=new PlatformPlayer(scene),held=new Set(),keys=new Set(),pointers=new Map();
+const buttons=[...document.querySelectorAll('[data-job]')];
+const icons={pilotFuel:'◇',pilotAir:'△',mainFuel:'◆',mainAir:'≋',draft:'↻'};
+let stage='hub',job=null,burner=null,evaluator=null,watching=false,selected=null,practice=false;
+let funds=110,frameLast=0,worldTime=0;
+const playSound=()=>sound.unlock().catch(()=>{});
+function camera(){return player.camera(scene,{width:world.width,height:world.height});}
+function resize(){
+  const r=viewport.getBoundingClientRect();
+  if(r.width&&r.height){const h=Math.max(1,Math.round(VIEWPORT.width*r.height/r.width));if(world.width!==VIEWPORT.width)world.width=VIEWPORT.width;if(world.height!==h)world.height=h;}
+}
+function distance(i){const s=player.state;return Math.hypot(i.x-s.x-s.w/2,i.y-s.y-s.h/2);}
+function near(id,r=112){const i=scene.interactions.find(x=>x.id===id);return !!i&&distance(i)<=r;}
+function clearInput(){held.clear();keys.clear();pointers.clear();}
+function setScene(next){scene=next;player.setScene(scene);clearInput();}
 function updateControls(){
-  const mission=stage==='mission';
-  $('spark').disabled=!mission;
-  $('observe').disabled=!mission;
-  $('return').disabled=stage==='hub';
-  for(const button of missionButtons){
-    button.disabled=stage!=='hub';button.classList.toggle('selected',job?.id===button.dataset.job);
-  }
+  const board=stage==='hub'&&near('contracts');
+  for(const b of buttons){b.disabled=!board;b.classList.toggle('selected',job?.id===b.dataset.job);}
+  $('spark').disabled=!(stage==='mission'&&near('spark'))&&!(stage==='hub'&&practice&&near('practice'));
+  $('observe').disabled=!watching&&!(stage==='mission'&&near('port'))&&!(stage==='hub'&&practice&&near('practice'));
+  $('return').disabled=stage==='hub'&&!watching;
 }
-function showDevice(def){
-  if(!burner||stage!=='mission')return;
-  selected=def;panel.hidden=false;symbol.textContent=def.icon;
-  slider.value=Math.round(burner.devices[def.id]*100);
-  slider.setAttribute('aria-label',def.label);
-}
+function closeDevice(){selected=null;$('device-panel').hidden=true;}
+function stopWatching(){watching=false;$('inspection').hidden=true;viewport.classList.remove('observing');$('observe').setAttribute('aria-pressed','false');}
 function beginJob(id){
   const chosen=JOBS.find(x=>x.id===id);
-  if(!chosen||stage!=='hub'||funds<=0)return;
-  job=chosen;burner=new BurnerSolver(chosen.burner);evaluator=new MissionEvaluator(chosen);
-  stage='mission';watching=false;selected=null;pending=null;panel.hidden=true;
-  player.x=70;player.target=70;particles.clear();clocks.resetMission();
-  view.classList.remove('observing');$('observe').setAttribute('aria-pressed','false');
-  result.textContent=chosen.symbol;result.setAttribute('aria-label',chosen.label);
-  updateControls();playSound();
+  if(!chosen||stage!=='hub'||!near('contracts')||funds<=0)return;
+  stopWatching();closeDevice();practice=false;job=chosen;burner=new BurnerSolver(chosen.burner);evaluator=new MissionEvaluator(chosen);
+  stage='mission';setScene(SCENES[chosen.id]);particles.clear();clocks.resetMission();
+  $('result').textContent=chosen.symbol;$('result').setAttribute('aria-label',chosen.label);$('hint').hidden=true;updateControls();playSound();
 }
 function backToHub(){
-  if(stage==='hub')return;
-  stage='hub';watching=false;pending=null;selected=null;panel.hidden=true;
-  player.target=70;player.x=70;job=null;burner=null;evaluator=null;particles.clear();
-  view.classList.remove('observing');$('observe').setAttribute('aria-pressed','false');
-  result.textContent='⌂';result.setAttribute('aria-label','Backyard hub');
-  progressFill.style.width='0%';progress.setAttribute('aria-valuenow','0');
-  sound.stop();updateControls();
+  if(stage==='hub'){if(watching)stopWatching();updateControls();return;}
+  stopWatching();closeDevice();stage='hub';job=null;burner=null;evaluator=null;practice=false;particles.clear();setScene(SCENES.hub);
+  $('result').textContent='⌂';$('result').setAttribute('aria-label','Backyard hub');$('progress-fill').style.width='0%';$('progress').setAttribute('aria-valuenow','0');sound.stop();updateControls();
 }
-function resetGame(){
-  funds=110;backToHub();clocks.resetMission();result.textContent='⌂';
-  $('tutorial').hidden=false;shownTutorial=true;
-}
+function resetGame(){funds=110;if(stage!=='hub')backToHub();else{stopWatching();closeDevice();practice=false;burner=null;job=null;particles.clear();setScene(SCENES.hub);sound.stop();}clocks.resetMission();$('tutorial').hidden=false;updateControls();}
 function toggleObservation(){
-  if(stage!=='mission')return;
-  watching=!watching;
-  if(watching){selected=null;panel.hidden=true;}
-  view.classList.toggle('observing',watching);
-  $('observe').setAttribute('aria-pressed',String(watching));
-  playSound();
+  if(!watching&&!(stage==='mission'&&near('port'))&&!(stage==='hub'&&practice&&near('practice')))return;
+  watching=!watching;if(watching){closeDevice();clearInput();drawChamber();}
+  $('inspection').hidden=!watching;viewport.classList.toggle('observing',watching);$('observe').setAttribute('aria-pressed',String(watching));playSound();updateControls();
 }
-function closestDevice(x){
-  let best=null,distance=Infinity;
-  for(const def of DEVICES){
-    const delta=Math.abs(def.x-x);
-    if(delta<distance){distance=delta;best=def;}
-  }
-  return distance<43?best:null;
-}
-world.addEventListener('pointerdown',(e)=>{
-  if(stage!=='mission'&&stage!=='hub')return;
-  const r=world.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*640;
-  const y=(e.clientY-r.top)/r.height*360;
-  if(stage==='mission'&&y<248){
-    const dev=closestDevice(x);
-    if(dev){
-      player.target=dev.x;
-      if(Math.abs(player.x-dev.x)<53)showDevice(dev);
-      else pending=dev;
-      return;
-    }
-  }
-  pending=null;player.target=Math.max(35,Math.min(605,x));
-});
-flame.addEventListener('pointerdown',toggleObservation);
-document.addEventListener('keydown',(e)=>{
-  if(['ArrowRight','ArrowLeft'].includes(e.key)&&panel.hidden){
-    player.target=Math.max(30,Math.min(610,player.x+(e.key==='ArrowRight'?60:-60)));
-    e.preventDefault();
-  }else if(e.key==='Escape'&&watching)toggleObservation();
-  else if(e.key.toLowerCase()==='e'&&stage==='mission'){
-    const d=closestDevice(player.x);if(d)showDevice(d);
-  }
-});
-slider.addEventListener('input',()=>{
-  if(selected&&burner&&stage==='mission')burner.setDevice(selected.id,Number(slider.value)/100);
-});
-$('device-close').addEventListener('click',()=>{selected=null;panel.hidden=true;playSound();});
-$('spark').addEventListener('click',()=>{
-  if(stage!=='mission')return;
+function spark(){
+  if(!((stage==='mission'&&near('spark'))||(stage==='hub'&&practice&&near('practice')))||!burner)return;
   playSound();sound.click();burner.ignite();
-});
-$('observe').addEventListener('click',toggleObservation);
-$('return').addEventListener('click',backToHub);
-$('reset').addEventListener('click',resetGame);
-$('tutorial-ok').addEventListener('click',()=>{shownTutorial=false;$('tutorial').hidden=true;playSound();});
-for(const button of missionButtons)button.addEventListener('click',()=>beginJob(button.dataset.job));
-function physicsStep(processDt,missionDt,cashDt){
-  if(stage!=='failed'&&funds>0)funds=Math.max(0,funds-0.32*cashDt);
-  if(stage!=='mission'||!burner)return;
-  const state=burner.step(processDt);
-  particles.step(processDt,state,CHAMBERS[job.chamber]);
-  sound.update(state,watching);
-  const outcome=evaluator.tick(processDt,missionDt,state,funds);
-  if(outcome==='won'){
-    stage='won';funds+=job.payout;result.textContent='✓';result.setAttribute('aria-label','Contract complete');
-    watching=false;view.classList.remove('observing');$('observe').setAttribute('aria-pressed','false');
-    sound.stop();updateControls();
-  }else if(outcome==='failed'){
-    stage='failed';result.textContent='✕';result.setAttribute('aria-label','Contract failed');
-    watching=false;view.classList.remove('observing');$('observe').setAttribute('aria-pressed','false');
-    sound.stop();updateControls();
+}
+function showDevice(i){
+  if(stage!=='mission'||!burner||distance(i)>112)return;
+  selected=i;$('device-panel').hidden=false;$('device-symbol').textContent=icons[i.deviceId]||'◆';
+  $('device-slider').value=Math.round(burner.devices[i.deviceId]*100);$('device-slider').setAttribute('aria-label',i.label);
+}
+function interact(){
+  if(watching){toggleObservation();return;}
+  if(!$('device-panel').hidden){closeDevice();return;}
+  const i=player.nearby(scene);if(!i)return;
+  $('hint').hidden=true;
+  if(i.type==='device')showDevice(i);
+  else if(i.type==='ignition')spark();
+  else if(i.type==='observation')toggleObservation();
+  else if(i.type==='exit')backToHub();
+  else if(i.type==='contracts')updateControls();
+  else if(i.type==='practice'){
+    if(!practice){practice=true;job=JOBS[0];burner=new BurnerSolver(job.burner);particles.clear();playSound();}
+    else toggleObservation();
+  }else if(i.type==='workbench'||i.type==='npc'){
+    $('hint').textContent=i.type==='workbench'?'⚒　◇':'☻　✦';$('hint').hidden=false;
   }
 }
-function drawWorld(){
-  wc.fillStyle=stage==='hub'?'#182937':'#1e2731';wc.fillRect(0,0,640,360);
-  for(let i=0;i<14;i++){
-    wc.fillStyle=i%2?'#213443':'#233645';wc.fillRect(i*48,50,46,185);
-    wc.fillStyle='#364d58';wc.fillRect(i*48,51,2,182);
+for(const b of buttons)b.addEventListener('click',()=>beginJob(b.dataset.job));
+$('spark').addEventListener('click',spark);$('observe').addEventListener('click',toggleObservation);$('return').addEventListener('click',backToHub);$('reset').addEventListener('click',resetGame);
+$('tutorial-ok').addEventListener('click',()=>{$('tutorial').hidden=true;playSound();});
+$('device-close').addEventListener('click',()=>{closeDevice();playSound();});
+$('device-slider').addEventListener('input',()=>{if(selected&&burner&&stage==='mission'&&distance(selected)<=112)burner.setDevice(selected.deviceId,Number($('device-slider').value)/100);});
+$('interact').addEventListener('click',interact);flame.addEventListener('pointerdown',toggleObservation);
+for(const b of document.querySelectorAll('[data-hold]')){
+  b.addEventListener('pointerdown',e=>{e.preventDefault();pointers.set(e.pointerId,b.dataset.hold);held.add(b.dataset.hold);b.setPointerCapture(e.pointerId);});
+  const release=e=>{const action=pointers.get(e.pointerId);pointers.delete(e.pointerId);if(action&&![...pointers.values()].includes(action))held.delete(action);};
+  b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);b.addEventListener('lostpointercapture',release);
+}
+const keyActions={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',j:'jump'};
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input'))return;
+  const k=e.key.length===1?e.key.toLowerCase():e.key,a=keyActions[k];
+  if(a){keys.add(a);e.preventDefault();}else if(k==='e'&&!e.repeat){interact();e.preventDefault();}else if(k==='Escape'){if(watching)toggleObservation();else closeDevice();}
+});
+document.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(keyActions[k]){keys.delete(keyActions[k]);e.preventDefault();}});
+window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();frameLast=0;}});window.addEventListener('resize',resize);
+function movement(){const on=x=>held.has(x)||keys.has(x);return {x:Number(on('right'))-Number(on('left')),y:Number(on('down'))-Number(on('up')),jump:on('jump')};}
+function physicsStep(processDt,missionDt,cashDt){
+  player.update(1/60,watching||!$('tutorial').hidden||!$('device-panel').hidden?{x:0,y:0,jump:false}:movement(),scene);
+  if(selected&&distance(selected)>112)closeDevice();
+  if(stage!=='failed'&&funds>0)funds=Math.max(0,funds-.32*cashDt);
+  if(!burner||!(stage==='mission'||(stage==='hub'&&practice)))return;
+  const state=burner.step(processDt);particles.step(processDt,state,CHAMBERS[job.chamber]);sound.update(state,watching);
+  if(stage!=='mission')return;
+  const outcome=evaluator.tick(processDt,missionDt,state,funds);
+  if(outcome==='won'||outcome==='failed'){
+    stage=outcome;if(outcome==='won')funds+=job.payout;
+    $('result').textContent=outcome==='won'?'✓':'✕';$('result').setAttribute('aria-label',outcome==='won'?'Contract complete':'Contract failed');
+    stopWatching();closeDevice();sound.stop();updateControls();
   }
-  wc.fillStyle='#405661';wc.fillRect(0,306,640,54);
-  wc.fillStyle='#586e78';wc.fillRect(0,301,640,7);
-  if(stage==='hub'){
-    wc.fillStyle='#304451';wc.fillRect(35,157,152,142);
-    wc.fillStyle='#83949b';wc.fillRect(49,190,104,78);
-    wc.fillStyle='#cc6e43';wc.fillRect(59,209,18,34);
-    wc.fillStyle='#e4ad68';wc.fillRect(202,214,37,87);
-    wc.fillStyle='#526875';wc.fillRect(263,113,330,131);
-    for(let i=0;i<3;i++){
-      const x=302+i*91;
-      wc.fillStyle='#1b2b36';wc.fillRect(x,140,71,82);
-      wc.fillStyle='#d9c188';wc.font='34px sans-serif';wc.fillText(JOBS[i].symbol,x+18,190);
-    }
-  }else{
-    wc.fillStyle='#748b97';wc.fillRect(10,125,625,19);
-    wc.fillStyle='#516774';wc.fillRect(10,142,625,17);
-    DEVICES.forEach((d,i)=>{
-      wc.fillStyle=selected?.id===d.id?'#cfaf75':'#698391';
-      wc.fillRect(d.x-25,174,50,61);
-      wc.fillStyle='#162d39';wc.fillRect(d.x-20,179,40,51);
-      wc.fillStyle='#efcc8c';wc.font='31px sans-serif';wc.fillText(d.icon,d.x-15,213);
-      wc.fillStyle='#b6c3cc';wc.fillRect(d.x-4,144,8,29);
-    });
-    wc.fillStyle='#6b8793';wc.fillRect(530,61,94,67);
-    wc.fillStyle='#162a35';wc.fillRect(543,72,67,44);
-    wc.fillStyle='#eac47a';wc.font='32px sans-serif';wc.fillText('◎',559,106);
-  }
-  const dx=player.target-player.x;
-  if(Math.abs(dx)>1.5)player.x+=Math.sign(dx)*Math.min(Math.abs(dx),player.speed/18);
-  if(pending&&Math.abs(player.x-pending.x)<53){showDevice(pending);pending=null;}
-  wc.fillStyle='#101f2a';wc.fillRect((player.x-11)|0,272,22,29);
-  wc.fillStyle='#dbd4b3';wc.fillRect((player.x-9)|0,248,18,25);
-  wc.fillStyle='#b88a5b';wc.fillRect((player.x-10)|0,245,20,7);
-  wc.fillStyle='#7292a4';wc.fillRect((player.x-14)|0,275,28,6);
 }
 function drawChamber(){
-  fc.clearRect(0,0,640,360);
-  if(!burner||!job)return;
+  fc.clearRect(0,0,640,360);if(!burner||!job)return;
   const chamber=CHAMBERS[job.chamber],state=burner.snapshot();
-  fc.fillStyle=chamber.color;fc.fillRect(0,0,640,360);
-  fc.fillStyle='#2e3d48';fc.fillRect(18,23,606,313);
-  fc.fillStyle='#121e29';fc.fillRect(24,30,592,297);
+  fc.fillStyle=chamber.color;fc.fillRect(0,0,640,360);fc.fillStyle='#2e3d48';fc.fillRect(18,23,606,313);fc.fillStyle='#121e29';fc.fillRect(24,30,592,297);
   fc.fillStyle='#4f626d';fc.fillRect(19,23,603,9);fc.fillRect(19,325,603,12);
-  fc.fillStyle='rgba(249,108,34,'+Math.min(.26,Math.max(0,state.temperature-.15)*.13)+')';
-  fc.fillRect(35,37,571,275);
-  const x=chamber.nozzle.x,y=chamber.nozzle.y;
-  fc.fillStyle='#8c969a';
-  if(chamber.orientation==='updraft'){fc.fillRect(x-18,y+3,36,83);fc.fillStyle='#4a545e';fc.fillRect(x-10,y,20,35);}
-  else{fc.fillRect(0,y-20,x,40);fc.fillStyle='#4a545e';fc.fillRect(x-31,y-13,35,26);}
-  if(chamber.baffle){fc.fillStyle='#70767c';fc.fillRect(394,35,12,118*chamber.baffle);}
-  if(chamber.orientation==='updraft'){fc.fillStyle='#6d777f';fc.fillRect(275,12,64,19);}
-  particles.draw(fc,state,chamber);
-  if(state.failed){fc.fillStyle='rgba(245,26,21,.29)';fc.fillRect(20,30,600,290);}
+  fc.fillStyle='rgba(249,108,34,'+Math.min(.26,Math.max(0,state.temperature-.15)*.13)+')';fc.fillRect(35,37,571,275);
+  const x=chamber.nozzle.x,y=chamber.nozzle.y;fc.fillStyle='#8c969a';
+  if(chamber.orientation==='updraft'){fc.fillRect(x-18,y+3,36,83);fc.fillStyle='#4a545e';fc.fillRect(x-10,y,20,35);}else{fc.fillRect(0,y-20,x,40);fc.fillStyle='#4a545e';fc.fillRect(x-31,y-13,35,26);}
+  if(chamber.baffle){fc.fillStyle='#70767c';fc.fillRect(394,35,12,118*chamber.baffle);}if(chamber.orientation==='updraft'){fc.fillStyle='#6d777f';fc.fillRect(275,12,64,19);}
+  particles.draw(fc,state,chamber);if(state.failed){fc.fillStyle='rgba(245,26,21,.29)';fc.fillRect(20,30,600,290);}
 }
+function renderWorld(){drawScene(wc,scene,{camera:camera(),player:player.state,time:worldTime,selectedId:selected?.id??player.nearby(scene)?.id??null,stage,jobId:job?.id??null});}
 function updateHUD(){
-  cashOutput.value=funds.toFixed(1);clockOutput.value=clocks.missionTime.toFixed(0);
-  tempOutput.value=(burner?.temperature??0.12).toFixed(2);
-  const pct=evaluator?Math.round(evaluator.progress()*100):0;
-  progressFill.style.width=pct+'%';progress.setAttribute('aria-valuenow',String(pct));
+  $('cash').value=funds.toFixed(1);$('mission-clock').value=clocks.missionTime.toFixed(0);$('temperature').value=(burner?.temperature??.12).toFixed(2);
+  const pct=evaluator?Math.round(evaluator.progress()*100):0;$('progress-fill').style.width=pct+'%';$('progress').setAttribute('aria-valuenow',String(pct));updateControls();
 }
 function frame(now){
-  if(!frameLast)frameLast=now;
-  const dt=(now-frameLast)/1000;frameLast=now;
-  const frames=clocks.advance(dt,watching,physicsStep);
-  if(frames.world)drawWorld();
-  if(frames.flame&&watching)drawChamber();
-  updateHUD();requestAnimationFrame(frame);
+  if(!frameLast)frameLast=now;const dt=(now-frameLast)/1000;frameLast=now;worldTime+=Math.min(dt,.1);
+  const frames=clocks.advance(dt,watching,physicsStep);if(frames.world)renderWorld();if(frames.flame&&watching)drawChamber();updateHUD();requestAnimationFrame(frame);
 }
-updateControls();drawWorld();
-window.ICE_DEBUG=Object.freeze({snapshot:()=>({
-  stage,watching,funds,missionTime:clocks.missionTime,playerX:player.x,
-  job:job?.id??null,solver:burner?.snapshot()??null,objective:evaluator?.progress()??0,
-  particles:particles.activeCount()
-})});
+resize();updateControls();renderWorld();
+window.ICE_DEBUG=Object.freeze({snapshot:()=>{const c=camera(),s=player.state;return {stage,watching,funds,missionTime:clocks.missionTime,playerX:s.x,job:job?.id??null,solver:burner?.snapshot()??null,objective:evaluator?.progress()??0,particles:particles.activeCount(),playerY:s.y,cameraX:c.x,cameraY:c.y,sceneId:scene.id,worldWidth:scene.width,worldHeight:scene.height,grounded:s.grounded,climbing:s.climbing};}});
 requestAnimationFrame(frame);
