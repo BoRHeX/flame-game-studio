@@ -27,9 +27,16 @@ function ownedFiles(paths,maxFiles=7,maxChars=35000){
  }
  return found;
 }
-export function buildBrief(orderPath){
+export function buildBrief(orderPath,{executionMode='dry_run'}={}){
+ if(!['dry_run','paid_proposal'].includes(executionMode))throw Error('invalid briefing execution mode');
  const order=loadOrder(orderPath);
  const roleBrief=compileBrief(order);
+ // Compilation is always inert. Only the guarded runtime selects paid proposal
+ // context after activation checks; these fields never grant execution rights.
+ if(executionMode==='paid_proposal'){
+  roleBrief.status='PAID_PROPOSAL';
+  roleBrief.agent_invocation_enabled=true;
+ }
  const agentProfile=loadProfile(order.role);
  const producerProfile=loadProfile('producer');
  const qaProfile=loadProfile('qa_architect');
@@ -42,6 +49,7 @@ export function buildBrief(orderPath){
  const dependencyPaths=[...new Set([
   ...agentProfile.critical_inputs,
   ...(order.required_contracts??[]),
+  ...(order.verification_script?[order.verification_script]:[]),
   ...(order.target_file?[order.target_file]:[])
  ])].filter(p=>/^(?:game|content|design|tests|studio|memory|assets)\/[a-zA-Z0-9_./-]+$/.test(p)&&!p.includes('..'));
  const readOnlyDependencies=dependencyPaths.filter(p=>existsSync(join(ROOT,p)))
@@ -50,10 +58,15 @@ export function buildBrief(orderPath){
   .map(path=>({path,body:readText(path).slice(0,14000)}));
  const incidentPath='memory/incidents/'+order.id+'.md';
  const incidentNotes=existsSync(join(ROOT,incidentPath))?readText(incidentPath).slice(0,4500):'';
+ const activeDecisions=ownedFiles(['memory/decisions/'],10,24000)
+  .filter(file=>/^Status:\s*ACCEPTED\s*$/mi.test(file.body));
  return {
   order,roleBrief,agentProfile,producerProfile,qaProfile,canon:canon.slice(0,13000),visualBrief:vision.slice(0,14000),
   systemsBrief:systems.slice(0,12000),memoryPolicy:memory.slice(0,3600),
-  files,readOnlyDependencies,incidentNotes,sourceSha:process.env.GITHUB_SHA??'uncommitted',
-  instruction:'Historical images not in source tree are NOT available to agent as image data. Do not claim to have seen or imported them.'
+  files,readOnlyDependencies,activeDecisions,incidentNotes,sourceSha:process.env.GITHUB_SHA??'uncommitted',
+  execution:{mode:executionMode,proposal_generation_authorized:executionMode==='paid_proposal',
+   generated_code_execution_authorized:false,automatic_merge_authorized:false},
+  instruction:'The active work order defines this run\'s deliverable and acceptance; role success definitions describe longer-term department goals. Active decisions supersede historical activation notes. Paid proposal mode authorizes generating scoped file content only; CI executes it later without secrets. Historical images not in source tree are unavailable as image data; do not claim to have seen or imported them.'
  };
 }
+

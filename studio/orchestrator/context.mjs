@@ -1,6 +1,6 @@
 // V1: deterministic local work-order validation and scoped canonical memory.
 // No API key, no LLM invocation, no repo writes.
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync,lstatSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const DEFAULT_ROOT=fileURLToPath(new URL('../../',import.meta.url));
@@ -21,6 +21,13 @@ export function validateWorkOrder(order,rootDir=DEFAULT_ROOT){
  const role=roles.find(x=>x.id===order.role);
  if(!role)throw Error('unknown agent role');
  if(!Number.isFinite(order.max_cost_usd)||order.max_cost_usd<0)throw Error('invalid cost allowance');
+ if(order.verification_script!==undefined){
+  if(typeof order.verification_script!=='string'||
+     !/^studio\/acceptance\/[a-z0-9-]+\.mjs$/.test(order.verification_script))
+   throw Error('invalid trusted acceptance script');
+  const script=join(rootDir,order.verification_script);
+  if(!existsSync(script)||!lstatSync(script).isFile())throw Error('missing trusted acceptance script');
+ }
  if(order.target_file!==undefined){
   normalizePath(order.target_file);
   if(order.target_file.endsWith('/'))throw Error('target file must be a file');
@@ -45,3 +52,4 @@ export function compileBrief(order,rootDir=DEFAULT_ROOT){
    max_attempts:Math.min(order.max_attempts??1,policy.MAX_ATTEMPTS_PER_TASK),
    status:'DRY_RUN_ONLY',agent_invocation_enabled:false};
 }
+

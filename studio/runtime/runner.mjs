@@ -93,7 +93,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
  rejectedPath='artifacts/ice-rejected-candidate.json'}={}){
  if(policy.STUDIO_ENABLED!==true||policy.ENFORCEMENT_IMPLEMENTED!==true||policy.DURABLE_LEDGER_ENABLED!==true||
    process.env.ICE_STUDIO_ENABLED!=='true')throw Error('paid studio is disabled');
- const brief=buildBrief(orderPath),order=brief.order;
+ const brief=buildBrief(orderPath,{executionMode:'paid_proposal'}),order=brief.order;
  if(!/^\d+$/.test(String(process.env.GITHUB_RUN_ID??'')))throw Error('run ID required');
  const cap=Math.min(order.max_cost_usd,policy.MAX_RUN_COST_USD);
  const budget=new ModelBudget(cap);
@@ -109,7 +109,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
   let implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:order.role,
    instructions:brief.agentProfile.system_instructions+' Respect existing imports, geometry, and simulation. No new dependencies. Preserve mobile Chrome gameplay. '+
     (singleFile?'Return ONLY the complete text content for the required target file '+order.target_file+
-      ' in the content field. Do not create, name or modify any other files. Content must be nonempty, executable source; output is one full file, not a diff.':
+      ' in the content field. Do not create, name or modify any other files. Content must be nonempty complete UTF-8 text appropriate to its extension (valid JSON for .json); output is one full file, not a diff.':
       'Produce complete UTF-8 source files only inside allowed paths, at most four files.'),
    input:JSON.stringify({brief,plan}),schema:singleFile?oneFileSchema:outputSchema,name:'ice_code_candidate',
    max_output_tokens:12000,budget,fetchImpl}),order);
@@ -137,6 +137,7 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
      instructions:brief.qaProfile.system_instructions+' Be an independent code reviewer. Reject invalid imports, non-portable geometry, unsafe or out-of-scope changes, fabricated assets, missing tests, and incompatible source contracts. Inspect submitted changes and name actionable defects.',
      input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
+       execution:brief.execution,activeDecisions:brief.activeDecisions,
        files:implementation.changes,tests:implementation.tests,risks:implementation.risks,
        readOnlyDependencies:brief.readOnlyDependencies,incidentNotes:brief.incidentNotes}),
      schema:reviewSchema,name:'ice_independent_review',max_output_tokens:2500,budget,fetchImpl});
@@ -163,7 +164,8 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
       ' You have a rejected specialist output and independent QA feedback. Make a short, testable correction plan for the SAME specialist. Preserve good work, respect file ownership and point out root causes. Do not weaken QA criteria.',
     input:JSON.stringify({role:order.role,profile:brief.agentProfile,goal:order.goal,
       acceptance:order.acceptance,priorPlan:plan,reviewFeedback:review,
-      original:implementation,readOnlyDependencies:brief.readOnlyDependencies}),
+      original:implementation,readOnlyDependencies:brief.readOnlyDependencies,
+      execution:brief.execution,activeDecisions:brief.activeDecisions}),
     schema:planSchema,name:'ice_producer_remediation',max_output_tokens:1700,budget,fetchImpl});
    implementation=normalizeAgentDraft(await callStructured({key,model:'gpt-6.1-terra',step:'specialist_repair_'+(revision+1),
     instructions:brief.agentProfile.system_instructions+
@@ -174,7 +176,8 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
      ' Preserve deterministic mobile performance; never change CI, memory or simulation contracts.',
     input:JSON.stringify({order,plan,remediation,original:implementation,reviewFeedback:review,
       relevantSource:brief.files,readOnlyDependencies:brief.readOnlyDependencies,
-      incidentNotes:brief.incidentNotes,architecture:brief.roleBrief}),
+      incidentNotes:brief.incidentNotes,architecture:brief.roleBrief,
+      execution:brief.execution,activeDecisions:brief.activeDecisions}),
     schema:singleFile?oneFileSchema:outputSchema,name:'ice_corrected_candidate',
     max_output_tokens:12000,budget,fetchImpl}),order);
   }
@@ -209,3 +212,4 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
 if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
  await runSession(process.argv[2],process.argv[3]??'artifacts/ice-proposal.json');
 }
+

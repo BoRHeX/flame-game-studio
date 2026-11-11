@@ -68,8 +68,13 @@
         "type": "string"
       }
     },
+    "verification_script": {
+      "type": "string",
+      "pattern": "^studio/acceptance/[a-z0-9-]+\\.mjs$"
+    },
     "target_file": {
       "type": "string"
     }
   }
 }
+

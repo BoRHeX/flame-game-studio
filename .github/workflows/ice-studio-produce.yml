@@ -147,6 +147,8 @@ jobs:
         run: node studio/runtime/apply-cli.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
       - name: Independent unit and browser tests
         run: npm test && npm run browser:smoke
+      - name: Work-order acceptance checks from trusted source
+        run: node studio/runtime/acceptance-cli.mjs "$ORDER_PATH"
   submit:
     needs: [prepare, verify]
     runs-on: ubuntu-latest
@@ -171,3 +173,4 @@ jobs:
           path: artifacts
       - name: Create isolated branch and review-only draft PR
         run: node studio/runtime/submit.mjs "$ORDER_PATH" "artifacts/ice-proposal.json"
+
