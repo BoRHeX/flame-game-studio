@@ -102,8 +102,8 @@
       "orderId": "ICE-MAJOR-WORLD-001",
       "date": "2026-11-11",
       "reservedUsd": 1.25,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.050797,
+      "status": "settled"
     }
   ]
 }
