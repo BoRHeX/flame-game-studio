@@ -7,6 +7,7 @@ const [action,value]=process.argv.slice(2);
 const repo=process.env.GITHUB_REPOSITORY,runId=process.env.GITHUB_RUN_ID;
 if(!repo||!runId)throw Error('must run in GitHub Actions');
 if(action==='reserve'){
+ if(!/^studio\/work-orders\/[A-Za-z0-9-]+\.json$/.test(value??''))throw Error('invalid work-order path');
  const order=JSON.parse(readFileSync(value,'utf8'));
  validateWorkOrder(order);
  if(process.env.ICE_STUDIO_ENABLED!=='true')throw Error('repository variable ICE_STUDIO_ENABLED must be true');

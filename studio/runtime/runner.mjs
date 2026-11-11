@@ -98,6 +98,6 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch}={}){
  console.log('MODEL SESSION: '+order.id+' files='+proposal.changes.length+' charged estimate=$'+proposal.costUsd);
  return proposal;
 }
-if(process.argv[1]&&new URL('file://'+process.argv[1]).pathname===new URL(import.meta.url).pathname){
+if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
  await runSession(process.argv[2],process.argv[3]??'artifacts/ice-proposal.json');
 }
