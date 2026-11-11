@@ -1,0 +1,17 @@
+:root{color-scheme:dark;font-family:system-ui,Arial,sans-serif;background:#080d13;color:#dce5eb}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;overscroll-behavior:none}
+#lab{width:min(100%,880px);margin:0 auto;padding:10px;display:grid;gap:12px}
+.hud{display:flex;align-items:center;gap:18px;justify-content:space-between;font-variant-numeric:tabular-nums}
+.hud-item{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700}
+.indicator{width:17px;height:17px;background:#292f38;border:2px solid #626e7b;border-radius:50%}
+.indicator.active{background:#6fc6ff;box-shadow:0 0 14px #6fc6ff}
+#chamber{position:relative;width:100%;aspect-ratio:16 / 9;border:2px solid #48576a;overflow:hidden;background:#111b26;border-radius:8px}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
+.controls{padding:12px;background:#131d28;border:1px solid #253546;border-radius:10px;display:grid;gap:12px}
+.adjust{display:flex;gap:15px;align-items:center}.symbol{width:32px;font-size:25px;text-align:center}
+input[type=range]{width:100%;height:32px;accent-color:#f9aa4d;touch-action:pan-x}
+.buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+button{min-height:60px;border-radius:10px;background:#1f3449;color:#f9d89a;font-size:34px;border:1px solid #48617b;touch-action:manipulation}
+button:active,button[aria-pressed=true]{background:#4a647c}
+#watch[aria-pressed=true]{outline:2px solid #e5bd80}
+@media(max-width:480px){#lab{padding:6px;gap:8px}.controls{padding:10px;gap:6px}button{min-height:56px}}

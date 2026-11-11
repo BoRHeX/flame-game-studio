@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d13">
+<link rel="stylesheet" href="./style.css">
+<title>I.C.E. — isolated chamber lab</title>
+</head>
+<body>
+<main id="lab">
+  <div class="hud" aria-live="off">
+    <span class="hud-item" aria-label="Funds"><span aria-hidden="true">◈</span> <output id="money">100</output></span>
+    <span class="hud-item" aria-label="Mission time"><span aria-hidden="true">◷</span> <output id="clock">0</output></span>
+    <span id="indicator" class="indicator" aria-label="Flame off"></span>
+  </div>
+  <div id="chamber" role="img" aria-label="Pixel particle flame chamber">
+    <canvas id="world" width="640" height="360"></canvas>
+    <canvas id="flame" width="640" height="360"></canvas>
+  </div>
+  <div class="controls">
+    <div class="adjust">
+      <label class="symbol" for="fuel" aria-label="Fuel valve">◆</label>
+      <input id="fuel" aria-label="Fuel valve" type="range" min="0" max="100" value="45" />
+    </div>
+    <div class="adjust">
+      <label class="symbol" for="air" aria-label="Air damper">≋</label>
+      <input id="air" aria-label="Air damper" type="range" min="0" max="100" value="50" />
+    </div>
+    <div class="buttons">
+      <button type="button" id="spark" aria-label="Ignition" title="Ignition">ϟ</button>
+      <button type="button" id="watch" aria-label="Toggle flame observation" title="Observation">◎</button>
+      <button type="button" id="reset" aria-label="Reset laboratory" title="Reset">↺</button>
+    </div>
+  </div>
+</main>
+<script type="module" src="./app.mjs"></script>
+</body>
+</html>

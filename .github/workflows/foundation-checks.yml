@@ -1,0 +1,38 @@
+name: Foundation checks
+on:
+  pull_request:
+  push:
+    branches: [feature/foundation-01]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit / invariant / agent policy tests
+        run: npm test
+      - name: Agent context dry-run (must not call paid provider)
+        run: npm run studio:dry-run > /tmp/flame-studio-brief.json
+      - name: Chrome touch + page smoke
+        run: npm run browser:smoke
+      - name: Archive browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ice-flame-mobile-smoke
+          path: artifacts/mobile-flame.png
+          if-no-files-found: ignore
+      - name: Archive browser-playable prototype
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ice-early-slice-source
+          path: game/

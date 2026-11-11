@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "all_roles_ephemeral": true,
+  "no_direct_main_writes": true,
+  "roles": [
+    {
+      "id": "producer",
+      "mission": "Pass scope, budget, dependency graph",
+      "scope": [
+        "studio/"
+      ],
+      "acceptance": "Approval of small scoped work orders"
+    },
+    {
+      "id": "game_director",
+      "mission": "Canon and consistency",
+      "scope": [
+        "design/"
+      ],
+      "acceptance": "Reject design contradictions"
+    },
+    {
+      "id": "technical_director",
+      "mission": "Shared interfaces and ADRs",
+      "scope": [
+        "design/",
+        "memory/decisions/"
+      ],
+      "acceptance": "Approve contract changes"
+    },
+    {
+      "id": "combustion_engineer",
+      "mission": "Deterministic burner physics",
+      "scope": [
+        "game/simulation/"
+      ],
+      "acceptance": "Physical invariants and seeded replay"
+    },
+    {
+      "id": "flame_behavior_engineer",
+      "mission": "Map process truth to flame visuals",
+      "scope": [
+        "game/flame/"
+      ],
+      "acceptance": "Distinct lean/rich/stable cases"
+    },
+    {
+      "id": "particle_engineer",
+      "mission": "Mobile pixel particle rendering",
+      "scope": [
+        "game/flame/",
+        "game/chambers/"
+      ],
+      "acceptance": "Performance budgets"
+    },
+    {
+      "id": "chamber_designer",
+      "mission": "Per-mission scripted flow geometry",
+      "scope": [
+        "content/chambers/"
+      ],
+      "acceptance": "Data-only flow definition"
+    },
+    {
+      "id": "gameplay_engineer",
+      "mission": "Movement and equipment interaction",
+      "scope": [
+        "game/player/",
+        "game/interaction/"
+      ],
+      "acceptance": "Touch interaction tests"
+    },
+    {
+      "id": "mission_engineer",
+      "mission": "Goals, modifiers, payouts and outcomes",
+      "scope": [
+        "game/missions/",
+        "content/jobs/"
+      ],
+      "acceptance": "Mission solvability"
+    },
+    {
+      "id": "economy_engineer",
+      "mission": "Money, progression and unlock balance",
+      "scope": [
+        "game/economy/",
+        "game/progression/"
+      ],
+      "acceptance": "No-perk completion route"
+    },
+    {
+      "id": "npc_engineer",
+      "mission": "Operator access and bot behaviour",
+      "scope": [
+        "game/npc/"
+      ],
+      "acceptance": "No deadlocked required task"
+    },
+    {
+      "id": "pixel_art_director",
+      "mission": "Shared palette and art language",
+      "scope": [
+        "assets/visual/",
+        "design/art/"
+      ],
+      "acceptance": "Style consistency"
+    },
+    {
+      "id": "character_animator",
+      "mission": "Character and machinery animation",
+      "scope": [
+        "game/animation/"
+      ],
+      "acceptance": "18 FPS presentation and event markers"
+    },
+    {
+      "id": "environment_animator",
+      "mission": "Biome/parallax environments",
+      "scope": [
+        "game/world/"
+      ],
+      "acceptance": "Animation and interactivity"
+    },
+    {
+      "id": "ux_designer",
+      "mission": "Iconographic mobile feedback and accessibility",
+      "scope": [
+        "game/ui/"
+      ],
+      "acceptance": "Touch and no-language tutorial"
+    },
+    {
+      "id": "persistence_engineer",
+      "mission": "Saves, migrations, offline workshop",
+      "scope": [
+        "game/persistence/"
+      ],
+      "acceptance": "Recoverable versioned save"
+    },
+    {
+      "id": "composer_conductor",
+      "mission": "Original themes, motifs, tempo",
+      "scope": [
+        "design/audio/"
+      ],
+      "acceptance": "Theme spec with provenance"
+    },
+    {
+      "id": "orchestrator_instrumentalist",
+      "mission": "MIDI, arrangement, stems",
+      "scope": [
+        "assets/audio/"
+      ],
+      "acceptance": "Reproducible instrumental asset"
+    },
+    {
+      "id": "sound_engineer",
+      "mission": "SFX, burner and ambience layers",
+      "scope": [
+        "assets/audio/",
+        "game/audio/"
+      ],
+      "acceptance": "Process-linked sound states"
+    },
+    {
+      "id": "av_sync_director",
+      "mission": "Audio + animation timing",
+      "scope": [
+        "game/audio/",
+        "game/animation/"
+      ],
+      "acceptance": "Event sync verification"
+    },
+    {
+      "id": "qa_architect",
+      "mission": "Independent tests, hostile evidence",
+      "scope": [
+        "tests/"
+      ],
+      "acceptance": "Passing reproducible acceptance"
+    },
+    {
+      "id": "performance_engineer",
+      "mission": "Android profiling and resource budgets",
+      "scope": [
+        "tests/performance/"
+      ],
+      "acceptance": "Measured frame and memory budget"
+    },
+    {
+      "id": "security_release_engineer",
+      "mission": "Workflow rights, secrets, tags",
+      "scope": [
+        "studio/release/",
+        ".github/"
+      ],
+      "acceptance": "Manual review-gated deploy"
+    },
+    {
+      "id": "integrator",
+      "mission": "Integrate accepted scoped changes",
+      "scope": [
+        "game/"
+      ],
+      "acceptance": "All contract and browser tests pass"
+    },
+    {
+      "id": "narrative_designer",
+      "mission": "Story graph and alternate endings",
+      "scope": [
+        "content/endings/",
+        "game/narrative/"
+      ],
+      "acceptance": "Consistent story flag transitions"
+    }
+  ]
+}

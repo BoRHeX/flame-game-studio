@@ -1,0 +1,12 @@
+{
+ "id":"ICE-F0-001",
+ "role":"particle_engineer",
+ "goal":"Benchmark and refine the mobile pixel-particle chamber without editing combustion truth",
+ "allowed_paths":["game/flame/"],
+ "forbidden_paths":["game/simulation/","studio/budget/","memory/canonical/"],
+ "dependencies":[],
+ "acceptance":["Active particle count remains capped","Same seed produces same particle positions","Mobile Chrome renders flame without input latency"],
+ "max_cost_usd":1,
+ "max_attempts":2,
+ "seed":1911
+}
