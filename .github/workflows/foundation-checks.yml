@@ -28,7 +28,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ice-flame-mobile-smoke
-          path: artifacts/mobile-flame.png
+          path: |
+            artifacts/mobile-flame.png
+            artifacts/mobile-world.png
           if-no-files-found: ignore
       - name: Archive browser-playable prototype
         if: success()
@@ -36,3 +38,4 @@ jobs:
         with:
           name: ice-early-slice-source
           path: game/
+
