@@ -8,6 +8,8 @@
 - design/, memory/: game bible, architecture, four-agent AI orchestra, durable agent decision rules, roadmaps.
 - tests/: unit/invariant tests and Chrome touch smoke with a screenshot artifact.
 
+Visible playtest 01 integrates the specialist pixel-flame and procedural burner-sound updates. The game acceptance suite covers all three chambers, pilot/main transitions, soot and audio lifecycle behavior. This is still an early game slice with real-phone acceptance pending.
+
 Run locally with Node 22+:
 
     npm test
@@ -28,10 +30,10 @@ The branch workflow runs independent tests and uploads the game files plus mobil
 - The production stack (TypeScript + Phaser / custom flame renderer) remains a measured decision, not an installed dependency.
 - No API tokens in source, scheduled autonomous work or automatic merging. Authorized paid runs create review-only proposals.
 - Source simulation is dimensionless gameplay design, **never real equipment guidance**.
-- Do not merge into main until an actual phone playtest and independent acceptance.
+- Reviewed development previews may integrate changes after independent tests. A game release requires an actual phone playtest and independent acceptance.
 
 ## Next gate
-Fix observed Chrome/mobile defects, confirm meaningful lean/rich/stable visual differences, implement durable and atomic spending controls for any future model worker, and only then allow reviewed paid task-to-PR execution.
+Playtest the integrated flame and sound on a physical phone, measure performance and readability, and continue actual gameplay, environment, operator and persistence work against the roadmap. The bounded production-to-PR pipeline is active and has delivered integrated game changes.
 
 
 ## New API-backed production studio (review stage)

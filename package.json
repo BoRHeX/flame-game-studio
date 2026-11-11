@@ -5,10 +5,13 @@
   "type": "module",
   "description": "Independent AI production studio and mobile I.C.E. vertical slice",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests/*.test.mjs && npm run test:game-acceptance",
     "studio:dry-run": "node studio/orchestrator/dry-run.mjs",
     "browser:smoke": "node scripts/browser-smoke.mjs",
-    "check": "npm test && npm run studio:dry-run && npm run browser:smoke"
+    "check": "npm test && npm run studio:dry-run && npm run browser:smoke",
+    "test:game-acceptance": "node studio/acceptance/chamber-flow-output.mjs && node studio/acceptance/flame-visible.mjs && node studio/acceptance/burner-sound.mjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }
