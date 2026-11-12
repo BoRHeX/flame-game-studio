@@ -232,6 +232,14 @@
       "reservedUsd": 0.65,
       "actualUsd": 0.035697,
       "status": "settled"
+    },
+    {
+      "runId": "43200536364",
+      "orderId": "ICE-COASTAL-JUNGLE-ENV-01",
+      "date": "2026-11-12",
+      "reservedUsd": 1.2,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
