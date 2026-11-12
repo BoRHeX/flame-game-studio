@@ -181,7 +181,16 @@ async function main(){
    // Start a clean real UI session for the established mission path; never teleport test state.
    await command('Page.reload',{ignoreCache:true});
    for(let i=0;i<60;i++){await delay(100);if(await evalJs('Boolean(window.ICE_DEBUG)'))break;}
-   if(await evalJs("!document.querySelector('#tutorial').hidden"))await tap('#tutorial-ok');
+   // Pass Two restores the upper-floor position on reload. Verify persistence
+   // and explicitly restart before the independent initial-mission test.
+   if(await evalJs("document.querySelector('meta[name=\\\"ice-pass-two\\\"]')?.content==='operator-save-missions-01'")){
+     const resumed=await snapshot();
+     if(!resumed.autosaveRestored||resumed.playerY>=initialY-100)
+       throw Error('Real upper-floor autosave did not restore after reload: '+JSON.stringify(resumed));
+     console.log('PASS PASS-TWO: reloaded upper-floor position and camera persist');
+     await tap('#reset');
+     await tap('#tutorial-ok');
+   }else if(await evalJs("!document.querySelector('#tutorial').hidden"))await tap('#tutorial-ok');
  }
  await tap('[data-job="backyard"]');
  let data=await evalJs('window.ICE_DEBUG.snapshot()');
