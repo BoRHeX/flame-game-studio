@@ -166,8 +166,8 @@
       "orderId": "ICE-ROLE-09",
       "date": "2026-11-12",
       "reservedUsd": 1,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.073623,
+      "status": "settled"
     }
   ]
 }
