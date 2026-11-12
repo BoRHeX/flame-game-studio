@@ -2,6 +2,9 @@
 
 **I.C.E. / The Flame Game** — a lightweight mobile-browser combustion game, plus the future autonomous production system that builds it.
 
+## Autonomous production
+One production brief now starts team selection, coordinated multi-file implementation, integration, executable gameplay checks, visual review against the approved reference, bounded automatic repair and verified preview publication. Layouts, coordinates, art, animation and UI can evolve together. The operator supplies the job and receives the outcome. See [production operation](studio/production/README.md) and [the active decision](memory/decisions/ADR-0007-autonomous-production.md).
+
 ## Current status — Coastal Jungle art preview
 The Operator expands the accepted tall-platformer foundation into three physical contracts. Backyard requires an intake-shield diagnosis/repair and air adjustment; Warehouse requires freeing and testing a seized draft linkage; Heat-Hold remains a clean-combustion temperature challenge. Each job requires inspection, physical work, adjustment, verification and a stable hold. All calibrated tools are available without purchases.
 
@@ -11,7 +14,7 @@ The game includes analog/alternate-handed/D-pad controls, native fullscreen, phy
 
 The Coastal Jungle art preview is published at https://borhex.github.io/flame-game-studio/. It adds Pacific sunset/ocean/ridge/jungle parallax, coastal workshop windows, an open outdoor steel frame, textured equipment and enclosed process-lit furnace ports. All 88 Node tests, department acceptance checks and the complete real-touch Chrome route passed in PR #44 CI #43203489574 and again in Pages release #43203983688. All three contracts were won without purchases, including physical repairs, local NPC assistance, save/reload and corrupt-slot backup recovery. Physical Samsung comfort, audio mix and sustained-performance acceptance remain pending; they are not inferred from CI. See [the art-wave evidence](memory/evidence/acceptance/coastal-jungle-art-01.md), [Pass Two baseline evidence](memory/evidence/acceptance/pass-two-operator-02.md) and [living roadmap](design/roadmap.md).
 
-The studio remains bounded, on-demand Producer → Specialist → independent source review → no-secret executable verification → reviewable PR. The Pass Two baseline integrated five new specialist PRs plus a recovered environment contribution. The resumed art wave used two further bounded jobs (USD 0.566484 total); the background passed its studio run, while the foreground proposal was preserved after a source-review rejection and accepted only through supervised integration and independent executable checks. No schedules, permanent background agents, automatic paid task loops or changes to the separate Cataclysm experiment.
+Production jobs now run Producer → selected departments → Integrator → executable and visual verification → automatic repair → verified preview promotion and deployment. The Pass Two baseline integrated five new specialist PRs plus a recovered environment contribution. The resumed art wave used two further bounded jobs (USD 0.566484 total); the background passed its studio run, while the foreground proposal was preserved after a source-review rejection and accepted only through supervised integration and independent executable checks. No schedules, permanent background agents, automatic paid task loops or changes to the separate Cataclysm experiment.
 
 Run locally with Node 22+:
 
@@ -31,16 +34,16 @@ The branch workflow runs independent tests and uploads the game files plus mobil
 ## Boundaries
 - This repository is independent of BoRHeX/kbc-rpg-prototype. Do not edit the existing experimental BoRHeZ Games Studio.
 - The production stack (TypeScript + Phaser / custom flame renderer) remains a measured decision, not an installed dependency.
-- No API tokens in source, scheduled autonomous work or automatic merging. Authorized paid runs create review-only proposals.
+- Provider credentials, budgets and CI stay outside generated product changes. On-demand production jobs may promote independently tested and visually accepted development previews under ADR-0007.
 - Source simulation is dimensionless gameplay design, **never real equipment guidance**.
 - Reviewed development previews may integrate changes after independent tests. A game release requires an actual phone playtest and independent acceptance.
 
 ## Next gate
 Collect the user's physical-phone review of the verified, published Pass Two preview. Pass Three's campaign expansion remains separate.
 
-## New API-backed production studio (review stage)
+## Legacy single-module worker
 
-This branch adds the full I.C.E. visual constitution, specialist role registry, a separately protected AI generation job, a no-secret test job and a GitHub Actions draft-PR publisher. It does **not** call paid models unless GitHub main-branch settings and the policy allow it.
+The earlier single-module workflow remains for deliberately small repairs. Its fixed file ownership and draft-PR endpoint do not govern the default autonomous production workflow. Both modes require the existing activation settings and durable budget policy.
 
 See [activation instructions](studio/runtime/README.md), [visual target](design/visual-bible.md), [full product scope](design/product-systems.md) and [studio operation](studio/production-plan.md).
 

@@ -1,0 +1,128 @@
+name: I.C.E. autonomous production attempt
+on:
+  workflow_call:
+    inputs:
+      job:
+        required: true
+        type: string
+      attempt:
+        required: true
+        type: number
+      previous:
+        required: false
+        default: ''
+        type: string
+    secrets:
+      OPENAI_API_KEY:
+        required: true
+    outputs:
+      passed:
+        value: ${{ jobs.assess.outputs.passed }}
+      retryable:
+        value: ${{ jobs.assess.outputs.retryable }}
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      ready: ${{ steps.generate.outputs.ready }}
+      billing_certain: ${{ steps.generate.outputs.billing_certain }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        if: inputs.previous != ''
+        with:
+          name: ${{ inputs.previous }}
+          path: artifacts/previous
+      - name: Producer, departments and integrator
+        id: generate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
+          JOB_PATH: ${{ inputs.job }}
+          ATTEMPT: ${{ inputs.attempt }}
+          PREVIOUS: ${{ inputs.previous }}
+        run: |
+          if [ -n "$PREVIOUS" ]; then
+            node studio/production/worker.mjs generate "$JOB_PATH" "$ATTEMPT" artifacts/current artifacts/previous
+          else
+            node studio/production/worker.mjs generate "$JOB_PATH" "$ATTEMPT" artifacts/current
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-${{ inputs.attempt }}-generated
+          path: artifacts/current/
+          if-no-files-found: error
+  verify:
+    needs: generate
+    if: always() && needs.generate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-${{ inputs.attempt }}-generated
+          path: artifacts/current
+      - name: Independent executable checks and portable Chrome playthrough
+        env:
+          JOB_PATH: ${{ inputs.job }}
+          ATTEMPT: ${{ inputs.attempt }}
+        run: node studio/production/verify.mjs "$JOB_PATH" "$ATTEMPT" artifacts/current
+      - name: Prepare compact visual evidence
+        if: always()
+        run: |
+          rm -rf artifacts/current/portable
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-${{ inputs.attempt }}-verified
+          path: artifacts/current/
+          if-no-files-found: error
+  assess:
+    needs: [generate, verify]
+    if: always() && needs.verify.result == 'success' && needs.generate.outputs.billing_certain == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    outputs:
+      passed: ${{ steps.assess.outputs.passed }}
+      retryable: ${{ steps.assess.outputs.retryable }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-${{ inputs.attempt }}-verified
+          path: artifacts/current
+      - name: Independent visual and playable-outcome review
+        id: assess
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JOB_PATH: ${{ inputs.job }}
+          ATTEMPT: ${{ inputs.attempt }}
+        run: node studio/production/worker.mjs assess "$JOB_PATH" "$ATTEMPT" artifacts/current
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-${{ inputs.attempt }}
+          path: artifacts/current/
+          if-no-files-found: error
