@@ -1,0 +1,38 @@
+{
+  "id": "ICE-COASTAL-JUNGLE-ENV-01",
+  "role": "environment_animator",
+  "target_file": "game/world/parallax.mjs",
+  "allowed_paths": [
+    "game/world/"
+  ],
+  "forbidden_paths": [
+    "game/main.mjs",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/",
+    "game/player/",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Implement the approved coastal-jungle art wave in the ACTUAL game/world/parallax.mjs renderer, following design/production/coastal-jungle-art-01.md. The user says the current graphics are still much too simple. Create a substantial authored original pixel-art change: outdoor Backyard has a Chilean Pacific sunset, peach/coral/gold sky bands, glowing sun and broken ocean reflections, distant coastal ridges, layered dark-emerald jungle canopy, palms/ferns/vines, atmospheric depth and restrained animated stack smoke. Use at least five distinct visual depth bands for this exterior, with deterministic stable geography under camera movement. Hub suggests warm industrial workshop openings onto the same coast; Warehouse remains enclosed; Heat-Hold retains industrial heat/haze. Make the scene attractive at normal mobile scale. Preserve every ADR-0006 public export, all exact existing environmentAt process formulas and validation behavior, foreground protection and reduced motion. drawParallax is already consumed live by industrial-yard.mjs; deliver rendered artwork, not another design-only manifest. No PNG backdrop, new dependency, DOM, timers, random state or collision changes. Retain or improve existing palette/material detail. One complete compact source module, preferably under 26000 UTF-8 bytes; author drawing helpers to avoid repetition.",
+  "acceptance": [
+    "Pass protected studio/acceptance/p2-environment-final.mjs and existing unit/browser checks without editing tests.",
+    "Public BIOMES, environmentAt and drawParallax APIs remain compatible; all four existing scene IDs remain distinct.",
+    "Keep exact process-weather math and invalid-input checks; art changes must not change mission solvability.",
+    "The outdoor renderer visibly depicts sunset over an ocean with coastal ridges and several jungle depth layers, rather than generic repeated industrial boxes.",
+    "Pixel positions are integer-aligned; save/restore balanced; foreground protection and reduced-motion remain correct; drawing is deterministic, bounded and camera-coherent.",
+    "No claims that the conversation reference image has been imported; no writes outside the single target module."
+  ],
+  "required_contracts": [
+    "design/production/coastal-jungle-art-01.md",
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "game/world/industrial-yard.mjs",
+    "studio/acceptance/major-world.mjs",
+    "tests/pass-two-connected.test.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-environment-final.mjs",
+  "max_cost_usd": 1.2,
+  "max_attempts": 1,
+  "seed": 2026111201
+}
