@@ -206,8 +206,8 @@
       "orderId": "ICE-P2-NARRATIVE-01",
       "date": "2026-11-12",
       "reservedUsd": 0.65,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.03568,
+      "status": "settled"
     }
   ]
 }
