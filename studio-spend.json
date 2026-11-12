@@ -240,6 +240,14 @@
       "reservedUsd": 1.2,
       "actualUsd": 0.253921,
       "status": "settled"
+    },
+    {
+      "runId": "43200672399",
+      "orderId": "ICE-COASTAL-JUNGLE-WORLD-01",
+      "date": "2026-11-12",
+      "reservedUsd": 1.2,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
