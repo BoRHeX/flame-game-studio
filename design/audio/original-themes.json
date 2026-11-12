@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "provenance": {
+    "creatorRole": "composer_conductor",
+    "method": "Original MIDI composition authored for this score; no recordings or source melodies used",
+    "source": "original",
+    "license": "CC0-1.0",
+    "date": "2026-11-12"
+  },
+  "themes": {
+    "hub": {
+      "bpm": 82,
+      "stepsPerBar": 16,
+      "bars": 4,
+      "chords": [[48, 51, 55, 62], [44, 48, 51, 55], [46, 50, 53, 57], [43, 47, 50, 53]],
+      "melody": [
+        {"step": 0, "midi": 63, "duration": 4, "velocity": 0.62},
+        {"step": 5, "midi": 67, "duration": 3, "velocity": 0.54},
+        {"step": 9, "midi": 62, "duration": 3, "velocity": 0.49},
+        {"step": 13, "midi": 60, "duration": 3, "velocity": 0.55},
+        {"step": 16, "midi": 63, "duration": 4, "velocity": 0.58},
+        {"step": 21, "midi": 68, "duration": 3, "velocity": 0.51},
+        {"step": 25, "midi": 67, "duration": 3, "velocity": 0.48},
+        {"step": 29, "midi": 63, "duration": 3, "velocity": 0.52},
+        {"step": 32, "midi": 65, "duration": 4, "velocity": 0.59},
+        {"step": 37, "midi": 69, "duration": 3, "velocity": 0.53},
+        {"step": 41, "midi": 65, "duration": 3, "velocity": 0.48},
+        {"step": 45, "midi": 62, "duration": 3, "velocity": 0.52},
+        {"step": 48, "midi": 59, "duration": 4, "velocity": 0.56},
+        {"step": 53, "midi": 62, "duration": 3, "velocity": 0.5},
+        {"step": 57, "midi": 65, "duration": 2, "velocity": 0.47},
+        {"step": 60, "midi": 62, "duration": 4, "velocity": 0.54}
+      ]
+    },
+    "backyard": {
+      "bpm": 164,
+      "stepsPerBar": 16,
+      "bars": 4,
+      "chords": [[50, 53, 57, 60], [46, 50, 53, 57], [48, 52, 55, 59], [45, 49, 52, 55]],
+      "melody": [
+        {"step": 0, "midi": 65, "duration": 2, "velocity": 0.75},
+        {"step": 3, "midi": 69, "duration": 1, "velocity": 0.62},
+        {"step": 5, "midi": 72, "duration": 3, "velocity": 0.71},
+        {"step": 9, "midi": 69, "duration": 2, "velocity": 0.6},
+        {"step": 12, "midi": 65, "duration": 3, "velocity": 0.68},
+        {"step": 16, "midi": 65, "duration": 2, "velocity": 0.69},
+        {"step": 19, "midi": 69, "duration": 1, "velocity": 0.6},
+        {"step": 21, "midi": 74, "duration": 3, "velocity": 0.74},
+        {"step": 25, "midi": 72, "duration": 2, "velocity": 0.59},
+        {"step": 28, "midi": 69, "duration": 3, "velocity": 0.66},
+        {"step": 32, "midi": 67, "duration": 2, "velocity": 0.7},
+        {"step": 35, "midi": 71, "duration": 1, "velocity": 0.59},
+        {"step": 37, "midi": 76, "duration": 3, "velocity": 0.72},
+        {"step": 41, "midi": 74, "duration": 2, "velocity": 0.6},
+        {"step": 44, "midi": 71, "duration": 3, "velocity": 0.64},
+        {"step": 48, "midi": 69, "duration": 2, "velocity": 0.72},
+        {"step": 51, "midi": 73, "duration": 1, "velocity": 0.62},
+        {"step": 53, "midi": 76, "duration": 2, "velocity": 0.7},
+        {"step": 56, "midi": 67, "duration": 2, "velocity": 0.6},
+        {"step": 59, "midi": 64, "duration": 2, "velocity": 0.57},
+        {"step": 62, "midi": 62, "duration": 2, "velocity": 0.68}
+      ]
+    },
+    "warehouse": {
+      "bpm": 170,
+      "stepsPerBar": 16,
+      "bars": 4,
+      "chords": [[40, 47, 50, 55], [41, 48, 52, 57], [45, 52, 55, 59], [47, 51, 54, 57]],
+      "melody": [
+        {"step": 0, "midi": 71, "duration": 3, "velocity": 0.7},
+        {"step": 4, "midi": 67, "duration": 1, "velocity": 0.57},
+        {"step": 6, "midi": 62, "duration": 2, "velocity": 0.68},
+        {"step": 10, "midi": 64, "duration": 1, "velocity": 0.55},
+        {"step": 12, "midi": 67, "duration": 3, "velocity": 0.65},
+        {"step": 16, "midi": 69, "duration": 3, "velocity": 0.69},
+        {"step": 20, "midi": 65, "duration": 1, "velocity": 0.56},
+        {"step": 22, "midi": 60, "duration": 2, "velocity": 0.65},
+        {"step": 26, "midi": 64, "duration": 1, "velocity": 0.54},
+        {"step": 28, "midi": 69, "duration": 3, "velocity": 0.66},
+        {"step": 32, "midi": 71, "duration": 3, "velocity": 0.71},
+        {"step": 36, "midi": 67, "duration": 1, "velocity": 0.57},
+        {"step": 38, "midi": 64, "duration": 2, "velocity": 0.65},
+        {"step": 42, "midi": 72, "duration": 1, "velocity": 0.6},
+        {"step": 44, "midi": 71, "duration": 3, "velocity": 0.67},
+        {"step": 48, "midi": 69, "duration": 3, "velocity": 0.71},
+        {"step": 52, "midi": 66, "duration": 1, "velocity": 0.59},
+        {"step": 54, "midi": 63, "duration": 2, "velocity": 0.68},
+        {"step": 58, "midi": 66, "duration": 1, "velocity": 0.56},
+        {"step": 60, "midi": 71, "duration": 4, "velocity": 0.7}
+      ]
+    },
+    "heat-hold": {
+      "bpm": 158,
+      "stepsPerBar": 16,
+      "bars": 4,
+      "chords": [[41, 48, 53, 56], [49, 53, 56, 60], [46, 50, 53, 57], [48, 52, 55, 58]],
+      "melody": [
+        {"step": 0, "midi": 68, "duration": 1, "velocity": 0.7},
+        {"step": 2, "midi": 72, "duration": 1, "velocity": 0.59},
+        {"step": 4, "midi": 77, "duration": 4, "velocity": 0.75},
+        {"step": 10, "midi": 75, "duration": 2, "velocity": 0.61},
+        {"step": 13, "midi": 72, "duration": 2, "velocity": 0.64},
+        {"step": 16, "midi": 68, "duration": 1, "velocity": 0.68},
+        {"step": 18, "midi": 72, "duration": 1, "velocity": 0.58},
+        {"step": 20, "midi": 77, "duration": 3, "velocity": 0.72},
+        {"step": 24, "midi": 80, "duration": 2, "velocity": 0.68},
+        {"step": 27, "midi": 77, "duration": 2, "velocity": 0.59},
+        {"step": 30, "midi": 72, "duration": 2, "velocity": 0.62},
+        {"step": 32, "midi": 69, "duration": 1, "velocity": 0.71},
+        {"step": 34, "midi": 74, "duration": 1, "velocity": 0.6},
+        {"step": 36, "midi": 77, "duration": 4, "velocity": 0.74},
+        {"step": 42, "midi": 74, "duration": 2, "velocity": 0.61},
+        {"step": 45, "midi": 69, "duration": 2, "velocity": 0.64},
+        {"step": 48, "midi": 70, "duration": 1, "velocity": 0.7},
+        {"step": 50, "midi": 76, "duration": 1, "velocity": 0.6},
+        {"step": 52, "midi": 79, "duration": 3, "velocity": 0.73},
+        {"step": 56, "midi": 76, "duration": 2, "velocity": 0.62},
+        {"step": 59, "midi": 70, "duration": 2, "velocity": 0.6},
+        {"step": 62, "midi": 72, "duration": 2, "velocity": 0.66}
+      ]
+    }
+  }
+}
