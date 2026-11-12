@@ -256,6 +256,14 @@
       "reservedUsd": 2,
       "actualUsd": 0.314404,
       "status": "settled"
+    },
+    {
+      "runId": "43217127850",
+      "orderId": "ICE-LIVING-PLANT-01",
+      "date": "2026-11-12",
+      "reservedUsd": 2,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
