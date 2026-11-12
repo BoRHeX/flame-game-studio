@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "references": [
+    {"file":"coastal-jungle-target.jpg","source":"Approved generated composition from the user's Flame Game design conversation","source_library_file_id":"libfile_3b77ed19c7d88191bd5645304f10d44c","purpose":"Visual direction, with the user's correction that the chamber should be enclosed","derivative":"Resized JPEG for model input; original reference unchanged"},
+    {"file":"player-feedback-20261112.jpg","source":"User-provided gameplay screenshot 1794481377368.jpeg, 2026-11-12","purpose":"Evidence of repeated floor layout, tiny characters and obstructive operator dialogue","derivative":"Resized JPEG for model input; original screenshot unchanged"}
+  ]
+}

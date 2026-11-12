@@ -7,6 +7,7 @@ import {tmpdir} from 'node:os';
 import {spawn,spawnSync} from 'node:child_process';
 import {once} from 'node:events';
 const root=resolve(process.cwd());
+const productionMode=process.env.ICE_PRODUCTION_MODE==='true';
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8'};
 const web=http.createServer(async(req,res)=>{
  try{
@@ -81,6 +82,8 @@ async function main(){
      if(m.error)fail(Error('CDP '+JSON.stringify(m.error)));else ok(m.result);
    }else if(m.method==='Runtime.exceptionThrown'){
      exceptions.push(m.params?.exceptionDetails?.text||'Runtime.exceptionThrown');
+   }else if(m.method==='Network.responseReceived'){
+     const r=m.params?.response;if(r&&r.status>=400&&r.url.startsWith('http://127.0.0.1:')&&!r.url.endsWith('/favicon.ico'))exceptions.push('Runtime asset HTTP '+r.status+': '+r.url);
    }
  });
  const command=(method,params={})=>new Promise((ok,fail)=>{
@@ -92,6 +95,10 @@ async function main(){
    if(r.exceptionDetails)throw Error('Page JS exception: '+r.exceptionDetails.text);
    return r.result?.value;
  };
+ const captureJpeg=async()=>{
+   const v=await evalJs('({w:innerWidth,h:innerHeight,dpr:devicePixelRatio})');
+   return command('Page.captureScreenshot',{format:'jpeg',quality:72,captureBeyondViewport:false,clip:{x:0,y:0,width:v.w,height:v.h,scale:Math.min(1,640/(Math.max(v.w,v.h)*v.dpr))}});
+ };
  const center=selector=>evalJs('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()');
  const tap=async selector=>{
    const {x,y}=await center(selector);
@@ -100,6 +107,7 @@ async function main(){
    await delay(170);
  };
  await command('Runtime.enable');
+ await command('Network.enable');
  await command('Page.enable');
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:3,mobile:true});
  await command('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
@@ -108,7 +116,7 @@ async function main(){
  for(let i=0;i<60;i++){await delay(100);if(await evalJs('Boolean(window.ICE_DEBUG)')){boot=true;break;}}
  if(!boot)throw Error('Game JS did not initialize');
  await tap('#tutorial-ok');
- const majorBuild=await evalJs("document.querySelector('meta[name=\"ice-build\"]')?.content==='20261111-major-pass-one-01'");
+ const majorBuild=productionMode||await evalJs("document.querySelector('meta[name=\"ice-build\"]')?.content==='20261111-major-pass-one-01'");
  if(majorBuild){
    const snapshot=()=>evalJs('window.ICE_DEBUG.snapshot()');
    let state=await snapshot();
@@ -177,6 +185,8 @@ async function main(){
    if(climbed<250||state.cameraY>=initialCamera-20)throw Error('Vertical camera did not follow exploration');
    const worldShot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
    await mkdir('artifacts',{recursive:true});await writeFile('artifacts/mobile-world.png',Buffer.from(worldShot.data,'base64'));
+   const worldJpeg=await captureJpeg();
+   await writeFile('artifacts/mobile-world.jpg',Buffer.from(worldJpeg.data,'base64'));
    console.log('PASS MAJOR: actual held-touch walking, edge jump/landing, ladder climb, vertical camera, portrait layout and world screenshot');
    // Start a clean real UI session for the established mission path; never teleport test state.
    await command('Page.reload',{ignoreCache:true});
@@ -234,7 +244,7 @@ async function main(){
 
  // Pass Two release route: physical controls only; debug snapshots and authored
  // geometry are read-only observations, never teleports or direct solver writes.
- if(await evalJs("document.querySelector('meta[name=\"ice-release\"]')?.content==='pass-two-operator-02'")){
+ if(productionMode||await evalJs("document.querySelector('meta[name=\"ice-release\"]')?.content==='pass-two-operator-02'")){
   const snapshot=()=>evalJs('window.ICE_DEBUG.snapshot()');
   const bounds=selector=>evalJs('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};})()');
   const hold=async(action,ms)=>{
@@ -253,21 +263,34 @@ async function main(){
    const scene=await evalJs("import('./world/industrial-yard.mjs').then(m=>m.SCENES[window.ICE_DEBUG.snapshot().sceneId])");
    const station=scene.interactions.find(i=>i.id===id);if(!station)throw Error('Missing physical station '+id);
    const floor=scene.platforms.reduce((a,b)=>Math.abs(a.y-station.y-32)<Math.abs(b.y-station.y-32)?a:b).y;
-   for(let n=0;n<5;n++){
-    const state=await snapshot(),feet=state.playerY+52;if(Math.abs(feet-floor)<.2)break;
-    const up=feet>floor;
-    const ladder=scene.ladders.find(l=>up?Math.abs(l.y+l.h-feet)<12:Math.abs(l.y-feet)<12);
-    if(!ladder)throw Error('No physical ladder route to '+id+': '+JSON.stringify(state));
-    await walkTo(ladder.x+ladder.w/2);
-    const target=up?ladder.y:ladder.y+ladder.h;
-    for(let j=0;j<18;j++){const current=await snapshot();if(Math.abs(current.playerY+52-target)<.2)break;await hold(up?'up':'down',350);}
-    const reached=await snapshot();if(Math.abs(reached.playerY+52-target)>1)throw Error('Climb route failed '+id+': '+JSON.stringify(reached));
-    await hold('right',150);
+   const levels=[...new Set(scene.platforms.map(p=>p.y))],edges=new Map(levels.map(y=>[y,[]]));
+   const nearest=y=>levels.reduce((a,b)=>Math.abs(a-y)<Math.abs(b-y)?a:b);
+   for(const ladder of scene.ladders){const bottom=nearest(ladder.y+ladder.h),top=nearest(ladder.y);
+    edges.get(bottom).push({to:top,kind:'ladder',object:ladder,up:true});edges.get(top).push({to:bottom,kind:'ladder',object:ladder,up:false});}
+   for(const stair of scene.stairs??[]){const bottom=nearest(stair.y+stair.h),top=nearest(stair.y);
+    edges.get(bottom).push({to:top,kind:'stairs',object:stair,up:true});edges.get(top).push({to:bottom,kind:'stairs',object:stair,up:false});}
+   const state0=await snapshot(),start=nearest(state0.playerY+52),seen=new Set([start]),queue=[{at:start,path:[]}];let route=null;
+   while(queue.length){const item=queue.shift();if(item.at===floor){route=item.path;break;}
+    for(const edge of edges.get(item.at)??[])if(!seen.has(edge.to)){seen.add(edge.to);queue.push({at:edge.to,path:[...item.path,edge]});}}
+   if(!route)throw Error('No physical traversal route to '+id);
+   for(const edge of route){
+    if(edge.kind==='ladder'){
+     const ladder=edge.object;await walkTo(ladder.x+ladder.w/2);
+     for(let j=0;j<32;j++){const current=await snapshot();if(Math.abs(current.playerY+52-edge.to)<1)break;await hold(edge.up?'up':'down',300);}
+     if(Math.abs((await snapshot()).playerY+52-edge.to)>3)throw Error('Ladder route failed '+id);
+     await hold('right',150);
+    }else{
+     const stair=edge.object,right=stair.direction!=='left';
+     const entry=edge.up?(right?stair.x-16:stair.x+stair.w+16):(right?stair.x+stair.w+16:stair.x-16);
+     const exit=edge.up?(right?stair.x+stair.w+16:stair.x-16):(right?stair.x-16:stair.x+stair.w+16);
+     await walkTo(entry);await walkTo(exit);
+     if(Math.abs((await snapshot()).playerY+52-edge.to)>20)throw Error('Walking staircase route failed '+id);
+    }
    }
    await walkTo(station.x);const state=await snapshot();
    if(Math.hypot(station.x-state.playerX-14,station.y-state.playerY-26)>112)throw Error('Station remains out of actual physical reach '+id);
   };
-  const screenshot=async name=>{const shot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile('artifacts/'+name,Buffer.from(shot.data,'base64'));};
+  const screenshot=async name=>{const shot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile('artifacts/'+name,Buffer.from(shot.data,'base64'));const jpg=await captureJpeg();await writeFile('artifacts/'+name.replace(/\.png$/,'.jpg'),Buffer.from(jpg.data,'base64'));};
   await tap('#reset');await tap('#tutorial-ok');
   if((await snapshot()).controls==='joystick')await tap('#controls-mode');
   // Pause must stop BOTH deadlines and cash, rather than just hiding controls.
@@ -277,6 +300,7 @@ async function main(){
   const results=[];
   for(const id of ['backyard','warehouse','heat-hold']){
    await tap('[data-job="'+id+'"]');let state=await snapshot();if(state.job!==id||state.stage!=='mission')throw Error('Contract did not start '+id);
+   if(productionMode)await screenshot('production-'+id+'.png');
    if(!state.kit?.allTools)throw Error('No free calibrated equipment preset');
    await tap('#spark');await tap('#observe');await delay(200);await tap('#inspection-close');
    if(!(await snapshot()).contract?.inspected)throw Error('Actual observation did not diagnose '+id);
@@ -299,6 +323,7 @@ async function main(){
     if((await snapshot()).solver.devices.draft<.70)throw Error('Repaired damper did not regain travel');
     await tap('#device-close');await routeTo('site-operator');await tap('#interact');
     if(await evalJs("document.querySelector('#operator-panel').hidden"))throw Error('Physical operator panel did not open');
+    if(productionMode)await screenshot('production-operator.png');
     await tap('#operator-assist');state=await snapshot();
     if(state.operatorConsults<1||state.story.choice!=='assisted'||Math.abs(state.solver.devices.draft-.72)>.001)throw Error('Operator did not apply local authorized assistance');
     await screenshot('mobile-warehouse.png');

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "source": "https://platform.openai.com/pricing",
-  "verified_date": "2026-11-11",
+  "source": "https://developers.openai.com/api/docs/pricing",
+  "verified_date": "2026-11-12",
   "currency": "USD",
   "mode": "standard",
   "models": {

@@ -1,4 +1,8 @@
-# I.C.E. multi-department production studio V2
+# I.C.E. multi-department production studio
+
+The active default is [one brief to a playable preview](production/README.md), accepted in ADR-0007. Production jobs use the full roster as expertise, coordinate product-wide changes, automatically repair from executable/visual feedback and publish accepted previews. The scoped V2 flow below is retained as history and for deliberate small repairs; its one-file ownership/manual-merge limits do not apply to production jobs.
+
+## Historical scoped V2 worker
 
 **25 registered and individually configured specialist agents**, one central Producer, independent QA and Integrator roles, with **four dedicated AI Orchestra specialists**. Each agent is a role-specific model session on demand, not a permanently running server.
 

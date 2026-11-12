@@ -1,3 +1,7 @@
+# Legacy scoped worker
+
+New game-production briefs use [the autonomous production workflow](../production/README.md). This module-level runner remains available for small repairs; its draft-PR endpoint and file ownership are not the default production authorization.
+
 # API-backed autonomous production worker
 
 Uses the OpenAI Responses API, canonical memory, approved scoped work orders and relevant source. Three bounded model sessions per authorized run: Producer/Planner, Specialist Builder, Independent AI Reviewer.

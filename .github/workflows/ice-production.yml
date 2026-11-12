@@ -1,0 +1,154 @@
+name: I.C.E. production - brief to playable preview
+on:
+  push:
+    branches: [main]
+    paths: ['studio/production/requests/*.json']
+permissions:
+  contents: read
+concurrency:
+  group: ice-paid-studio-reservations
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository == 'BoRHeX/flame-game-studio' && vars.ICE_STUDIO_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      job: ${{ steps.prepare.outputs.job }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: prepare
+        run: node studio/production/controller.mjs prepare
+  reserve:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reserve one allowance for the complete production job
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ICE_STUDIO_ENABLED: ${{ vars.ICE_STUDIO_ENABLED }}
+          JOB_PATH: ${{ needs.prepare.outputs.job }}
+        run: node studio/production/controller.mjs reserve "$JOB_PATH"
+  attempt0:
+    needs: [prepare, reserve]
+    uses: ./.github/workflows/ice-production-attempt.yml
+    with:
+      job: ${{ needs.prepare.outputs.job }}
+      attempt: 0
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  attempt1:
+    needs: [prepare, attempt0]
+    if: needs.attempt0.outputs.retryable == 'true'
+    uses: ./.github/workflows/ice-production-attempt.yml
+    with:
+      job: ${{ needs.prepare.outputs.job }}
+      attempt: 1
+      previous: production-0
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  attempt2:
+    needs: [prepare, attempt1]
+    if: needs.attempt1.outputs.retryable == 'true'
+    uses: ./.github/workflows/ice-production-attempt.yml
+    with:
+      job: ${{ needs.prepare.outputs.job }}
+      attempt: 2
+      previous: production-1
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  reconcile:
+    needs: [reserve, attempt0, attempt1, attempt2]
+    if: always() && needs.reserve.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: production-*
+          path: artifacts/attempts
+      - name: Settle cumulative measured usage across all attempts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node studio/production/controller.mjs settle artifacts/attempts
+  publish:
+    needs: [prepare, reconcile, attempt0, attempt1, attempt2]
+    if: always() && needs.reconcile.result == 'success' && (needs.attempt0.outputs.passed == 'true' || needs.attempt1.outputs.passed == 'true' || needs.attempt2.outputs.passed == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: production-*
+          path: artifacts/attempts
+      - name: Promote only the exact verified product package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_PATH: ${{ needs.prepare.outputs.job }}
+        run: node studio/production/controller.mjs publish "$JOB_PATH" artifacts/attempts
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: artifacts/release/site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-release-summary
+          path: artifacts/release/production-summary.json
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: ice-playtest
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+  result:
+    needs: [prepare, reconcile, publish, deploy, attempt0, attempt1, attempt2]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report one production-job outcome
+        env:
+          DEPLOYED: ${{ needs.deploy.result }}
+          ROUND0: ${{ needs.attempt0.outputs.passed }}
+          ROUND1: ${{ needs.attempt1.outputs.passed }}
+          ROUND2: ${{ needs.attempt2.outputs.passed }}
+        run: |
+          if [ "$DEPLOYED" = success ]; then
+            echo 'Production job completed: integrated, tested, visually reviewed and published.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Production job stopped with preserved candidates and test/review feedback. No failed candidate was published.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
