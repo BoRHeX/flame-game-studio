@@ -254,8 +254,8 @@
       "orderId": "ICE-LIVING-PLANT-01",
       "date": "2026-11-12",
       "reservedUsd": 2,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.314404,
+      "status": "settled"
     }
   ]
 }
