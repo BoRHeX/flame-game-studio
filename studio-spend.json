@@ -184,6 +184,14 @@
       "reservedUsd": 1,
       "actualUsd": 0.088819,
       "status": "settled"
+    },
+    {
+      "runId": "43134117750",
+      "orderId": "ICE-P2-CHARACTER-02",
+      "date": "2026-11-12",
+      "reservedUsd": 0.65,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
