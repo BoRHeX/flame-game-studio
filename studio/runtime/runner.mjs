@@ -135,9 +135,10 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
     ],missing_tests:[]};
    }else{
     review=await callStructured({key,model:'gpt-6-luna',step:revision?'final_reviewer':'independent_reviewer',
-     instructions:brief.qaProfile.system_instructions+' Perform PRE-EXECUTION SOURCE REVIEW, not release approval. This credentialed generation job must never execute generated code. Unit, browser and trusted work-order acceptance tests run AFTER your source approval in the separate no-secret verification job and must pass before any PR is created. Assess the code and test coverage now; do not reject merely because those downstream tests have not run, and do not demand that the specialist edit protected acceptance files. Existing independent acceptance checks can cover a change without worker-authored tests. Reject actual code defects, uncovered behavior, invalid imports, incompatible contracts, fabricated assets or out-of-scope changes. Approval means eligible for independent execution checks, never approved for release.',
+     instructions:brief.qaProfile.system_instructions+' Perform PRE-EXECUTION SOURCE REVIEW, not release approval. This credentialed generation job must never execute generated code. Unit, browser and trusted work-order acceptance tests run AFTER your source approval in the separate no-secret verification job and must pass before any PR is created. Assess the code and test coverage now; do not reject merely because those downstream tests have not run, and do not demand that the specialist edit protected acceptance files. Existing independent acceptance checks can cover a change without worker-authored tests. Respect taskScope: a single-file department module must implement the accepted API and its own complete behavior; connecting read-only consumers belongs to the integrator. Do not reject a correct module solely because main.mjs has not yet imported it. Record downstream consumer/test gaps as integration requirements; they remain mandatory before release. Reject actual code defects, uncovered module behavior, invalid imports, incompatible contracts, fabricated assets or out-of-scope changes. Approval means eligible for independent execution checks, never approved for release.',
      input:JSON.stringify({goal:order.goal,acceptance:order.acceptance,canon:brief.roleBrief.canon,
        execution:brief.execution,activeDecisions:brief.activeDecisions,
+       taskScope:{target_file:order.target_file??null,allowed_paths:order.allowed_paths,stage:order.target_file?'department_module':'integration'},
        verification:{stage:'pre_execution_source_review',testsExecuted:false,
         pendingChecks:['unit suite','mobile Chrome smoke',...(order.verification_script?[order.verification_script]:[])],
         requiredBefore:'draft PR creation',generatedCodeExecutionAllowed:false},
@@ -215,4 +216,5 @@ export async function runSession(orderPath,outPath,{fetchImpl=fetch,reportPath='
 if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
  await runSession(process.argv[2],process.argv[3]??'artifacts/ice-proposal.json');
 }
+
 
