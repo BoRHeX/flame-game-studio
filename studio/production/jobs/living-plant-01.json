@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "ICE-LIVING-PLANT-01",
-  "title": "The Living Plant — autonomous major game build",
+  "title": "The Living Plant \u2014 autonomous major game build",
   "goal": "Evolve I.C.E. substantially toward the approved coastal-jungle industrial pixel-art reference. The player says the current game barely changed: four repeated horizontal floors, tiny characters, flat rectangular machinery and an oversized operator dialogue. Rebuild the hub and at least one job site as distinct authored industrial locations with intermediate platforms, functional stairs, railings, shaped furnace/stack/pipework, substantial original pixel art, environmental depth and readable animated PPE people. Make the flame-first industrial adventure attractive to watch and play. Give the studio creative authority over layouts, scene coordinates, artwork, animation, UI and coordinated implementation; this is a major playable build, not preservation of the existing composition. A closed combustion chamber should glow through ports, with causally appropriate smoke and operator reactions. Use the actual target image as art direction and the player screenshot as evidence of what is inadequate. Improve the operator interaction so it conveys useful information with much less obstruction. Coordinate related changes across the entire product, integrate them, correct failures and publish a verified preview through this single production job.",
   "acceptance": [
     "The hub and at least one contract site have meaningfully different authored geography from the baseline. They include intermediate platforms and at least one functional walking staircase with actual collision support; not just repainted rails or fake stairs.",
@@ -15,7 +15,14 @@
     "assets/reference/coastal-jungle-target.jpg",
     "assets/reference/player-feedback-20261112.jpg"
   ],
-  "quality": {"min_changed_scenes": 2, "physical_stairs": true},
+  "quality": {
+    "min_changed_scenes": 2,
+    "physical_stairs": true
+  },
   "max_cost_usd": 2,
-  "max_attempts": 3
+  "max_attempts": 6,
+  "seed": {
+    "run_id": "43212381372",
+    "artifact": "production-2"
+  }
 }

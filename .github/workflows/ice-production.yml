@@ -5,6 +5,7 @@ on:
     paths: ['studio/production/requests/*.json']
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: ice-paid-studio-reservations
   cancel-in-progress: false
@@ -14,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       job: ${{ steps.prepare.outputs.job }}
+      seed_run: ${{ steps.prepare.outputs.seed_run }}
+      seed_artifact: ${{ steps.prepare.outputs.seed_artifact }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +51,8 @@ jobs:
     with:
       job: ${{ needs.prepare.outputs.job }}
       attempt: 0
+      seed_run: ${{ needs.prepare.outputs.seed_run }}
+      seed_artifact: ${{ needs.prepare.outputs.seed_artifact }}
     secrets:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   attempt1:
@@ -70,8 +75,38 @@ jobs:
       previous: production-1
     secrets:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  attempt3:
+    needs: [prepare, attempt2]
+    if: needs.attempt2.outputs.retryable == 'true'
+    uses: ./.github/workflows/ice-production-attempt.yml
+    with:
+      job: ${{ needs.prepare.outputs.job }}
+      attempt: 3
+      previous: production-2
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  attempt4:
+    needs: [prepare, attempt3]
+    if: needs.attempt3.outputs.retryable == 'true'
+    uses: ./.github/workflows/ice-production-attempt.yml
+    with:
+      job: ${{ needs.prepare.outputs.job }}
+      attempt: 4
+      previous: production-3
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  attempt5:
+    needs: [prepare, attempt4]
+    if: needs.attempt4.outputs.retryable == 'true'
+    uses: ./.github/workflows/ice-production-attempt.yml
+    with:
+      job: ${{ needs.prepare.outputs.job }}
+      attempt: 5
+      previous: production-4
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   reconcile:
-    needs: [reserve, attempt0, attempt1, attempt2]
+    needs: [reserve, attempt0, attempt1, attempt2, attempt3, attempt4, attempt5]
     if: always() && needs.reserve.result == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -92,8 +127,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node studio/production/controller.mjs settle artifacts/attempts
   publish:
-    needs: [prepare, reconcile, attempt0, attempt1, attempt2]
-    if: always() && needs.reconcile.result == 'success' && (needs.attempt0.outputs.passed == 'true' || needs.attempt1.outputs.passed == 'true' || needs.attempt2.outputs.passed == 'true')
+    needs: [prepare, reconcile, attempt0, attempt1, attempt2, attempt3, attempt4, attempt5]
+    if: always() && needs.reconcile.result == 'success' && (needs.attempt0.outputs.passed == 'true' || needs.attempt1.outputs.passed == 'true' || needs.attempt2.outputs.passed == 'true' || needs.attempt3.outputs.passed == 'true' || needs.attempt4.outputs.passed == 'true' || needs.attempt5.outputs.passed == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -135,7 +170,7 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
   result:
-    needs: [prepare, reconcile, publish, deploy, attempt0, attempt1, attempt2]
+    needs: [prepare, reconcile, publish, deploy, attempt0, attempt1, attempt2, attempt3, attempt4, attempt5]
     if: always()
     runs-on: ubuntu-latest
     steps:
