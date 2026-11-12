@@ -15,7 +15,7 @@ export const JOBS=Object.freeze([
   },
   {
     id:'heat-hold',symbol:'◉',chamber:'heat-hold',
-    burner:{airflowFactor:0.90,draftFactor:1.05,heatLoss:0.24},
+    burner:{airflowFactor:0.90,draftFactor:1.05,heatLoss:0.24,mainFuel:0.40},
     initialCash:150,payout:125,deadline:185,
     objective:{type:'temperature-hold',seconds:8,minTemp:0.62,maxTemp:1.25,maxSoot:0.18,minStability:0.53},
     clue:['ϟ','◉','◎'],label:'Heat-hold contract'

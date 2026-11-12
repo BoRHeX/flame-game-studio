@@ -176,7 +176,7 @@ function syncFullscreen(){
   const active=document.fullscreenElement===game;
   $('fullscreen').setAttribute('aria-pressed',String(active));
   $('fullscreen').setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');
-  $('fullscreen').textContent=active?'⤡':'⛶';
+  $('fullscreen').innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="'+(active?'M3 8h5V3m13 5h-5V3M3 16h5v5m13-5h-5v5':'M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5')+'"/></svg>';
   resize();
 }
 $('fullscreen').addEventListener('click',async()=>{

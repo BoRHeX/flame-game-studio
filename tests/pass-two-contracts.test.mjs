@@ -49,3 +49,8 @@ test('environment effects affect real airflow without accumulating or changing d
  for(let i=0;i<200;i++)Object.assign(b.definition,s.environment(base,effect,0));assert.deepEqual(b.devices,d);assert.ok(b.definition.airflowFactor>.5);
  s.inspect();s.repair('secure-intake');Object.assign(b.definition,s.environment(base,effect,0));assert.ok(b.step(.1).airFlow>a);
 });
+test('Heat-Hold starting tune allows a fair physical trip to its controls before overheat',()=>{
+ const job=JOBS.find(j=>j.id==='heat-hold'),b=new BurnerSolver(job.burner),s=new ContractSession(job.id),base={...b.definition};b.ignite();
+ for(let n=0;n<1800;n++){Object.assign(b.definition,s.environment(base,environmentAt(job.id,b.time),b.time));b.step(1/60);}
+ assert.equal(b.failed,false);assert.ok(b.temperature<1.58);assert.equal(s.adjusted,false,'safe starting tune does not bypass physical work');
+});

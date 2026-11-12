@@ -303,7 +303,7 @@ async function main(){
     if(state.operatorConsults<1||state.story.choice!=='assisted'||Math.abs(state.solver.devices.draft-.72)>.001)throw Error('Operator did not apply local authorized assistance');
     await screenshot('mobile-warehouse.png');
    }else{
-    await routeTo('mainFuel');await tap('#interact');const r=await bounds('#device-wheel'),angle=-.425,R=70;
+    await routeTo('mainFuel');await tap('#interact');const r=await bounds('#device-wheel'),angle=-.05*Math.PI*1.5,R=70;
     const px=a=>({x:r.x+r.w*(130+Math.cos(a)*R)/260,y:r.y+r.h*(110+Math.sin(a)*R)/220,id:1});
     await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[px(0)]});await delay(50);
     await command('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[px(angle)]});await delay(50);
@@ -317,9 +317,18 @@ async function main(){
    state=await until(s=>s.stage==='won'||s.stage==='failed','No complete outcome for '+id,140);
    if(state.stage!=='won')throw Error('Real no-purchase contract route failed '+id+': '+JSON.stringify(state));
    if(!state.contract.verified||state.objective<1)throw Error('Contract skipped its physical verification/hold');
-   results.push({id,missionTime:state.missionTime,funds:state.funds,contract:state.contract});await tap('#return');
+   results.push({id,missionTime:state.missionTime,funds:state.funds,contract:state.contract});console.log('PASS PASS-TWO CONTRACT: '+id+' physical diagnosis/repair/adjust/verify/hold, payout and no purchases');await tap('#return');
   }
   if((await snapshot()).completed.length!==3)throw Error('Completed contracts did not persist');
+  // Explicit storage-fault input in the disposable browser profile. Recovery
+  // itself uses the actual slot UI; no live game state or solver is mutated.
+  await tap('#save-menu');await tap('[data-save-slot="2"]');await tap('[data-save-slot="2"]');await tap('#save-close');
+  await evalJs("localStorage.setItem('ice.save.v1.slot.2','{corrupt')");
+  await tap('#save-menu');
+  if(!(await evalJs("document.querySelector('#slot-2 output').textContent.includes('↶')")))throw Error('Corrupt slot did not expose backup recovery');
+  await tap('[data-load-slot="2"]');
+  if((await snapshot()).completed.length!==3)throw Error('Browser backup recovery lost earned progression');
+  console.log('PASS PASS-TWO RECOVERY: actual slot UI restores semantic backup after injected storage corruption');
   // Portrait, landscape and foldable layouts: no inaccessible tiny controls.
   for(const [width,height] of [[844,390],[768,1024],[390,844]]){
    await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:2,mobile:true});await delay(150);
@@ -331,7 +340,7 @@ async function main(){
   // Genuine touch cancellation must neutralize the analog stick.
   if((await snapshot()).controls!=='joystick')await tap('#controls-mode');const jr=await bounds('#joystick');
   await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:jr.x+jr.w*.8,y:jr.y+jr.h*.5,id:1}]});await delay(100);
-  await command('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});await delay(70);state=await snapshot();
+  await command('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});await delay(70);const state=await snapshot();
   if(state.stickX!==0||state.stickY!==0)throw Error('Joystick stuck after actual touch cancellation');
   if(state.audio.voices>24)throw Error('Audio voice bound exceeded');
   await writeFile('artifacts/pass-two-routes.json',JSON.stringify({results,completed:state.completed,story:state.story,audio:state.audio},null,2));
