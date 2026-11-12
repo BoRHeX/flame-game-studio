@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {productPath,applyEdits,validateJob,validateCandidate,packageHash,selectJob,save,json,pickAttempt,contextFiles} from '../studio/production/protocol.mjs';
-import {generate,assess,ask,restoreBudget} from '../studio/production/worker.mjs';
+import {generate,assess,ask,restoreBudget,implementationTeam} from '../studio/production/worker.mjs';
 import {publishVerified} from '../studio/production/controller.mjs';
 import {verify} from '../studio/production/verify.mjs';
 const job={version:1,id:'ICE-AUTONOMY-TEST',goal:'Build a connected, visibly different playable game production feature.',acceptance:['A coherent result'],max_cost_usd:2,max_attempts:3,references:[],quality:{}};
@@ -51,24 +51,37 @@ test('one brief drives shared implementation, real failure feedback, repair and 
   writeFileSync('design/game-bible.md','Flame causality and a playable industrial game.');writeFileSync('game/index.html','<head></head>');writeFileSync('game/a.mjs','export const n=1;');save('job.json',job);
   Object.assign(process.env,{OPENAI_API_KEY:'test-key',GITHUB_RUN_ID:'123',GITHUB_SHA:'abc',ICE_STUDIO_ENABLED:'true'});
   const seen=[],model=fakeModel([
-   {vision:'Connected production',team:[{role:'environment_animator',goal:'Build the world'}],acceptance:['Connected consumers']},
+   {vision:'Connected production',team:[{role:'environment_animator',goal:'Build the world'},{role:'pixel_art_director',goal:'Author assets'}],acceptance:['Connected consumers']},
    {summary:'Authored module',edits:[{path:'game/a.mjs',operation:'replace',find:'n=1',content:'n=2'}],handoff:'n is now 2'},
+   {summary:'Authored asset',edits:[{path:'game/assets/operator.svg',operation:'write',find:'',content:'<svg xmlns="http://www.w3.org/2000/svg"/>'}],handoff:'Native product art'},
    {summary:'Connected consumer',edits:[{path:'game/b.mjs',operation:'write',find:'',content:'import {n} from "./a.mjs";export const value=n*2;'}],handoff:'Complete connected game code'}],seen);
   const p=await generate('job.json',0,'out',null,{fetchImpl:model});
-  assert.equal(p.handoffs.length,2);assert.ok(seen[2].input.includes('n=2'),'integrator sees the actual prior contribution');
+  assert.equal(p.handoffs.length,3);assert.ok(seen[3].input.includes('n=2'),'integrator sees the actual prior contribution');
   assert.ok(readFileSync('game/a.mjs','utf8').includes('n=1'),'credentialed worker has not executed/applied its code');
   save('out/verification.json',{passed:false,failures:['Real test: expected value 6, got 4'],checks:[]});
   const failed=await assess('job.json',0,'out',{fetchImpl:()=>{throw Error('No vision call on failing executable checks');}});
   assert.equal(failed.passed,false);assert.equal(failed.retryable,true);
-  const repaired=await generate('job.json',1,'repaired','out',{fetchImpl:fakeModel([{summary:'Fixed coherent consumer',edits:[{path:'game/b.mjs',operation:'replace',find:'n*2',content:'n*3'}],handoff:'Actual failure fixed'}])});
+  await generate('job.json',1,'bad-edit','out',{fetchImpl:fakeModel([
+   {vision:'Repair failure',team:[{role:'gameplay_engineer',goal:'Repair consumer'}],acceptance:['Value 6']},
+   {summary:'Invalid search anchor',edits:[{path:'game/b.mjs',operation:'replace',find:'absent source',content:'n*3'}],handoff:'An invalid edit'}
+  ])});
+  assert.deepEqual(json('bad-edit/candidate.json').files,p.files,'a rejected model edit cannot discard the inherited candidate');
+  assert.equal(json('bad-edit/spend.json').billingComplete,true);
+  save('bad-edit/verification.json',{passed:false,failures:['The replacement anchor did not match'],checks:[]});
+  await assess('job.json',1,'bad-edit',{fetchImpl:()=>{throw Error('No visual review for failed checks');}});
+  const repaired=await generate('job.json',2,'repaired','bad-edit',{fetchImpl:fakeModel([
+   {vision:'Repair actual failure',team:[{role:'gameplay_engineer',goal:'Fix the failing consumer'}],acceptance:['Value 6']},
+   {summary:'Fixed coherent consumer',edits:[{path:'game/b.mjs',operation:'replace',find:'n*2',content:'n*3'}],handoff:'Actual failure fixed'},
+   {summary:'Finished integration',edits:[{path:'game/index.html',operation:'write',find:'',content:'<head><title>Integrated game</title></head>'}],handoff:'Complete integrated result'}
+  ])});
   const current=new Map([['game/a.mjs','export const n=1;']]);for(const f of repaired.files)current.set(f.path,f.content);
   for(const [path,content] of current){mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,content);}
   assert.equal(execFileSync(process.execPath,['--input-type=module','-e','import {value} from "./game/b.mjs";console.log(value)'],{encoding:'utf8'}).trim(),'6');
   save('repaired/verification.json',{passed:true,packageHash:packageHash(repaired),checks:[{name:'actual execution',passed:true}],failures:[]});
-  const missing=await assess('job.json',1,'repaired',{fetchImpl:()=>{throw Error('Cannot review absent images');}});
+  const missing=await assess('job.json',2,'repaired',{fetchImpl:()=>{throw Error('Cannot review absent images');}});
   assert.equal(missing.passed,false);assert.match(missing.error,/visual evidence is missing/);
   mkdirSync('repaired/screens');for(const name of ['mobile-world.jpg','production-backyard.jpg'])writeFileSync('repaired/screens/'+name,Buffer.from([255,216,255,217,0]));
-  const accepted=await assess('job.json',1,'repaired',{fetchImpl:fakeModel([{approved:true,visible_progress:true,findings:['Verified substantial result'],repair_brief:''}])});
+  const accepted=await assess('job.json',2,'repaired',{fetchImpl:fakeModel([{approved:true,visible_progress:true,findings:['Verified substantial result'],repair_brief:''}])});
   assert.equal(accepted.passed,true);assert.ok(json('repaired/spend.json').modelAudit.length>json('out/spend.json').modelAudit.length,'all attempts share cumulative usage');
   assert.equal(pickAttempt(['out','repaired'],'123').dir,'repaired');
  }finally{
@@ -100,6 +113,41 @@ test('publisher promotes only the tested package and rejects stale or forged evi
 test('unknown model usage cannot silently create a fresh allowance',()=>{
  assert.throws(()=>restoreBudget(2,{billingComplete:false,modelAudit:[],costUsd:0}),/unknown/);
  assert.throws(()=>restoreBudget(2,{billingComplete:true,modelAudit:[],costUsd:1}),/spend report/);
+});
+
+test('visual repair uses complementary implementation departments, then integration',()=>{
+ const team=implementationTeam({team:[{role:'environment_animator',goal:'Redesign geography'}]});
+ assert.deepEqual(team.map(x=>x.role),['environment_animator','pixel_art_director','integrator']);
+ assert.ok(!team.some(x=>x.goal.includes('one file')));
+});
+
+test('continuation carries forward candidate work without replaying billed calls or overwriting a changed base',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'ice-seed-')),cwd=process.cwd();
+ const before={key:process.env.OPENAI_API_KEY,run:process.env.GITHUB_RUN_ID,sha:process.env.GITHUB_SHA,enabled:process.env.ICE_STUDIO_ENABLED};
+ try{
+  process.chdir(root);mkdirSync('game');mkdirSync('design');writeFileSync('game/a.mjs','export const n=1;');writeFileSync('game/index.html','<head></head>');writeFileSync('design/game-bible.md','A playable causal game.');
+  const git=args=>execFileSync('git',args,{encoding:'utf8'}).trim();
+  git(['init','-q']);git(['config','user.name','Production test']);git(['config','user.email','test@example.invalid']);git(['add','.']);git(['commit','-qm','Accepted product']);const base=git(['rev-parse','HEAD']);
+  mkdirSync('studio');writeFileSync('studio/updated-controller.txt','infrastructure only');git(['add','.']);git(['commit','-qm','Updated automation']);const head=git(['rev-parse','HEAD']);
+  const seededJob={...job,max_attempts:6,seed:{run_id:'100',artifact:'production-2'}};save('job.json',seededJob);mkdirSync('seed');
+  save('seed/candidate.json',{...candidate([{path:'game/a.mjs',content:'export const n=2;'}]),runId:'100',sourceSha:base,attempt:2});
+  save('seed/spend.json',{runId:'100',jobId:job.id,billingComplete:true,costUsd:.3,modelAudit:[]});
+  save('seed/assessment.json',{passed:false,verdict:{approved:false},verification:{passed:true},error:'More authored art required'});
+  Object.assign(process.env,{OPENAI_API_KEY:'test-key',GITHUB_RUN_ID:'123',GITHUB_SHA:head,ICE_STUDIO_ENABLED:'true'});
+  const p=await generate('job.json',0,'continued','seed',{seed:true,fetchImpl:fakeModel([
+   {vision:'Continue accepted mechanics, redesign visuals',team:[{role:'environment_animator',goal:'Authored world'},{role:'pixel_art_director',goal:'Art'}],acceptance:['A complete result']},
+   {summary:'Advanced seeded work',edits:[{path:'game/a.mjs',operation:'replace',find:'n=2',content:'n=3'}],handoff:'Seed work was present'},
+   {summary:'Art asset',edits:[{path:'game/assets/scene.svg',operation:'write',find:'',content:'<svg/>'}],handoff:'Integrated visual source'},
+   {summary:'Integrated continuation',edits:[{path:'game/index.html',operation:'write',find:'',content:'<head><title>Continued</title></head>'}],handoff:'Complete candidate'}
+  ])});
+  assert.ok(p.files.find(f=>f.path==='game/a.mjs').content.includes('n=3'));
+  assert.equal(json('continued/spend.json').modelAudit.length,4);assert.ok(json('continued/spend.json').costUsd<.3,'previous billed calls were not charged again');
+  writeFileSync('game/a.mjs','export const n=9;');git(['add','game/a.mjs']);git(['commit','-qm','Someone changed the product']);
+  await assert.rejects(()=>generate('job.json',0,'unsafe','seed',{seed:true,fetchImpl:()=>{throw Error('No provider call allowed');}}),/base product changed/);
+ }finally{
+  process.chdir(cwd);for(const [k,v] of Object.entries({OPENAI_API_KEY:before.key,GITHUB_RUN_ID:before.run,GITHUB_SHA:before.sha,ICE_STUDIO_ENABLED:before.enabled}))v===undefined?delete process.env[k]:process.env[k]=v;
+  rmSync(root,{recursive:true,force:true});
+ }
 });
 
 test('executable verification rejects provider keys and source modified during tests',()=>{

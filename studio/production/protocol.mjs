@@ -4,7 +4,7 @@ import {readFileSync,writeFileSync,mkdirSync,readdirSync,existsSync,lstatSync} f
 import {resolve,dirname,join,relative,sep} from 'node:path';
 import {createHash} from 'node:crypto';
 export const PRODUCT_ROOTS=['game/','content/','assets/visual/','assets/audio/','design/audio/','design/art/','tests/game/'];
-export const MAX_ATTEMPTS=3;
+export const MAX_ATTEMPTS=6;
 const TEXT=/\.(?:mjs|js|ts|json|html|css|svg|md|txt)$/;
 export const digest=content=>createHash('sha256').update(content).digest('hex');
 export const json=path=>JSON.parse(readFileSync(path,'utf8'));
@@ -22,6 +22,7 @@ export function validateJob(job){
   !Number.isInteger(job.max_attempts)||job.max_attempts<1||job.max_attempts>MAX_ATTEMPTS)
   throw Error('Invalid bounded production job');
  for(const p of job.references??[])if(!/^assets\/reference\/[a-zA-Z0-9-]+\.jpg$/.test(p))throw Error('Invalid reference image path');
+ if(job.seed&&(!/^\d+$/.test(job.seed.run_id??'')||!/^production-[0-5]$/.test(job.seed.artifact??'')))throw Error('Invalid production continuation');
  return job;
 }
 export function selectJob(diff,read){

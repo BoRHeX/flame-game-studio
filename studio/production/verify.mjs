@@ -12,6 +12,7 @@ function command(exe,args,cwd,timeout=360000){
 export function verify(jobPath,attempt,dir,{runCommand=command}={}){
  const root=process.cwd(),out=resolve(dir),job=validateJob(json(jobPath));mkdirSync(out,{recursive:true});
  const report={version:1,runId:String(process.env.GITHUB_RUN_ID),jobId:job.id,attempt,sourceSha:process.env.GITHUB_SHA,passed:false,failures:[],checks:[],screens:[]};
+ if(existsSync(join(out,'generation.json')))report.generation=json(join(out,'generation.json'));
  try{
   if(process.env.OPENAI_API_KEY)throw Error('Model credentials are forbidden in executable verification');
   const candidate=json(join(out,'candidate.json'));

@@ -19,7 +19,7 @@ export async function publishVerified({job,candidate,assessment,repo,runId,sourc
  const source=await api(prefix+'/git/commits/'+sourceSha);
  const tree=await api(prefix+'/git/trees',{method:'POST',body:{base_tree:source.tree.sha,tree:[
   ...candidate.files.map(f=>({path:f.path,mode:'100644',type:'blob',content:f.content})),
-  {path:'studio/production/history/'+runId+'.json',mode:'100644',type:'blob',content:JSON.stringify({jobId:job.id,runId,sourceSha,attempt:candidate.attempt,packageHash:assessment.packageHash,handoffs:candidate.handoffs,verdict:assessment.verdict,verification:assessment.verification.checks.map(c=>({name:c.name,passed:c.passed})),publishedBy:'trusted-production-publisher'},null,2)+'\n'}]}});
+  {path:'studio/production/history/'+runId+'.json',mode:'100644',type:'blob',content:JSON.stringify({jobId:job.id,runId,sourceSha,seed:job.seed??null,attempt:candidate.attempt,packageHash:assessment.packageHash,handoffs:candidate.handoffs,verdict:assessment.verdict,verification:assessment.verification.checks.map(c=>({name:c.name,passed:c.passed})),publishedBy:'trusted-production-publisher'},null,2)+'\n'}]}});
  const commit=await api(prefix+'/git/commits',{method:'POST',body:{message:'I.C.E. '+job.id+': verified autonomous production build',tree:tree.sha,parents:[sourceSha]}});
  const branch='production/'+job.id.toLowerCase()+'-'+runId;
  await api(prefix+'/git/refs',{method:'POST',body:{ref:'refs/heads/'+branch,sha:commit.sha}});
@@ -36,7 +36,7 @@ async function main(){
  const [action,...args]=process.argv.slice(2),repo=process.env.GITHUB_REPOSITORY,runId=String(process.env.GITHUB_RUN_ID);
  if(action==='prepare'){
   const path=selectJob(execFileSync('git',['diff-tree','--no-commit-id','--name-status','-r','HEAD'],{encoding:'utf8'}),p=>readFileSync(p,'utf8'));
-  const job=validateJob(json(path));output('job',path);output('attempts',job.max_attempts);console.log('PRODUCTION JOB '+job.id);
+  const job=validateJob(json(path));output('job',path);output('attempts',job.max_attempts);output('seed_run',job.seed?.run_id??'');output('seed_artifact',job.seed?.artifact??'');console.log('PRODUCTION JOB '+job.id);
  }else if(action==='reserve'){
   if(process.env.ICE_STUDIO_ENABLED!=='true')throw Error('Studio is not enabled');
   const job=validateJob(json(args[0])),policy=getPolicy();

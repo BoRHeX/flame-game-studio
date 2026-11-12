@@ -2,8 +2,9 @@
 // compile, run, git-commit or publish generated product source.
 import {readFileSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
 import {ModelBudget,calculateUsageCost} from '../runtime/runner.mjs';
-import {json,save,output,validateJob,validateCandidate,readWorkspace,applyEdits,changedFiles,contextFiles,packageHash} from './protocol.mjs';
+import {json,save,output,validateJob,validateCandidate,readWorkspace,applyEdits,changedFiles,contextFiles,packageHash,PRODUCT_ROOTS} from './protocol.mjs';
 const obj=properties=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
 const strings={type:'array',items:{type:'string'}};
 const text={type:'string'};
@@ -23,14 +24,14 @@ export function restoreBudget(cap,previous){
  return budget;
 }
 function images(paths){return paths.filter(p=>existsSync(p)).slice(0,4).map(path=>({type:'input_image',detail:'low',image_url:'data:image/jpeg;base64,'+readFileSync(path).toString('base64')}));}
-export async function ask({model='gpt-6.1-terra',instructions,input,schema,name,max=14000,budget,imagePaths=[],fetchImpl=fetch}){
+export async function ask({model='gpt-6.1-terra',instructions,input,schema,name,max=14000,budget,imagePaths=[],effort='low',fetchImpl=fetch}){
  if(!process.env.OPENAI_API_KEY)throw Error('OpenAI API key is not configured');
  const pictures=images(imagePaths);
  const body={model,instructions,input:pictures.length?[{role:'user',content:[{type:'input_text',text:JSON.stringify(input)},...pictures]}]:JSON.stringify(input),
-  max_output_tokens:max,store:false,reasoning:{effort:'low'},text:{format:{type:'json_schema',name,strict:true,schema}}};
+  max_output_tokens:max,store:false,reasoning:{effort},text:{format:{type:'json_schema',name,strict:true,schema}}};
  // Count encoded bytes conservatively, plus a separate low-detail image allowance.
  budget.bound({...body,image_token_reserve:' '.repeat(pictures.length*10000)},model);
- const control=new AbortController(),timer=setTimeout(()=>control.abort(),300000);
+ const control=new AbortController(),timer=setTimeout(()=>control.abort(),600000);
  let response;
  try{
   const r=await fetchImpl('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY,'Content-Type':'application/json'},body:JSON.stringify(body),signal:control.signal});
@@ -50,32 +51,48 @@ function previous(dir){
   spend:existsSync(join(dir,'spend.json'))?json(join(dir,'spend.json')):null,
   feedback:existsSync(join(dir,'assessment.json'))?json(join(dir,'assessment.json')):null};
 }
-export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImpl=fetch}={}){
+export function implementationTeam(plan,minimum=2){
+ const selected=(plan.team??[]).filter((s,i,all)=>roles.some(r=>r.id===s.role)&&!['producer','integrator','qa_architect','security_release_engineer'].includes(s.role)&&all.findIndex(x=>x.role===s.role)===i).slice(0,3);
+ for(const role of ['pixel_art_director','environment_animator','gameplay_engineer'])if(selected.length<minimum&&!selected.some(s=>s.role===role))selected.push({role,goal:role==='pixel_art_director'?'Produce substantial original visual assets and readable industrial/character art for the complete brief.':'Implement the complete authored geography and physical gameplay requested by the brief.'});
+ return [...selected,{role:'integrator',goal:'Finish the complete coherent playable result. Incorporate every department, and resolve outstanding product work instead of returning a known partial implementation.'}];
+}
+export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImpl=fetch,seed=false}={}){
  const job=validateJob(json(jobPath));
  if(policy.STUDIO_ENABLED!==true||process.env.ICE_STUDIO_ENABLED!=='true'||!/^\d+$/.test(runId()))throw Error('Production is not enabled');
  const old=previous(previousDir);
- if(old.spend&&(old.spend.runId!==runId()||old.spend.jobId!==job.id))throw Error('Previous spend belongs to a different production job');
- if(old.candidate)validateCandidate(old.candidate,job,sourceSha(),runId());
- const budget=restoreBudget(Math.min(job.max_cost_usd,policy.MAX_RUN_COST_USD),old.spend);
+ if(seed){
+  if(attempt!==0||!job.seed||!old.candidate||old.candidate.runId!==job.seed.run_id||old.spend?.runId!==job.seed.run_id||old.spend?.jobId!==job.id||old.spend?.billingComplete!==true||! /^[a-f0-9]{40}$/.test(old.candidate.sourceSha??''))throw Error('Invalid or unaccounted continuation seed');
+  validateCandidate(old.candidate,job,old.candidate.sourceSha,job.seed.run_id);
+  const changes=execFileSync('git',['diff','--name-only',old.candidate.sourceSha,'HEAD','--',...PRODUCT_ROOTS],{encoding:'utf8',env:{PATH:process.env.PATH,HOME:process.env.HOME}}).trim();
+  if(changes)throw Error('Continuation base product changed; refusing to overwrite newer game work');
+ }else{
+  if(old.spend&&(old.spend.runId!==runId()||old.spend.jobId!==job.id))throw Error('Previous spend belongs to a different production job');
+  if(old.candidate)validateCandidate(old.candidate,job,sourceSha(),runId());
+ }
+ const budget=restoreBudget(Math.min(job.max_cost_usd,policy.MAX_RUN_COST_USD),seed?null:old.spend);
  const baseline=readWorkspace(),current=new Map(baseline);let candidate=null,status='failed',error='';
  if(old.candidate)for(const f of old.candidate.files)current.set(f.path,f.content);
  const handoffs=old.candidate?.handoffs?[...old.candidate.handoffs]:[];
+ if(old.candidate){
+  candidate={...old.candidate,runId:runId(),sourceSha:sourceSha(),attempt,files:changedFiles(baseline,current),handoffs};
+  save(join(outDir,'candidate.json'),candidate);
+ }
  const canon=readFileSync('design/game-bible.md','utf8');
  try{
-  let plan=old.candidate?.plan;
-  if(!plan){plan=await ask({model:'gpt-6-luna',instructions:'Act as production lead. Choose two or three complementary implementation specialists from the roster, followed by integrator. Give them outcome goals and let them coordinate their own multi-file implementation. This is one substantial playable build, not cosmetic maintenance.',input:{job,canon,roster:roles.map(r=>({role:r.id,expertise:r.mission})),sourceIndex:contextFiles(current,'integrator',0).index},schema:planSchema,name:'production_plan',max:2200,budget,fetchImpl});
-   const selected=plan.team.filter((s,i,all)=>roles.some(r=>r.id===s.role)&&!['producer','integrator','qa_architect','security_release_engineer'].includes(s.role)&&all.findIndex(x=>x.role===s.role)===i).slice(0,3);
-   plan.team=[...selected,{role:'integrator',goal:'Assemble, improve and finish the complete playable production brief across all needed product files.'}];
-   if(plan.team.length<2)plan.team.unshift({role:'environment_animator',goal:job.goal});
+  let plan=seed?null:old.candidate?.plan;
+  const visualFailure=old.feedback?.verdict?.approved===false;
+  if(!plan||attempt>0){plan=await ask({model:'gpt-6-luna',instructions:'Act as production lead. Choose two or three complementary IMPLEMENTATION specialists from the roster, followed by integrator. After a visual rejection, route actual artwork and geography back to art/environment specialists rather than asking only an integrator for another small patch. After executable failure, select the department that can fix its cause. Give outcome goals; do not freeze file ownership, original geometry or original appearance. The job must deliver the complete substantial brief, not a known partial build.',input:{job,canon,feedback:old.feedback,roster:roles.map(r=>({role:r.id,expertise:r.mission})),sourceIndex:contextFiles(current,'integrator',0).index},schema:planSchema,name:'production_plan',max:2600,budget,fetchImpl});
+   plan.team=implementationTeam(plan,attempt>0&&!visualFailure?1:2);
   }
-  const stages=attempt===0?plan.team:[{role:'integrator',goal:'Repair the complete candidate using actual test results, screenshots and the independent director feedback. Address root causes across all necessary files.'}];
+  const stages=plan.team;
   for(const stage of stages){
    const role=roles.find(r=>r.id===stage.role);
-   const draft=await ask({instructions:activeRules+' Act as '+stage.role+'; expertise: '+role.mission+'. '+stage.goal,
+   const strong=['integrator','pixel_art_director','character_animator'].includes(stage.role)||attempt>=2;
+   const draft=await ask({model:strong?'gpt-6.1-sol':'gpt-6.1-terra',effort:strong?'medium':'low',instructions:activeRules+' Act as '+stage.role+'; expertise: '+role.mission+'. '+stage.goal+' You can replace existing scenery and layout code rather than layering minor additions over a rejected composition. Complete the actual product contribution; explain uncertainty about execution honestly, but do not substitute a list of unfinished visual work for the requested implementation.',
     input:{job,canon,plan,stage,handoffs,workspace:contextFiles(current,stage.role,stage.role==='integrator'?165000:125000,changedFiles(baseline,current).map(f=>f.path)),feedback:old.feedback,
      traversalContract:'Keep the public SCENES / VIEWPORT / drawScene and PlatformPlayer inspection interfaces usable for automated gameplay QA. Layouts are free. Represent physical stairs in scene.stairs as {x,y,w,h,direction:"left"|"right"}; y is the top and y+h the bottom. Actual steps are collision platforms, not decorative fake routes. Walking must climb those stairs. Keep existing physical station IDs or update all game callers and provide equivalent QA-observable stations. UI text and panels can be redesigned while preserving accessible control semantics.'},
-    imagePaths:attempt?[...(job.references??[]).slice(0,1),join(previousDir,'screens','mobile-world.jpg'),join(previousDir,'screens','production-backyard.jpg')]:(['environment_animator','pixel_art_director','integrator','ux_designer'].includes(stage.role)?(job.references??[]).slice(0,2):[]),
-    schema:editSchema,name:'production_'+stage.role,max:16000,budget,fetchImpl});
+    imagePaths:(attempt||seed)?[...(job.references??[]).slice(0,1),join(previousDir,'screens','mobile-world.jpg'),join(previousDir,'screens','production-backyard.jpg')]:(['environment_animator','pixel_art_director','character_animator','integrator','ux_designer'].includes(stage.role)?(job.references??[]).slice(0,2):[]),
+    schema:editSchema,name:'production_'+stage.role,max:strong?24000:18000,budget,fetchImpl});
    const updated=applyEdits(current,draft.edits);current.clear();for(const [p,c] of updated)current.set(p,c);
    handoffs.push({role:stage.role,summary:draft.summary,handoff:draft.handoff,paths:[...new Set(draft.edits.map(e=>e.path))]});
    candidate={version:1,jobId:job.id,runId:runId(),sourceSha:sourceSha(),attempt,plan,handoffs,files:changedFiles(baseline,current)};
@@ -122,8 +139,8 @@ export async function assess(jobPath,attempt,dir,{fetchImpl=fetch}={}){
  return report;
 }
 if(process.argv[1]?.endsWith('/worker.mjs')){
- const [mode,job,attempt,dir,previousDir]=process.argv.slice(2);
- if(mode==='generate')await generate(job,Number(attempt),dir,previousDir);
+ const [mode,job,attempt,dir,previousDir,seedFlag]=process.argv.slice(2);
+ if(mode==='generate')await generate(job,Number(attempt),dir,previousDir,{seed:seedFlag==='seed'});
  else if(mode==='assess')await assess(job,Number(attempt),dir);
  else throw Error('Unknown production worker mode');
 }
