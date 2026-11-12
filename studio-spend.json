@@ -216,6 +216,14 @@
       "reservedUsd": 0.65,
       "actualUsd": 0.042753,
       "status": "settled"
+    },
+    {
+      "runId": "43135890199",
+      "orderId": "ICE-P2-ARRANGER-01",
+      "date": "2026-11-12",
+      "reservedUsd": 0.65,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
