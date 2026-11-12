@@ -32,8 +32,14 @@ test('source review describes mandatory downstream execution without claiming it
   assert.ok(input.verification.pendingChecks.includes('studio/acceptance/chamber-flow-output.mjs'));
   assert.match(reviewRequest.instructions,/not release approval/i);
   assert.match(reviewRequest.instructions,/must pass before any PR is created/);
+  assert.equal(input.taskScope.stage,'department_module');
+  assert.equal(input.taskScope.target_file,'game/chambers/flow.mjs');
+  assert.deepEqual(input.taskScope.allowed_paths,['game/chambers/']);
+  assert.match(reviewRequest.instructions,/connecting read-only consumers belongs to the integrator/);
+  assert.match(reviewRequest.instructions,/remain mandatory before release/);
  }finally{
   for(const [key,value] of Object.entries(saved)){if(value===undefined)delete process.env[key];else process.env[key]=value;}
   rmSync(temp,{recursive:true,force:true});
  }
 });
+
