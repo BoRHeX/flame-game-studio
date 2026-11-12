@@ -246,8 +246,8 @@
       "orderId": "ICE-COASTAL-JUNGLE-WORLD-01",
       "date": "2026-11-12",
       "reservedUsd": 1.2,
-      "actualUsd": null,
-      "status": "reserved"
+      "actualUsd": 0.312563,
+      "status": "settled"
     }
   ]
 }
