@@ -20,6 +20,15 @@ The user accepted the tall industrial platformer/hub on an actual phone. Movemen
 
 Five accepted new specialist PRs and a recovered environment contribution form this production wave. All 25 roles previously completed advisory sessions; those are not represented as 25 code implementations. The environment source-review failure was caused by demanding read-only consumer edits; the integrated acceptance suite must prove real process effects before release. The unresolved older ICE-ROLE-08 request was not duplicated and must not overwrite the independently integrated close-up on later arrival.
 
+## Coastal Jungle art wave — published after studio restart
+- [x] Two bounded model jobs executed against the existing Pass Two game plan; total settled model cost USD 0.566484.
+- [x] Environment run 43200536364 delivered original coastal sunset, Pacific ocean, ridges and jungle depth; its source passed unit/mobile/department verification.
+- [x] Foreground run 43200672399 preserved its art after a source-review rejection. Supervised integration resolved the review ambiguity, added direct furnace/exhaust checks and connected the artwork; this is not relabeled as a successful model run.
+- [x] Outdoor opaque wall opened into a steel frame; boiler art lowered to reveal the skyline; workshop windows show the coast. Scene geometry, controls, saved coordinates and combustion math are unchanged.
+- [x] All 88 tests, existing production checks and complete Chrome touch route passed on PR #44 head 6df00dee2a00a32bf942999f99d56d5ef66d1be7, run 43203489574.
+- [x] Reviewed merge e1ee9d741123b73ba1fc1db2db29b13805dd1896 published through Pages run 43203983688; live title/ice-art marker and renderer content verified.
+- [ ] Physical Samsung visual/comfort/audio/performance acceptance remains a player observation.
+
 ## Pass Three — campaign (not started)
 - [ ] Seven or more authored jobs, equipment-gated access and career progression.
 - [ ] Broader biomes, operator authority, cutscenes, story consequences and richer original adaptive orchestra.
