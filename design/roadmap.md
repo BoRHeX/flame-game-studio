@@ -44,6 +44,18 @@
 - [ ] Follow the ordered Pass Two specification at design/pass-two-operator.md. Two near-production missions, third playable, three-slot save/autosave/recovery, menu/UI, story scaffolding, biome effects and temporarily fully capable equipment; no mandatory purchases.
 - [ ] Verify and integrate each delivered subsystem before publishing a new playtest.
 
+## Current Pass Two production wave — 12 November 2026
+- [x] All 25 registered specialist roles ran source-grounded advisory sessions in workflow #43120683621; the integrator's proposed four-file monolith was rejected. Do not mistake role consultation for 25 completed coding tasks.
+- [x] Accepted Technical Director ADR-0005 established actual operator/mission/save module contracts after earlier source-generating models refused missing interfaces.
+- [x] NPC specialist produced a tested module in draft PR #31; persistence specialist produced a tested three-slot/backup module in draft PR #32. Both were independently integrated into *playable* game through reviewed PR #33, with direct physical operator adjustments, warehouse damper repair and autosave/load. Draft PRs are provenance, not separate releases.
+- [x] Mission engineer #43124008655 proposed a warning contract but source QA rejected the first version. Reviewed adaptation was connected to the real burner state with independent no-perk completion tests and warning icons in PR #34.
+- [ ] Physical Samsung evaluation of integrated operator, 3 save slots, restore after reload and the new warning icons; automated mobile Chrome coverage is not a substitute.
+- [ ] Finish physical valve-wheel/damper close-ups from queued ICE-ROLE-08; create no duplicate paid request.
+- [ ] Add genuinely different authored hazards/repair actions and diagnostic tests in Backyard and Warehouse, keeping Heat-Hold solvable; distinguish mission failure/reward through observable process state, not metadata alone.
+- [ ] Complete calibrated equipment preset, coherent intro, narrative flags, biome modifiers, character/environment animations and original synchronized orchestra layers as separate scoped role-owned sources, integrated through the same game acceptance gate.
+- [ ] Three-slot migration/corruption/fault-injection QA and long-run Samsung performance/safe tab-resume verification.
+- [ ] Declare Pass Two finished only after two polished levels, third playable, and physical-device review. Preserve main as rollback between verified releases.
+
 ## Stage F2 — review-led base
 - [ ] Two polished levels, third remains playable
 - [ ] Save/load, UI refinement, lore and biome effects
