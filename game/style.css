@@ -23,3 +23,15 @@
 @media(max-width:380px){#joystick{width:98px;height:98px}#controls{height:103px}#actions{bottom:118px}#action-controls{gap:6px}#action-controls button{min-width:62px;min-height:66px}#digital-pad{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,42px)}#digital-pad button{min-width:42px;min-height:42px}}
 @media(max-height:500px) and (orientation:landscape){#hud{height:46px;flex-basis:46px}#controls{height:86px}#joystick{width:83px;height:83px}#joystick-knob{width:43px;height:43px;margin:-21.5px 0 0 -21.5px}#action-controls button{min-height:62px;min-width:64px}#actions{bottom:98px}#digital-pad{grid-template-columns:repeat(3,39px);grid-template-rows:repeat(2,39px)}#digital-pad button{min-width:39px;min-height:39px}}
 @media(prefers-reduced-motion:reduce){#joystick-knob{transition:none}}
+
+#operator-panel,#save-panel{position:absolute;left:8%;right:8%;top:19%;z-index:12;border:2px solid #95c9ba;background:rgba(8,21,29,.96);box-shadow:0 15px 40px #000b;border-radius:16px;padding:12px;max-height:64%;overflow:auto}
+.panel-heading{text-align:center;color:#e7cea2;font-size:22px;padding:2px 0 10px;font-weight:800}
+.panel-actions{display:flex;justify-content:space-around;gap:8px}
+.panel-actions button{min-width:54px;min-height:56px;flex:1}
+.slot-row{display:grid;grid-template-columns:1fr 1fr 54px 54px;align-items:center;gap:7px;margin-bottom:8px;padding:6px;border:1px solid #537083;border-radius:9px}
+.slot-row output{text-align:center;color:#b9d8c5}
+#save-close{width:100%;margin-top:5px}
+#hint{z-index:8;top:35%;pointer-events:none;padding:8px;color:#e5d6b0;font-size:25px}
+#device-panel{z-index:9}
+#device-panel #device-repair{flex:0 0 50px}
+#game #save-panel button,#game #operator-panel button{touch-action:manipulation}

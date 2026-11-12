@@ -181,7 +181,16 @@ async function main(){
    // Start a clean real UI session for the established mission path; never teleport test state.
    await command('Page.reload',{ignoreCache:true});
    for(let i=0;i<60;i++){await delay(100);if(await evalJs('Boolean(window.ICE_DEBUG)'))break;}
-   if(await evalJs("!document.querySelector('#tutorial').hidden"))await tap('#tutorial-ok');
+   // Pass Two restores the upper-floor position on reload. Verify persistence
+   // and explicitly restart before the independent initial-mission test.
+   if(await evalJs("document.querySelector('meta[name=\\\"ice-pass-two\\\"]')?.content==='operator-save-missions-01'")){
+     const resumed=await snapshot();
+     if(!resumed.autosaveRestored||resumed.playerY>=initialY-100)
+       throw Error('Real upper-floor autosave did not restore after reload: '+JSON.stringify(resumed));
+     console.log('PASS PASS-TWO: reloaded upper-floor position and camera persist');
+     await tap('#reset');
+     await tap('#tutorial-ok');
+   }else if(await evalJs("!document.querySelector('#tutorial').hidden"))await tap('#tutorial-ok');
  }
  await tap('[data-job="backyard"]');
  let data=await evalJs('window.ICE_DEBUG.snapshot()');
@@ -201,6 +210,27 @@ async function main(){
  data=await evalJs('window.ICE_DEBUG.snapshot()');
  if(data.stage!=='hub')throw Error('Return to hub failed');
  if(exceptions.length)throw Error('Browser exceptions: '+exceptions.join('; '));
+ // Connected Pass Two integration: actual local slots, save/load and operator module.
+ if(await evalJs("document.querySelector('meta[name=\"ice-pass-two\"]')?.content==='operator-save-missions-01'")){
+   await tap('#save-menu');
+   if(await evalJs("document.querySelector('#save-panel').hidden"))throw Error('Save panel did not open');
+   await tap('[data-save-slot="1"]');
+   if(!(await evalJs('window.ICE_DEBUG.snapshot().savedSlots[0].occupied')))
+     throw Error('Real save slot one not populated');
+   await tap('#save-close');
+   await command('Page.reload',{ignoreCache:true});
+   let bootAgain=false;
+   for(let i=0;i<60;i++){await delay(100);if(await evalJs('Boolean(window.ICE_DEBUG)')){bootAgain=true;break;}}
+   if(!bootAgain)throw Error('Saved game did not restart');
+   if(!(await evalJs('window.ICE_DEBUG.snapshot().savedSlots[0].occupied')))
+     throw Error('Save slot did not survive browser reload');
+   await tap('#save-menu');await tap('[data-load-slot="1"]');
+   if(await evalJs("document.querySelector('#save-panel').hidden")===false)
+     throw Error('Load did not close the save menu');
+   const p2=await evalJs('window.ICE_DEBUG.snapshot()');
+   if(p2.stage!=='hub'||p2.funds<=0)throw Error('Saved game load invalid: '+JSON.stringify(p2));
+   console.log('PASS PASS-TWO: actual touchscreen save/load and reload persistence');
+ }
  console.log('PASS: Android viewport, actual touch tutorial/job/ignition/observe/return, main flame particles, clock, screenshot, zero uncaught JS exceptions');
 }
 main().catch(e=>{console.error('FAIL browser smoke:',e.stack||e);process.exitCode=1;}).finally(async()=>{

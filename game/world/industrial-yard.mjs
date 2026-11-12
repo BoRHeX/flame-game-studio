@@ -16,7 +16,13 @@ const station = (id,type,x,y,icon,label,deviceId) => ({id,type,x,y,icon,label,..
 function scene(id,theme,interactions) {
   return {id,width:1600,height:2500,spawn:{x:180,y:2248},...geometry(),interactions,theme};
 }
-function jobStations() {
+function jobStations(jobId) {
+  const placements={
+   backyard:{x:750,y:1348},
+   warehouse:{x:930,y:888},
+   'heat-hold':{x:1130,y:1808}
+  };
+  const operator=placements[jobId];
   return [
     station('spark','ignition',150,2268,'spark','Ignition'),
     station('port','observation',245,2268,'port','Observation port'),
@@ -25,7 +31,8 @@ function jobStations() {
     station('pilotAir','device',820,1808,'damper','Pilot air','pilotAir'),
     station('mainFuel','device',1200,1808,'valve','Main fuel','mainFuel'),
     station('mainAir','device',700,1348,'damper','Main air','mainAir'),
-    station('draft','device',1000,888,'damper','Draft','draft')
+    station('draft','device',1000,888,'damper','Draft','draft'),
+    station('site-operator','npc',operator.x,operator.y,'operator','Site operator')
   ];
 }
 export const SCENES = {
@@ -35,9 +42,9 @@ export const SCENES = {
     station('workbench','workbench',980,1808,'tools','Equipment bench'),
     station('npc','npc',1200,1348,'operator','Workshop operator')
   ]),
-  backyard:scene('backyard','yard',jobStations()),
-  warehouse:scene('warehouse','warehouse',jobStations()),
-  'heat-hold':scene('heat-hold','heater',jobStations())
+  backyard:scene('backyard','yard',jobStations('backyard')),
+  warehouse:scene('warehouse','warehouse',jobStations('warehouse')),
+  'heat-hold':scene('heat-hold','heater',jobStations('heat-hold'))
 };
 
 const palettes = {
