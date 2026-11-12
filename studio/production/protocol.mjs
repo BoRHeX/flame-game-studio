@@ -78,11 +78,11 @@ export function writeCandidate(candidate,root=process.cwd()){
   let p=target;while(p.startsWith(resolve(root)+sep)){if(existsSync(p)&&lstatSync(p).isSymbolicLink())throw Error('Symlink output blocked');p=dirname(p);}
   mkdirSync(dirname(target),{recursive:true});writeFileSync(target,f.content);}
 }
-export function contextFiles(files,role,limit=125000){
+export function contextFiles(files,role,limit=125000,changedPaths=[]){
  const priorities=['game/world/','game/animation/','game/player/','game/index.html','game/style.css','game/main.mjs'];
  const byRole={integrator:['game/main.mjs','game/player/','game/index.html','game/style.css'],gameplay_engineer:['game/player/','game/main.mjs','game/world/'],ux_designer:['game/index.html','game/style.css','game/main.mjs'],character_animator:['game/animation/','game/world/'],sound_engineer:['game/audio/','game/animation/']};
  const preferred=byRole[role]??priorities;
- const rank=p=>{const at=preferred.findIndex(x=>p.startsWith(x));return at<0?100:at;};
+ const rank=p=>{const changed=changedPaths.indexOf(p);if(changed>=0)return -1000+changed;const at=preferred.findIndex(x=>p.startsWith(x));return at<0?100:at;};
  const sorted=[...files].sort((a,b)=>rank(a[0])-rank(b[0])||a[0].localeCompare(b[0]));
  const result=[];let size=0;
  for(const [path,content] of sorted){if(size+content.length<=limit){result.push({path,content});size+=content.length;}}

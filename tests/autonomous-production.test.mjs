@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {productPath,applyEdits,validateJob,validateCandidate,packageHash,selectJob,save,json,pickAttempt} from '../studio/production/protocol.mjs';
+import {productPath,applyEdits,validateJob,validateCandidate,packageHash,selectJob,save,json,pickAttempt,contextFiles} from '../studio/production/protocol.mjs';
 import {generate,assess,ask,restoreBudget} from '../studio/production/worker.mjs';
 import {publishVerified} from '../studio/production/controller.mjs';
 import {verify} from '../studio/production/verify.mjs';
@@ -29,6 +29,14 @@ test('one production request selects one complete bounded job',()=>{
  assert.throws(()=>selectJob('M\tstudio/production/requests/request.json',read));
  assert.throws(()=>selectJob('A\tstudio/production/requests/request.json\nA\tgame/a.mjs',read));
  assert.throws(()=>validateJob({...job,max_attempts:99}));assert.throws(()=>validateJob({...job,max_cost_usd:200}));
+});
+
+test('integration context retains actual department changes ahead of unrelated old source',()=>{
+ const files=new Map([['assets/audio/old-score.json','x'.repeat(50000)],['game/main.mjs','m'.repeat(40000)],['game/world/redesigned.mjs','const newStairs=true;'.repeat(1200)]]);
+ const brief=contextFiles(files,'integrator',70000,['game/world/redesigned.mjs']);
+ assert.ok(brief.files.some(f=>f.path==='game/world/redesigned.mjs'));
+ assert.ok(brief.files.some(f=>f.path==='game/main.mjs'));
+ assert.ok(!brief.files.some(f=>f.path==='assets/audio/old-score.json'));
 });
 
 function fakeModel(outputs,seen=[]){return async(url,request)=>{
