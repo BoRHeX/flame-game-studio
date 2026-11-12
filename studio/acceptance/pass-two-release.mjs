@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import './p2-character-final.mjs';
+import './p2-environment-final.mjs';
+import './p2-narrative-final.mjs';
+import './p2-composer-final.mjs';
+import './p2-arranger-final.mjs';
+import './p2-av-sync-final.mjs';
+import './major-integration.mjs';
+import {SCENES} from '../../game/world/industrial-yard.mjs';
+import {SCORE} from '../../game/audio/score-data.mjs';
+const main=readFileSync(new URL('../../game/main.mjs',import.meta.url),'utf8');
+for(const needle of ['ContractSession','contract.environment(baseDefinition,biome','environmentAt(scene.id,burner.time)','contract?.tick','applyDevice','animationEvents','orchestra.update','StoryState','validGameState','restorePosition'])assert.ok(main.includes(needle),'integrator consumes real subsystem '+needle);
+assert.ok(SCENES.backyard.interactions.some(i=>i.id==='intake-shield'&&i.type==='repair'));
+for(const id of ['hub','backyard','warehouse','heat-hold'])assert.ok(SCORE.themes[id]);
+assert.ok(Object.isFrozen(SCORE.themes.hub.voices));
+console.log('PASS PASS-TWO INTEGRATION: authored physical contracts, real process biome effects, persistent narrative, calibrated controls and original adaptive orchestra are connected');

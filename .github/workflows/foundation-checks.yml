@@ -33,6 +33,10 @@ jobs:
           path: |
             artifacts/mobile-flame.png
             artifacts/mobile-world.png
+            artifacts/mobile-device.png
+            artifacts/mobile-warehouse.png
+            artifacts/mobile-landscape.png
+            artifacts/pass-two-routes.json
           if-no-files-found: ignore
       - name: Archive browser-playable prototype
         if: success()
@@ -40,4 +44,5 @@ jobs:
         with:
           name: ice-early-slice-source
           path: game/
+
 

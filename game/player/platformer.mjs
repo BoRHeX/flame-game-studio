@@ -122,6 +122,13 @@ export class PlatformPlayer {
     return s;
   }
 
+  restorePosition(position,scene){
+    if(!Number.isFinite(position?.x)||!Number.isFinite(position?.y))return false;
+    const s=this.state;s.x=clamp(position.x,0,scene.width-s.w);s.y=clamp(position.y,0,scene.height-s.h);s.vx=0;s.vy=0;s.facing=position.facing===-1?-1:1;
+    this._ladder=position.climbing===true?scene.ladders.find(l=>s.x+s.w/2>=l.x&&s.x+s.w/2<=l.x+l.w&&s.y+s.h>=l.y&&s.y<=l.y+l.h)??null:null;
+    s.climbing=!!this._ladder;s.grounded=!s.climbing&&scene.platforms.some(p=>Math.abs(s.y+s.h-p.y)<4&&s.x+s.w>p.x&&s.x<p.x+p.w);this._jumpHeld=false;return true;
+  }
+
   camera(scene, viewport) {
     const s = this.state;
     return {
@@ -150,3 +157,4 @@ export class PlatformPlayer {
     return closest;
   }
 }
+

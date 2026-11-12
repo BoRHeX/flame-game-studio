@@ -110,13 +110,15 @@ function defaultStorage() {
   try { return globalThis.localStorage || null; } catch (_) { return null; }
 }
 
-function decode(raw) {
+function decode(raw, validator = null) {
   if (raw === null || raw === undefined) return null;
-  return migrateSnapshot(JSON.parse(raw));
+  const snapshot=migrateSnapshot(JSON.parse(raw));
+  if(validator&&!validator(snapshot))throw new TypeError('invalid game state');
+  return snapshot;
 }
 
 export class SaveStore {
-  constructor(storage = defaultStorage()) { this.storage = storage; }
+  constructor(storage = defaultStorage(), validator = null) { this.storage = storage; this.validator=validator; }
 
   _read(name) {
     let primary = null, backup = null, primaryRaw = null, backupRaw = null;
@@ -126,8 +128,8 @@ export class SaveStore {
       primaryRaw = this.storage.getItem(PREFIX + name);
       backupRaw = this.storage.getItem(PREFIX + name + '.backup');
     } catch (_) { return { snapshot: newGameSnapshot(), source: 'new', unavailable: true }; }
-    try { primary = decode(primaryRaw); } catch (_) { primaryError = true; }
-    try { backup = decode(backupRaw); } catch (_) { backupError = true; }
+    try { primary = decode(primaryRaw,this.validator); } catch (_) { primaryError = true; }
+    try { backup = decode(backupRaw,this.validator); } catch (_) { backupError = true; }
     if (primary) return { snapshot: primary, source: 'primary' };
     if (backup) return { snapshot: backup, source: 'backup', corrupt: primaryError };
     return { snapshot: newGameSnapshot(), source: 'new', corrupt: primaryError || backupError };
@@ -138,12 +140,15 @@ export class SaveStore {
       const result = this._read(slotName(id));
       return { id, source: result.source, occupied: result.source !== 'new',
         corrupt: !!result.corrupt, unavailable: !!result.unavailable,
-        savedAtUtc: result.source === 'new' ? null : result.snapshot.savedAtUtc };
+        savedAtUtc: result.source === 'new' ? null : result.snapshot.savedAtUtc,
+        sceneId: result.source === 'new' ? null : result.snapshot.scene?.id??null,
+        funds: result.source === 'new' ? null : result.snapshot.economy?.funds??null };
     });
   }
 
   loadSlot(id) { return this._read(slotName(id)).snapshot; }
   loadAutosave() { return this._read('autosave').snapshot; }
+  readAutosave() { return this._read('autosave'); }
 
   _save(name, snapshot) {
     if (!this.storage) return { ok: false, error: 'storage unavailable' };
@@ -153,17 +158,18 @@ export class SaveStore {
     try {
       // Metadata describes the actual write, not the caller's stale capture time.
       const candidate = migrateSnapshot(snapshot);
+      if(this.validator&&!this.validator(candidate))throw new TypeError('invalid game state');
       Object.assign(candidate, deviceTime());
       const encoded = JSON.stringify(candidate);
       this.storage.setItem(stage, encoded);
       staged = this.storage.getItem(stage);
       if (staged !== encoded) throw new Error('staging verification failed');
-      decode(staged);
+      decode(staged,this.validator);
       const old = this.storage.getItem(key);
       if (old !== null) {
         // Never replace a valid backup with corrupt or unsupported primary data.
         let valid = false;
-        try { valid = !!decode(old); } catch (_) { /* retain existing backup */ }
+        try { valid = !!decode(old,this.validator); } catch (_) { /* retain existing backup */ }
         if (valid) {
           this.storage.setItem(key + '.backup', old);
           if (this.storage.getItem(key + '.backup') !== old) throw new Error('backup verification failed');
@@ -199,3 +205,4 @@ export class SaveStore {
 }
 
 export function createSaveStore(storage) { return new SaveStore(storage); }
+

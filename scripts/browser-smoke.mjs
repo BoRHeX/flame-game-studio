@@ -231,6 +231,123 @@ async function main(){
    if(p2.stage!=='hub'||p2.funds<=0)throw Error('Saved game load invalid: '+JSON.stringify(p2));
    console.log('PASS PASS-TWO: actual touchscreen save/load and reload persistence');
  }
+
+ // Pass Two release route: physical controls only; debug snapshots and authored
+ // geometry are read-only observations, never teleports or direct solver writes.
+ if(await evalJs("document.querySelector('meta[name=\"ice-release\"]')?.content==='pass-two-operator-02'")){
+  const snapshot=()=>evalJs('window.ICE_DEBUG.snapshot()');
+  const bounds=selector=>evalJs('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};})()');
+  const hold=async(action,ms)=>{
+   const r=await bounds('[data-hold="'+action+'"]');
+   if(r.w<44||r.h<44)throw Error('Pass Two touch target too small: '+action);
+   await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+r.w/2,y:r.y+r.h/2,id:1}]});
+   await delay(ms);await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await delay(45);
+  };
+  const until=async(predicate,message,max=80)=>{for(let i=0;i<max;i++){const value=await snapshot();if(predicate(value))return value;await delay(100);}throw Error(message+': '+JSON.stringify(await snapshot()));};
+  const walkTo=async x=>{
+   for(let i=0;i<60;i++){const state=await snapshot(),dx=x-state.playerX-14;if(Math.abs(dx)<12){if(state.climbing)await hold('right',100);return;}
+    await hold(dx>0?'right':'left',Math.max(35,Math.min(650,Math.abs(dx)/210*1000*.88)));
+   }throw Error('Cannot physically walk to '+x+': '+JSON.stringify(await snapshot()));
+  };
+  const routeTo=async id=>{
+   const scene=await evalJs("import('./world/industrial-yard.mjs').then(m=>m.SCENES[window.ICE_DEBUG.snapshot().sceneId])");
+   const station=scene.interactions.find(i=>i.id===id);if(!station)throw Error('Missing physical station '+id);
+   const floor=scene.platforms.reduce((a,b)=>Math.abs(a.y-station.y-32)<Math.abs(b.y-station.y-32)?a:b).y;
+   for(let n=0;n<5;n++){
+    const state=await snapshot(),feet=state.playerY+52;if(Math.abs(feet-floor)<.2)break;
+    const up=feet>floor;
+    const ladder=scene.ladders.find(l=>up?Math.abs(l.y+l.h-feet)<12:Math.abs(l.y-feet)<12);
+    if(!ladder)throw Error('No physical ladder route to '+id+': '+JSON.stringify(state));
+    await walkTo(ladder.x+ladder.w/2);
+    const target=up?ladder.y:ladder.y+ladder.h;
+    for(let j=0;j<18;j++){const current=await snapshot();if(Math.abs(current.playerY+52-target)<.2)break;await hold(up?'up':'down',350);}
+    const reached=await snapshot();if(Math.abs(reached.playerY+52-target)>1)throw Error('Climb route failed '+id+': '+JSON.stringify(reached));
+    await hold('right',150);
+   }
+   await walkTo(station.x);const state=await snapshot();
+   if(Math.hypot(station.x-state.playerX-14,station.y-state.playerY-26)>112)throw Error('Station remains out of actual physical reach '+id);
+  };
+  const screenshot=async name=>{const shot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile('artifacts/'+name,Buffer.from(shot.data,'base64'));};
+  await tap('#reset');await tap('#tutorial-ok');
+  if((await snapshot()).controls==='joystick')await tap('#controls-mode');
+  // Pause must stop BOTH deadlines and cash, rather than just hiding controls.
+  await tap('#menu-open');const pauseBefore=await snapshot();await delay(350);const pauseAfter=await snapshot();
+  if(!pauseAfter.paused||pauseBefore.funds!==pauseAfter.funds||pauseBefore.missionTime!==pauseAfter.missionTime)throw Error('Pause menu did not freeze game clocks');
+  await tap('#menu-resume');
+  const results=[];
+  for(const id of ['backyard','warehouse','heat-hold']){
+   await tap('[data-job="'+id+'"]');let state=await snapshot();if(state.job!==id||state.stage!=='mission')throw Error('Contract did not start '+id);
+   if(!state.kit?.allTools)throw Error('No free calibrated equipment preset');
+   await tap('#spark');await tap('#observe');await delay(200);await tap('#inspection-close');
+   if(!(await snapshot()).contract?.inspected)throw Error('Actual observation did not diagnose '+id);
+   if(id==='backyard'){
+    await routeTo('intake-shield');await tap('#interact');await tap('#fault-repair');
+    if(!(await snapshot()).contract.repaired)throw Error('Physical intake repair did not affect contract');
+    await routeTo('mainAir');await tap('#interact');const before=(await snapshot()).solver.devices.mainAir;
+    const r=await bounds('#device-wheel');
+    await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+r.w*.5,y:r.y+r.h*.8,id:1}]});await delay(50);
+    await command('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+r.w*.5,y:r.y+r.h*.72,id:1}]});await delay(50);
+    await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    state=await snapshot();if(state.solver.devices.mainAir<=before+.02||!state.contract.adjusted)throw Error('Real damper drag did not change authoritative air valve');
+    await screenshot('mobile-device.png');await tap('#device-close');
+   }else if(id==='warehouse'){
+    await routeTo('draft');await tap('#interact');
+    for(let n=0;n<7;n++)await tap('#device-more');
+    if((await snapshot()).solver.devices.draft>.580001)throw Error('Jammed damper bypassed its mechanical stop');
+    await tap('#device-repair');if(!(await snapshot()).contract.repaired)throw Error('Physical damper repair failed');
+    for(let n=0;n<6;n++)await tap('#device-more');
+    if((await snapshot()).solver.devices.draft<.70)throw Error('Repaired damper did not regain travel');
+    await tap('#device-close');await routeTo('site-operator');await tap('#interact');
+    if(await evalJs("document.querySelector('#operator-panel').hidden"))throw Error('Physical operator panel did not open');
+    await tap('#operator-assist');state=await snapshot();
+    if(state.operatorConsults<1||state.story.choice!=='assisted'||Math.abs(state.solver.devices.draft-.72)>.001)throw Error('Operator did not apply local authorized assistance');
+    await screenshot('mobile-warehouse.png');
+   }else{
+    await routeTo('mainFuel');await tap('#interact');const r=await bounds('#device-wheel'),angle=-.05*Math.PI*1.5,R=70;
+    const px=a=>({x:r.x+r.w*(130+Math.cos(a)*R)/260,y:r.y+r.h*(110+Math.sin(a)*R)/220,id:1});
+    await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[px(0)]});await delay(50);
+    await command('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[px(angle)]});await delay(50);
+    await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    if(Math.abs((await snapshot()).solver.devices.mainFuel-.35)>.015)throw Error('Real fuel wheel rotation did not follow angular travel');
+    await tap('#device-close');await routeTo('mainAir');await tap('#interact');
+    // Three keyboard-equivalent detents through real touch, not direct state writes.
+    for(let n=0;n<3;n++)await tap('#device-less');await tap('#device-close');
+   }
+   await routeTo('port');await tap('#observe');
+   state=await until(s=>s.stage==='won'||s.stage==='failed','No complete outcome for '+id,140);
+   if(state.stage!=='won')throw Error('Real no-purchase contract route failed '+id+': '+JSON.stringify(state));
+   if(!state.contract.verified||state.objective<1)throw Error('Contract skipped its physical verification/hold');
+   results.push({id,missionTime:state.missionTime,funds:state.funds,contract:state.contract});console.log('PASS PASS-TWO CONTRACT: '+id+' physical diagnosis/repair/adjust/verify/hold, payout and no purchases');await tap('#return');
+  }
+  if((await snapshot()).completed.length!==3)throw Error('Completed contracts did not persist');
+  // Explicit storage-fault input in the disposable browser profile. Recovery
+  // itself uses the actual slot UI; no live game state or solver is mutated.
+  await tap('#save-menu');await tap('[data-save-slot="2"]');await tap('[data-save-slot="2"]');await tap('#save-close');
+  await evalJs("localStorage.setItem('ice.save.v1.slot.2','{corrupt')");
+  await tap('#save-menu');
+  if(!(await evalJs("document.querySelector('#slot-2 output').textContent.includes('↶')")))throw Error('Corrupt slot did not expose backup recovery');
+  await tap('[data-load-slot="2"]');
+  if((await snapshot()).completed.length!==3)throw Error('Browser backup recovery lost earned progression');
+  console.log('PASS PASS-TWO RECOVERY: actual slot UI restores semantic backup after injected storage corruption');
+  // Portrait, landscape and foldable layouts: no inaccessible tiny controls.
+  for(const [width,height] of [[844,390],[768,1024],[390,844]]){
+   await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:2,mobile:true});await delay(150);
+   const layout=await evalJs("(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,world:document.querySelector('#viewport').getBoundingClientRect().height,small:Array.from(document.querySelectorAll('button')).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&r.height>0&&(r.width<44||r.height<44)}).map(b=>b.id||b.getAttribute('aria-label'))}))()");
+   if(layout.overflow||layout.world<height*.5||layout.small.length)throw Error('Pass Two responsive layout failed '+width+'x'+height+': '+JSON.stringify(layout));
+   if(width===844)await screenshot('mobile-landscape.png');
+  }
+  if(await evalJs('document.fullscreenEnabled')){await tap('#fullscreen');if(!(await snapshot()).fullscreen)throw Error('Fullscreen UI did not enter actual browser fullscreen');await tap('#fullscreen');if((await snapshot()).fullscreen)throw Error('Fullscreen UI did not exit');}
+  // Genuine touch cancellation must neutralize the analog stick.
+  if((await snapshot()).controls!=='joystick')await tap('#controls-mode');const jr=await bounds('#joystick');
+  await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:jr.x+jr.w*.8,y:jr.y+jr.h*.5,id:1}]});await delay(100);
+  await command('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});await delay(70);const state=await snapshot();
+  if(state.stickX!==0||state.stickY!==0)throw Error('Joystick stuck after actual touch cancellation');
+  if(state.audio.voices>24)throw Error('Audio voice bound exceeded');
+  await writeFile('artifacts/pass-two-routes.json',JSON.stringify({results,completed:state.completed,story:state.story,audio:state.audio},null,2));
+  if(exceptions.length)throw Error('Pass Two browser exceptions: '+exceptions.join('; '));
+  console.log('PASS PASS-TWO RELEASE: real touch repairs, lever and wheel drags, 3 no-purchase completed contracts, physical NPC assistance, pause clocks, fullscreen, cancelled joystick, portrait/landscape/foldable and bounded audio');
+ }
+
  console.log('PASS: Android viewport, actual touch tutorial/job/ignition/observe/return, main flame particles, clock, screenshot, zero uncaught JS exceptions');
 }
 main().catch(e=>{console.error('FAIL browser smoke:',e.stack||e);process.exitCode=1;}).finally(async()=>{
@@ -239,4 +356,5 @@ main().catch(e=>{console.error('FAIL browser smoke:',e.stack||e);process.exitCod
  try{web.close();}catch{}
  if(profileDir)await rm(profileDir,{recursive:true,force:true}).catch(()=>{});
 });
+
 

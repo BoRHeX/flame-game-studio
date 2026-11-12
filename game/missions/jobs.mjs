@@ -8,14 +8,14 @@ export const JOBS=Object.freeze([
   },
   {
     id:'warehouse',symbol:'▤',chamber:'warehouse',
-    burner:{airflowFactor:0.71,draftFactor:0.78,heatLoss:0.33},
+    burner:{airflowFactor:0.71,draftFactor:0.78,heatLoss:0.33,mainAir:0.60},
     initialCash:130,payout:85,deadline:155,
     objective:{type:'light-hold',seconds:6,minStability:0.57},
     clue:['≋','↻','◎'],label:'Warehouse restart'
   },
   {
     id:'heat-hold',symbol:'◉',chamber:'heat-hold',
-    burner:{airflowFactor:0.90,draftFactor:1.05,heatLoss:0.24},
+    burner:{airflowFactor:0.90,draftFactor:1.05,heatLoss:0.24,mainFuel:0.40},
     initialCash:150,payout:125,deadline:185,
     objective:{type:'temperature-hold',seconds:8,minTemp:0.62,maxTemp:1.25,maxSoot:0.18,minStability:0.53},
     clue:['ϟ','◉','◎'],label:'Heat-hold contract'
@@ -36,3 +36,4 @@ export class MissionEvaluator{
   }
   progress(){return Math.min(1,this.hold/this.job.objective.seconds);}
 }
+
