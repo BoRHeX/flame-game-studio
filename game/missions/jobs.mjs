@@ -8,7 +8,7 @@ export const JOBS=Object.freeze([
   },
   {
     id:'warehouse',symbol:'▤',chamber:'warehouse',
-    burner:{airflowFactor:0.71,draftFactor:0.78,heatLoss:0.33},
+    burner:{airflowFactor:0.71,draftFactor:0.78,heatLoss:0.33,mainAir:0.60},
     initialCash:130,payout:85,deadline:155,
     objective:{type:'light-hold',seconds:6,minStability:0.57},
     clue:['≋','↻','◎'],label:'Warehouse restart'
@@ -36,3 +36,4 @@ export class MissionEvaluator{
   }
   progress(){return Math.min(1,this.hold/this.job.objective.seconds);}
 }
+

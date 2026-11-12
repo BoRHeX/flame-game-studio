@@ -1,4 +1,5 @@
 // Original procedural pixel art; no external image assets or simulation state.
+import {drawParallax} from './parallax.mjs';
 export const VIEWPORT = Object.freeze({width:768,height:1152});
 
 const levels = [2300, 1840, 1380, 920];
@@ -14,7 +15,7 @@ function geometry() {
 }
 const station = (id,type,x,y,icon,label,deviceId) => ({id,type,x,y,icon,label,...(deviceId?{deviceId}:{})});
 function scene(id,theme,interactions) {
-  return {id,width:1600,height:2500,spawn:{x:180,y:2248},...geometry(),interactions,theme};
+  return {id,width:1600,height:2700,spawn:{x:180,y:2248},...geometry(),interactions,theme};
 }
 function jobStations(jobId) {
   const placements={
@@ -32,7 +33,8 @@ function jobStations(jobId) {
     station('mainFuel','device',1200,1808,'valve','Main fuel','mainFuel'),
     station('mainAir','device',700,1348,'damper','Main air','mainAir'),
     station('draft','device',1000,888,'damper','Draft','draft'),
-    station('site-operator','npc',operator.x,operator.y,'operator','Site operator')
+    station('site-operator','npc',operator.x,operator.y,'operator','Site operator'),
+    ...(jobId==='backyard'?[station('intake-shield','repair',960,1808,'shield','Intake shield')]:[])
   ];
 }
 export const SCENES = {
@@ -116,6 +118,11 @@ function background(c,s,v,p) {
   }
 }
 function structure(c,s,p) {
+  // Service trench below the walking floor keeps the player above thumb overlays
+  // at the bottom camera bound, while preserving actual world-space collision.
+  rect(c,'#1b3036',0,2300,s.width,400);
+  for(let x=20;x<s.width;x+=180){panel(c,x,2350,148,185,'#304c50');for(let k=0;k<4;k++)rect(c,'#172e35',x+13,2380+k*28,122,9);}
+  pipe(c,0,2580,s.width,24);pipe(c,0,2650,s.width,17);
   // The workshop shell and the three job sites share a scale, not collision.
   if(s.id==='hub'){
     rect(c,'#26383d',105,630,1370,1650);rect(c,p.wall,130,660,1320,1620);
@@ -172,7 +179,7 @@ function ladder(c,l) {
   rect(c,'#24383a',l.x-3,l.y,l.w+6,l.h);rect(c,'#778b80',l.x,l.y,7,l.h);rect(c,'#526c65',l.x+l.w-7,l.y,7,l.h);
   for(let y=l.y+12;y<l.y+l.h;y+=24){rect(c,'#a2ab96',l.x+6,y,l.w-12,5);rect(c,'#344e49',l.x+6,y+5,l.w-12,3);}
 }
-function machine(c,x,y,kind,selected,time) {
+function machine(c,x,y,kind,selected,time,deviceId=null,value=0,process=null,repaired=false) {
   const top=y-100;
   if(kind==='contracts'){
     panel(c,x-65,top-8,130,100,'#8b684d');
@@ -183,6 +190,11 @@ function machine(c,x,y,kind,selected,time) {
     panel(c,x-55,y-125,110,65,'#425956');
     for(let i=0;i<5;i++){rect(c,'#c5c4aa',x-42+i*20,y-115,4,30);rect(c,'#b2764f',x-46+i*20,y-90,12,5);}
     rect(c,'#84918a',x-22,y-70,44,14);rect(c,'#d0aa72',x-10,y-77,20,7);
+  }else if(kind==='repair'){
+    panel(c,x-55,y-110,110,108,'#5e7e79');rect(c,'#243f45',x-42,y-96,84,72);
+    for(let j=0;j<4;j++){rect(c,repaired?'#a7bcb0':'#c59457',x-35,y-85+j*16,70,8);rect(c,'#3c5758',x-35,y-77+j*16,70,3);}
+    for(const side of [-1,1]){rect(c,repaired?'#a9d6aa':'#df9b59',x+side*44-5,y-66,10,24);rect(c,'#243a3f',x+side*44-2,y-61,4,14);}
+    rect(c,repaired?'#82d9aa':'#edb362',x-6,y-121,12,6);
   }else if(kind==='npc'){
     operator(c,{x:x-14,y:y-52,w:28,h:52,vx:0,grounded:true,climbing:false,facing:-1,walkPhase:time*.4},true);
   }else if(kind==='exit'){
@@ -190,20 +202,28 @@ function machine(c,x,y,kind,selected,time) {
   }else{
     pipe(c,x-9,y-140,18,90);
     panel(c,x-40,y-85,80,78,kind==='practice'?'#8a6b58':'#5f7772');
-    if(kind==='device')wheel(c,x,y-46,17);
+    if(kind==='device'){
+      if(/Air|draft/.test(deviceId??'')){
+        rect(c,'#203b42',x-25,y-69,50,46);for(let k=0;k<4;k++){rect(c,'#8ca89c',x-19,y-64+k*9+Math.round(value*3),38,4);}
+        rect(c,'#d7ac68',x+26,y-64+value*32,12,8);
+      }else{wheel(c,x,y-46,17);rect(c,'#ffe0a1',x-3+Math.sin(value*4.7)*13,y-49-Math.cos(value*4.7)*13,6,6);}
+    }
     else if(kind==='ignition'){
       rect(c,'#2b3838',x-20,y-67,40,40);rect(c,'#d59552',x-11,y-58,22,22);rect(c,'#f5d58e',x-5,y-52,10,10);
     }else{
       rect(c,'#1b3036',x-25,y-70,50,43);rect(c,'#829b95',x-19,y-64,38,31);rect(c,'#2a4449',x-15,y-60,30,23);
+      if(process?.mainLit){rect(c,process.mainRatio>1.06?'#f7a052':'#74bac5',x-12,y-55,24,17);rect(c,'#fff2c0',x-4,y-51,8,10);}
       rect(c,'#b5c3ad',x-12,y-57,13,3);
     }
   }
   if(selected){rect(c,'#f5d18a',x-30,y-145,60,4);rect(c,'#f5d18a',x-30,y-145,4,18);rect(c,'#f5d18a',x+26,y-145,4,18);}
 }
 function operator(c,p,npc=false) {
-  const x=Math.round(p.x),y=Math.round(p.y),w=p.w||28,h=p.h||52;
+  const pose=p.pose??null;
+  const x=Math.round(p.x+(pose?.lean??0)),y=Math.round(p.y+(pose?.bob??0)),w=p.w||28,h=p.h||52;
   const moving=p.climbing||Math.abs(p.vx||0)>2;
-  const step=moving?Math.round(Math.sin(p.walkPhase||0)*4):0;
+  const step=pose?pose.leg:moving?Math.round(Math.sin(p.walkPhase||0)*4):0;
+  const arm=pose?.arm??(p.climbing?step:0);
   const scaleX=w/28,scaleY=h/52;
   c.save();c.translate(x,y);c.scale(scaleX,scaleY);
   if(p.facing<0){c.translate(28,0);c.scale(-1,1);}
@@ -213,8 +233,8 @@ function operator(c,p,npc=false) {
   rect(c,'#d8bf75',5,37,8,3);rect(c,'#d8bf75',16,37,8,3);
   rect(c,'#1f343a',4,18,21,18);rect(c,npc?'#a16d4c':'#63828a',6,19,17,17);
   rect(c,'#d9c68d',6,27,17,3);rect(c,'#e7d6a4',7,27,15,1);
-  rect(c,'#344e54',1,20,5,15+(p.climbing?step:0));rect(c,'#344e54',23,20,5,15-(p.climbing?step:0));
-  rect(c,'#c1a882',1,33+(p.climbing?step:0),5,4);rect(c,'#c1a882',23,33-(p.climbing?step:0),5,4);
+  rect(c,'#344e54',1,20,5,15+arm);rect(c,'#344e54',23,20,5,15-arm);
+  rect(c,'#c1a882',1,33+arm,5,4);rect(c,'#c1a882',23,33-arm,5,4);
   rect(c,'#342f2b',7,8,15,12);rect(c,'#bb936e',9,10,12,9);
   rect(c,'#243b40',6,2,18,9);rect(c,npc?'#d39b59':'#d4c68c',7,1,16,7);
   rect(c,'#f2dfaa',10,2,9,2);rect(c,'#a18355',5,8,21,3);
@@ -224,7 +244,7 @@ function operator(c,p,npc=false) {
 }
 function machinery(c,s,v) {
   // Decorative fan motion conveys machinery, not combustion state.
-  const t=Number.isFinite(v.time)?v.time:0;
+  const t=v.reducedMotion?0:Number.isFinite(v.time)?v.time:0;
   panel(c,1320,780,155,155,'#637675');rect(c,'#263b3e',1335,795,125,125);
   const phase=Math.floor(t*4)%4;
   for(let i=0;i<4;i++){
@@ -232,7 +252,7 @@ function machinery(c,s,v) {
     rect(c,'#8c9c91',1393+Math.cos(a)*28-8,853+Math.sin(a)*28-8,16,16);
   }
   rect(c,'#c2bc9c',1387,847,18,18);
-  for(const i of s.interactions)machine(c,i.x,i.y+32,i.type,v.selectedId===i.id,t);
+  for(const i of s.interactions)machine(c,i.x,i.y+32,i.type,v.selectedId===i.id,t,i.deviceId,v.process?.devices?.[i.deviceId]??0,v.process,!!v.contract?.repaired);
 }
 function occlusion(c,s) {
   // Foreground posts and cable bundles do not participate in collision.
@@ -245,7 +265,7 @@ function occlusion(c,s) {
 export function drawScene(ctx,scene,view) {
   const p=palettes[scene.theme]||palettes.workshop;
   ctx.save();
-  background(ctx,scene,view,p);
+  drawParallax(ctx,scene.id,view.camera,Number.isFinite(view.time)?view.time:0,{reducedMotion:!!view.reducedMotion});
   ctx.save();ctx.translate(-view.camera.x,-view.camera.y);
   structure(ctx,scene,p);
   for(const floor of scene.platforms)deck(ctx,floor);
@@ -253,5 +273,14 @@ export function drawScene(ctx,scene,view) {
   machinery(ctx,scene,view);
   operator(ctx,view.player);
   occlusion(ctx,scene);
-  ctx.restore();ctx.restore();
+  ctx.restore();
+  const cam=view.camera,protect=[{x:view.player.x-cam.x-10,y:view.player.y-cam.y-10,w:52,h:76},...scene.interactions.map(i=>({x:i.x-cam.x-42,y:i.y-cam.y-128,w:84,h:160})),{x:0,y:0,w:cam.width,h:150},{x:0,y:cam.height-300,w:cam.width,h:300}];
+  drawParallax(ctx,scene.id,cam,Number.isFinite(view.time)?view.time:0,{foreground:true,reducedMotion:!!view.reducedMotion,protectedAreas:protect});
+  if(view.target){
+    const tx=view.target.x-cam.x,ty=view.target.y-cam.y-160,x=Math.max(55,Math.min(cam.width-55,tx)),y=Math.max(145,Math.min(cam.height-320,ty));
+    rect(ctx,'#112a30',x-21,y-21,42,42);rect(ctx,'#e9bc72',x-21,y-21,42,3);rect(ctx,'#e9bc72',x-21,y+18,42,3);
+    ctx.fillStyle='#f4d89e';ctx.font='23px sans-serif';ctx.textAlign='center';ctx.fillText(ty<130?'↑':ty>cam.height-300?'↓':tx<55?'←':tx>cam.width-55?'→':'◇',x,y+8);
+  }
+  ctx.restore();
 }
+

@@ -22,3 +22,7 @@ The user's physical-phone Pass One screenshot confirms navigable multiple floors
 - Two polished missions + third functional mission; different hazards and rewards, not just icons or color variants.
 - Every delivered stage includes code, independent executable tests, CI evidence, and a separate review. Not complete merely because a studio worker ran.
 - No provider work is repeated or auto-scheduled. Cost caps, preview verification and review gates remain mandatory.
+
+
+## Operator 02 implementation candidate — 12 November 2026
+The ordered feature scope above is implemented in the connected candidate described in memory/evidence/acceptance/pass-two-operator-02.md. The older valve job was not re-dispatched; this integration supplies its consumer and a pure tested physical control while preserving the unresolved job as provenance. Five accepted specialist implementations plus the recovered environment module are wired into the game. Final real-touch Chrome, verified publication and physical Samsung review remain explicit gates; implementation checkmarks alone are not release acceptance.

@@ -41,6 +41,10 @@ jobs:
           path: |
             artifacts/mobile-world.png
             artifacts/mobile-flame.png
+            artifacts/mobile-device.png
+            artifacts/mobile-warehouse.png
+            artifacts/mobile-landscape.png
+            artifacts/pass-two-routes.json
           if-no-files-found: ignore
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
@@ -61,3 +65,4 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+

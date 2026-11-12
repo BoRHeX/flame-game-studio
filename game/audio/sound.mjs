@@ -14,6 +14,7 @@ export class ProcessSound {
     this.mainGain = null;
     this.stopped = false;
     this.transient = null;
+    this.volume = 1;
   }
 
   async unlock() {
@@ -84,7 +85,7 @@ export class ProcessSound {
     const pulse = Math.sin(now * 2 * Math.PI * 5.2);
     const focus = watching ? 1 : 0.38;
     const level = main ? 0.025 + heat * 0.045 : pilot ? 0.009 : 0;
-    this.gain.gain.setTargetAtTime(level * focus, now, 0.06);
+    this.gain.gain.setTargetAtTime(level * focus * unit(this.volume,1), now, 0.06);
     this.pilotGain.gain.setTargetAtTime(pilot ? (main ? 0.12 : 0.55) : 0, now, 0.06);
     this.mainGain.gain.setTargetAtTime(main ? 0.8 * (1 + instability * 0.12 * pulse) : 0, now, 0.06);
     this.mainFilter.frequency.setTargetAtTime(350 + heat * 850 + instability * 120 * pulse, now, 0.08);
@@ -92,7 +93,7 @@ export class ProcessSound {
   }
 
   click() {
-    if (!this.enabled || this.stopped) return;
+    if (!this.enabled || this.stopped || unit(this.volume,1)===0) return;
     if (this.transient) this.clearTransient(this.transient);
     const now = this.context.currentTime;
     const tone = this.context.createOscillator();
@@ -102,7 +103,7 @@ export class ProcessSound {
     tone.type = 'triangle';
     tone.frequency.setValueAtTime(250, now);
     tone.frequency.exponentialRampToValueAtTime(80, now + 0.08);
-    envelope.gain.setValueAtTime(0.035, now);
+    envelope.gain.setValueAtTime(0.035 * unit(this.volume,1), now);
     envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
     tone.connect(envelope);
     envelope.connect(this.context.destination);
@@ -134,3 +135,4 @@ export class ProcessSound {
     if (this.transient) this.clearTransient(this.transient);
   }
 }
+

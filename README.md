@@ -2,13 +2,16 @@
 
 **I.C.E. / The Flame Game** — a lightweight mobile-browser combustion game, plus the future autonomous production system that builds it.
 
-## Current status
-- game/: early experimental interactive vertical slice, **not** a complete Pass One release. Includes a backyard hub, touch-to-walk, manual pilot/main fuel and air controls, draft, ignition, observation mode, three contract definitions and distinct pixel-particle chambers.
-- studio/: activated API-backed producer, specialist and independent reviewer, scoped source proposals, durable per-run/daily/cumulative spend ledger and review-only PR pipeline. Each paid run requires a bounded one-time request and all activation guards.
-- design/, memory/: game bible, architecture, four-agent AI orchestra, durable agent decision rules, roadmaps.
-- tests/: unit/invariant tests and Chrome touch smoke with a screenshot artifact.
+## Current status — Pass Two integration candidate
+The Operator expands the accepted tall-platformer foundation into three physical contracts. Backyard requires an intake-shield diagnosis/repair and air adjustment; Warehouse requires freeing and testing a seized draft linkage; Heat-Hold remains a clean-combustion temperature challenge. Each job requires inspection, physical work, adjustment, verification and a stable hold. All calibrated tools are available without purchases.
 
-Visible playtest 01 integrates the specialist pixel-flame and procedural burner-sound updates. The game acceptance suite covers all three chambers, pilot/main transitions, soot and audio lifecycle behavior. This is still an early game slice with real-phone acceptance pending.
+The candidate connects six department contributions: six character animation clips, four authored biome environments with real process effects, contextual persistent operator narrative, four original composer themes, their adaptive arrangements, and synchronized mechanical/process/mission cues. The environment proposal was recovered from a source-review scope deadlock and is accepted only through integrated executable checks.
+
+The game includes analog/alternate-handed/D-pad controls, native fullscreen, physical valve-wheel and damper-lever close-ups with detents and stops, live diagnostics, operator assistance, three transactional save slots/autosave, recovery/migration, pause/options/equipment menu and portrait/landscape support. World presentation stays 18 FPS, flame 24 FPS; fixed simulation and audio scheduling remain independent.
+
+This is an engineering candidate for physical Samsung review. Unit/contract checks and the full real-touch Chrome route are release prerequisites; phone performance and subjective control/art/audio acceptance are not inferred from CI. See [the release evidence](memory/evidence/acceptance/pass-two-operator-02.md) and [living roadmap](design/roadmap.md).
+
+The studio remains bounded, on-demand Producer → Specialist → independent source review → no-secret executable verification → reviewable PR. Five new specialist PRs plus the recovered environment contribution were integrated for this wave. No schedules, permanent background agents, automatic paid task loops or changes to the separate Cataclysm experiment.
 
 Run locally with Node 22+:
 
@@ -33,8 +36,7 @@ The branch workflow runs independent tests and uploads the game files plus mobil
 - Reviewed development previews may integrate changes after independent tests. A game release requires an actual phone playtest and independent acceptance.
 
 ## Next gate
-Playtest the integrated flame and sound on a physical phone, measure performance and readability, and continue actual gameplay, environment, operator and persistence work against the roadmap. The bounded production-to-PR pipeline is active and has delivered integrated game changes.
-
+Finish independent integration/Chrome checks, publish the verified Pass Two candidate, and collect the user's physical-phone review. Pass Three's campaign expansion remains separate.
 
 ## New API-backed production studio (review stage)
 
@@ -43,4 +45,5 @@ This branch adds the full I.C.E. visual constitution, specialist role registry, 
 See [activation instructions](studio/runtime/README.md), [visual target](design/visual-bible.md), [full product scope](design/product-systems.md) and [studio operation](studio/production-plan.md).
 
 The initial deterministic pipeline works one scoped task at a time. Art and audio are authored as code/data in the first iteration; image-model PNG/GIF production, human-quality music rendering and automatic multi-task scheduling require separate quality/cost gates.
+
 
