@@ -74,7 +74,7 @@ export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImp
    const draft=await ask({instructions:activeRules+' Act as '+stage.role+'; expertise: '+role.mission+'. '+stage.goal,
     input:{job,canon,plan,stage,handoffs,workspace:contextFiles(current,stage.role),feedback:old.feedback,
      traversalContract:'Keep the public SCENES / VIEWPORT / drawScene and PlatformPlayer inspection interfaces usable for automated gameplay QA. Layouts are free. Represent physical stairs in scene.stairs as {x,y,w,h,direction:"left"|"right"}; y is the top and y+h the bottom. Actual steps are collision platforms, not decorative fake routes. Walking must climb those stairs. Keep existing physical station IDs or update all game callers and provide equivalent QA-observable stations. UI text and panels can be redesigned while preserving accessible control semantics.'},
-    imagePaths:attempt?[]:(['environment_animator','pixel_art_director','integrator','ux_designer'].includes(stage.role)?(job.references??[]).slice(0,2):[]),
+    imagePaths:attempt?[...(job.references??[]).slice(0,1),join(previousDir,'screens','mobile-world.jpg'),join(previousDir,'screens','production-backyard.jpg')]:(['environment_animator','pixel_art_director','integrator','ux_designer'].includes(stage.role)?(job.references??[]).slice(0,2):[]),
     schema:editSchema,name:'production_'+stage.role,max:16000,budget,fetchImpl});
    const updated=applyEdits(current,draft.edits);current.clear();for(const [p,c] of updated)current.set(p,c);
    handoffs.push({role:stage.role,summary:draft.summary,handoff:draft.handoff,paths:[...new Set(draft.edits.map(e=>e.path))]});
