@@ -1,0 +1,32 @@
+{
+  "id": "ICE-P2-AV-SYNC-01",
+  "role": "av_sync_director",
+  "target_file": "game/audio/event-sync.mjs",
+  "allowed_paths": [
+    "game/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Author all approved event cues and pure cueForEvent mapping in ADR-0006. Synchronize real character markers, valve detents, ignition/recoil, repair and mission outcomes through AudioContext scheduling. Deliver distinct restrained synthesized cue parameters, not documents or comments.",
+  "acceptance": [
+    "Implement exact accepted ADR-0006 exports and complete authored content.",
+    "Pass protected studio/acceptance/p2-av-sync-final.mjs without changing it.",
+    "No DOM/import side effects, external assets, clocks, credentials or simulator mutation."
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "design/pass-two-operator.md",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio/original-themes.json",
+    "game/animation/operator.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-av-sync-final.mjs",
+  "max_cost_usd": 0.65,
+  "max_attempts": 1,
+  "seed": 2112
+}

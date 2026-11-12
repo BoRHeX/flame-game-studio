@@ -1,0 +1,32 @@
+{
+  "id": "ICE-P2-NARRATIVE-01",
+  "role": "narrative_designer",
+  "target_file": "game/narrative/story-flags.mjs",
+  "allowed_paths": [
+    "game/narrative/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Implement the approved StoryState interface from ADR-0006. Deliver a small coherent industrial operator story with real independent versus assisted branching, mission consequences, persistence-safe flags, useful contextual dialogue and iconographic options. Keep Pass Three finale/content expansion out of scope.",
+  "acceptance": [
+    "Implement exact accepted ADR-0006 exports and complete authored content.",
+    "Pass protected studio/acceptance/p2-narrative-final.mjs without changing it.",
+    "No DOM/import side effects, external assets, clocks, credentials or simulator mutation."
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "design/pass-two-operator.md",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio/original-themes.json",
+    "game/animation/operator.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-narrative-final.mjs",
+  "max_cost_usd": 0.65,
+  "max_attempts": 1,
+  "seed": 2112
+}
