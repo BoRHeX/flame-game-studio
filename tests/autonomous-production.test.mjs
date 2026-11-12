@@ -61,7 +61,15 @@ test('one brief drives shared implementation, real failure feedback, repair and 
   save('out/verification.json',{passed:false,failures:['Real test: expected value 6, got 4'],checks:[]});
   const failed=await assess('job.json',0,'out',{fetchImpl:()=>{throw Error('No vision call on failing executable checks');}});
   assert.equal(failed.passed,false);assert.equal(failed.retryable,true);
-  const repaired=await generate('job.json',1,'repaired','out',{fetchImpl:fakeModel([
+  await generate('job.json',1,'bad-edit','out',{fetchImpl:fakeModel([
+   {vision:'Repair failure',team:[{role:'gameplay_engineer',goal:'Repair consumer'}],acceptance:['Value 6']},
+   {summary:'Invalid search anchor',edits:[{path:'game/b.mjs',operation:'replace',find:'absent source',content:'n*3'}],handoff:'An invalid edit'}
+  ])});
+  assert.deepEqual(json('bad-edit/candidate.json').files,p.files,'a rejected model edit cannot discard the inherited candidate');
+  assert.equal(json('bad-edit/spend.json').billingComplete,true);
+  save('bad-edit/verification.json',{passed:false,failures:['The replacement anchor did not match'],checks:[]});
+  await assess('job.json',1,'bad-edit',{fetchImpl:()=>{throw Error('No visual review for failed checks');}});
+  const repaired=await generate('job.json',2,'repaired','bad-edit',{fetchImpl:fakeModel([
    {vision:'Repair actual failure',team:[{role:'gameplay_engineer',goal:'Fix the failing consumer'}],acceptance:['Value 6']},
    {summary:'Fixed coherent consumer',edits:[{path:'game/b.mjs',operation:'replace',find:'n*2',content:'n*3'}],handoff:'Actual failure fixed'},
    {summary:'Finished integration',edits:[{path:'game/index.html',operation:'write',find:'',content:'<head><title>Integrated game</title></head>'}],handoff:'Complete integrated result'}
@@ -70,10 +78,10 @@ test('one brief drives shared implementation, real failure feedback, repair and 
   for(const [path,content] of current){mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,content);}
   assert.equal(execFileSync(process.execPath,['--input-type=module','-e','import {value} from "./game/b.mjs";console.log(value)'],{encoding:'utf8'}).trim(),'6');
   save('repaired/verification.json',{passed:true,packageHash:packageHash(repaired),checks:[{name:'actual execution',passed:true}],failures:[]});
-  const missing=await assess('job.json',1,'repaired',{fetchImpl:()=>{throw Error('Cannot review absent images');}});
+  const missing=await assess('job.json',2,'repaired',{fetchImpl:()=>{throw Error('Cannot review absent images');}});
   assert.equal(missing.passed,false);assert.match(missing.error,/visual evidence is missing/);
   mkdirSync('repaired/screens');for(const name of ['mobile-world.jpg','production-backyard.jpg'])writeFileSync('repaired/screens/'+name,Buffer.from([255,216,255,217,0]));
-  const accepted=await assess('job.json',1,'repaired',{fetchImpl:fakeModel([{approved:true,visible_progress:true,findings:['Verified substantial result'],repair_brief:''}])});
+  const accepted=await assess('job.json',2,'repaired',{fetchImpl:fakeModel([{approved:true,visible_progress:true,findings:['Verified substantial result'],repair_brief:''}])});
   assert.equal(accepted.passed,true);assert.ok(json('repaired/spend.json').modelAudit.length>json('out/spend.json').modelAudit.length,'all attempts share cumulative usage');
   assert.equal(pickAttempt(['out','repaired'],'123').dir,'repaired');
  }finally{

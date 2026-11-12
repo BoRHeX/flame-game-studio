@@ -73,6 +73,10 @@ export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImp
  const baseline=readWorkspace(),current=new Map(baseline);let candidate=null,status='failed',error='';
  if(old.candidate)for(const f of old.candidate.files)current.set(f.path,f.content);
  const handoffs=old.candidate?.handoffs?[...old.candidate.handoffs]:[];
+ if(old.candidate){
+  candidate={...old.candidate,runId:runId(),sourceSha:sourceSha(),attempt,files:changedFiles(baseline,current),handoffs};
+  save(join(outDir,'candidate.json'),candidate);
+ }
  const canon=readFileSync('design/game-bible.md','utf8');
  try{
   let plan=seed?null:old.candidate?.plan;
