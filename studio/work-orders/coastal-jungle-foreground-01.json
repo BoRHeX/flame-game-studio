@@ -1,0 +1,40 @@
+{
+  "id": "ICE-COASTAL-JUNGLE-WORLD-01",
+  "role": "environment_animator",
+  "target_file": "game/world/industrial-yard.mjs",
+  "allowed_paths": [
+    "game/world/"
+  ],
+  "forbidden_paths": [
+    "game/main.mjs",
+    "game/world/parallax.mjs",
+    "game/simulation/",
+    "game/player/",
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Implement the foreground half of design/production/coastal-jungle-art-01.md in the actual game/world/industrial-yard.mjs renderer. Keep imports/live drawParallax integration. The player wants major pixel-art improvement, not a few lines of decoration: a convincing weathered industrial plant in a jungle/coastal setting. Add authored metal-material clusters, pipe elbows/flanges, cable runs, louvered fans, rust/wear, grating and rail details, clear equipment silhouettes, plant vines at safe edges, animated smoke at the actual stack, warm sunset rim highlights and process-driven chamber/inspection-port glow. A combustion chamber stays enclosed with a visible shell/refractory/port rather than an open-front fire. Make four sites distinct and the workshop inviting. Preserve existing VIEWPORT/SCENES/drawScene APIs, every platform/ladder/spawn/interaction coordinate and ID, physical repair feedback, devices/selected highlights, and the existing pose-driven PPE player and NPCs. Preserve animation and process truth; do not represent panic or flame as a gameplay state unless the supplied process actually supports it. Use v.process, v.contract, v.time and reducedMotion only as established. No visual stairs that promise unsupported collision. No other file changes. Preserve foreground weather protection. Deliver one complete compact source file under approximately 30000 UTF-8 bytes so structured output can finish.",
+  "acceptance": [
+    "Pass protected studio/acceptance/major-world.mjs and existing unit/browser checks without editing them.",
+    "All existing scene, platform, ladder, spawn and interaction data remain byte-for-byte structurally equivalent, keeping save and touch-route compatibility.",
+    "Substantial original pixel-art foreground improvement visible at phone scale: material texture, shaped pipework, grating/rail depth, enclosed chamber glow, actual stack smoke and readable PPE characters.",
+    "Existing physical repair status, device values, selected interaction, character pose/event animation and background/foreground layering remain connected.",
+    "No new dependencies, external resources, import-time DOM, randomness, unbounded loops, collisions or process writes; retain reduced-motion and bounded drawing cost.",
+    "No fabricated raster import, screenshots, mastered audio or phone-playtest claims."
+  ],
+  "required_contracts": [
+    "design/production/coastal-jungle-art-01.md",
+    "memory/decisions/ADR-0004-major-platform-world.md",
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "game/world/parallax.mjs",
+    "game/animation/operator.mjs",
+    "tests/pass-two-connected.test.mjs",
+    "tests/pass-two-mission-cues.test.mjs"
+  ],
+  "verification_script": "studio/acceptance/major-world.mjs",
+  "max_cost_usd": 1.2,
+  "max_attempts": 1,
+  "seed": 2026111202
+}
