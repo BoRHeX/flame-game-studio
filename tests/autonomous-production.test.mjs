@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {productPath,applyEdits,validateJob,validateCandidate,packageHash,selectJob,save,json,pickAttempt,contextFiles} from '../studio/production/protocol.mjs';
+import {productPath,applyEdits,validateJob,validateCandidate,packageHash,selectJob,save,json,pickAttempt,contextFiles,diagnosticLog,repairFeedback} from '../studio/production/protocol.mjs';
 import {generate,assess,ask,restoreBudget,implementationTeam} from '../studio/production/worker.mjs';
 import {publishVerified} from '../studio/production/controller.mjs';
 import {verify} from '../studio/production/verify.mjs';
@@ -119,6 +119,46 @@ test('visual repair uses complementary implementation departments, then integrat
  const team=implementationTeam({team:[{role:'environment_animator',goal:'Redesign geography'}]});
  assert.deepEqual(team.map(x=>x.role),['environment_animator','pixel_art_director','integrator']);
  assert.ok(!team.some(x=>x.goal.includes('one file')));
+ assert.deepEqual(implementationTeam({team:[{role:'gameplay_engineer'},{role:'pixel_art_director'},{role:'environment_animator'}]},1,1).map(x=>x.role),['gameplay_engineer','integrator']);
+});
+
+test('repair diagnostics retain an early failing assertion without flooding departments with passing output',()=>{
+ const failure='not ok 11 - reduced-motion remains deterministic\n  ---\n  location: tests/coastal-renderer.test.mjs:45\n  error: animation changed while motion was disabled\n  stack: |-\n    at tests/coastal-renderer.test.mjs:47\n  ...\n';
+ const log=failure+('ok 20 - an unrelated passing test\n'.repeat(4000));
+ const short=diagnosticLog(log);assert.match(short,/reduced-motion remains deterministic/);assert.match(short,/animation changed/);assert.match(short,/coastal-renderer.test.mjs:47/);assert.ok(short.length<6000);
+ const feedback=repairFeedback({attempt:2,verification:{passed:false,checks:[{name:'unit',passed:false,log},{name:'passed check',passed:true,log:'x'.repeat(100000)}],failures:[log]},verdict:null});
+ assert.match(JSON.stringify(feedback),/animation changed/);assert.ok(JSON.stringify(feedback).length<15000);
+ assert.match(diagnosticLog('✔ passes\nℹ failing tests:\n✖ deterministic animation\n  Error: changed\n'),/Error: changed/);
+});
+
+test('verification archives complete logs and sends the actual failed assertion to repair',()=>{
+ const root=mkdtempSync(join(tmpdir(),'ice-diagnostics-')),cwd=process.cwd();
+ const previous={key:process.env.OPENAI_API_KEY,sha:process.env.GITHUB_SHA,run:process.env.GITHUB_RUN_ID};
+ try{
+  process.chdir(root);mkdirSync('game');writeFileSync('game/a.mjs','export const n=1;');save('job.json',job);save('out/candidate.json',candidate([{path:'game/a.mjs',content:'export const n=2;'}]));
+  delete process.env.OPENAI_API_KEY;process.env.GITHUB_RUN_ID='123';process.env.GITHUB_SHA='abc';
+  const log='not ok 2 - early rendering regression\n  ---\n  error: reduced-motion changed unexpectedly\n  ...\n'+('ok 30 - later passing test\n'.repeat(4000));
+  const report=verify('job.json',0,'out',{runCommand:(exe,args)=>args.includes('-e')?{passed:true,log:'{}'}:exe==='npm'?{passed:false,exitCode:1,log,error:''}:{passed:true,exitCode:0,log:'Outcome passed',error:''}});
+  assert.equal(report.passed,false);assert.match(report.failures.join('\n'),/reduced-motion changed unexpectedly/);
+  assert.equal(readFileSync('out/logs/unit-and-production.log','utf8'),log);assert.ok(JSON.stringify(report).length<10000);
+ }finally{
+  process.chdir(cwd);for(const [k,v] of Object.entries({OPENAI_API_KEY:previous.key,GITHUB_SHA:previous.sha,GITHUB_RUN_ID:previous.run}))v===undefined?delete process.env[k]:process.env[k]=v;
+  rmSync(root,{recursive:true,force:true});
+ }
+});
+
+test('a budget-blocked attempt stops instead of buying another planning pass',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'ice-budget-stop-')),cwd=process.cwd();
+ const previous={sha:process.env.GITHUB_SHA,run:process.env.GITHUB_RUN_ID};
+ try{
+  process.chdir(root);save('job.json',{...job,max_attempts:6});process.env.GITHUB_RUN_ID='123';process.env.GITHUB_SHA='abc';
+  save('out/spend.json',{runId:'123',jobId:job.id,costUsd:0,billingComplete:true,modelAudit:[],stopReason:'budget_exhausted'});
+  save('out/verification.json',{passed:false,failures:['An unresolved product check'],checks:[]});
+  const r=await assess('job.json',2,'out',{fetchImpl:()=>{throw Error('No new paid call is authorized by a budget failure');}});
+  assert.equal(r.retryable,false);assert.equal(r.stopReason,'budget_exhausted');assert.equal(json('out/spend.json').costUsd,0);
+ }finally{
+  process.chdir(cwd);for(const [k,v] of Object.entries({GITHUB_SHA:previous.sha,GITHUB_RUN_ID:previous.run}))v===undefined?delete process.env[k]:process.env[k]=v;rmSync(root,{recursive:true,force:true});
+ }
 });
 
 test('continuation carries forward candidate work without replaying billed calls or overwriting a changed base',async()=>{

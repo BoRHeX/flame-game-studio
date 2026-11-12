@@ -4,7 +4,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {ModelBudget,calculateUsageCost} from '../runtime/runner.mjs';
-import {json,save,output,validateJob,validateCandidate,readWorkspace,applyEdits,changedFiles,contextFiles,packageHash,PRODUCT_ROOTS} from './protocol.mjs';
+import {json,save,output,validateJob,validateCandidate,readWorkspace,applyEdits,changedFiles,contextFiles,packageHash,PRODUCT_ROOTS,repairFeedback} from './protocol.mjs';
 const obj=properties=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
 const strings={type:'array',items:{type:'string'}};
 const text={type:'string'};
@@ -51,8 +51,8 @@ function previous(dir){
   spend:existsSync(join(dir,'spend.json'))?json(join(dir,'spend.json')):null,
   feedback:existsSync(join(dir,'assessment.json'))?json(join(dir,'assessment.json')):null};
 }
-export function implementationTeam(plan,minimum=2){
- const selected=(plan.team??[]).filter((s,i,all)=>roles.some(r=>r.id===s.role)&&!['producer','integrator','qa_architect','security_release_engineer'].includes(s.role)&&all.findIndex(x=>x.role===s.role)===i).slice(0,3);
+export function implementationTeam(plan,minimum=2,maximum=3){
+ const selected=(plan.team??[]).filter((s,i,all)=>roles.some(r=>r.id===s.role)&&!['producer','integrator','qa_architect','security_release_engineer'].includes(s.role)&&all.findIndex(x=>x.role===s.role)===i).slice(0,maximum);
  for(const role of ['pixel_art_director','environment_animator','gameplay_engineer'])if(selected.length<minimum&&!selected.some(s=>s.role===role))selected.push({role,goal:role==='pixel_art_director'?'Produce substantial original visual assets and readable industrial/character art for the complete brief.':'Implement the complete authored geography and physical gameplay requested by the brief.'});
  return [...selected,{role:'integrator',goal:'Finish the complete coherent playable result. Incorporate every department, and resolve outstanding product work instead of returning a known partial implementation.'}];
 }
@@ -70,7 +70,8 @@ export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImp
   if(old.candidate)validateCandidate(old.candidate,job,sourceSha(),runId());
  }
  const budget=restoreBudget(Math.min(job.max_cost_usd,policy.MAX_RUN_COST_USD),seed?null:old.spend);
- const baseline=readWorkspace(),current=new Map(baseline);let candidate=null,status='failed',error='';
+ const baseline=readWorkspace(),current=new Map(baseline);let candidate=null,status='failed',error='',stopReason='';
+ const feedback=repairFeedback(old.feedback);
  if(old.candidate)for(const f of old.candidate.files)current.set(f.path,f.content);
  const handoffs=old.candidate?.handoffs?[...old.candidate.handoffs]:[];
  if(old.candidate){
@@ -81,15 +82,15 @@ export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImp
  try{
   let plan=seed?null:old.candidate?.plan;
   const visualFailure=old.feedback?.verdict?.approved===false;
-  if(!plan||attempt>0){plan=await ask({model:'gpt-6-luna',instructions:'Act as production lead. Choose two or three complementary IMPLEMENTATION specialists from the roster, followed by integrator. After a visual rejection, route actual artwork and geography back to art/environment specialists rather than asking only an integrator for another small patch. After executable failure, select the department that can fix its cause. Give outcome goals; do not freeze file ownership, original geometry or original appearance. The job must deliver the complete substantial brief, not a known partial build.',input:{job,canon,feedback:old.feedback,roster:roles.map(r=>({role:r.id,expertise:r.mission})),sourceIndex:contextFiles(current,'integrator',0).index},schema:planSchema,name:'production_plan',max:2600,budget,fetchImpl});
-   plan.team=implementationTeam(plan,attempt>0&&!visualFailure?1:2);
+  if(!plan||attempt>0){plan=await ask({model:'gpt-6-luna',instructions:'Act as production lead. Choose two or three complementary IMPLEMENTATION specialists from the roster, followed by integrator. After a visual rejection, route actual artwork and geography back to art/environment specialists rather than asking only an integrator for another small patch. After executable failure, select ONE department that can fix its cause, then integrator; preserve the existing contributions while fixing the demonstrated defect. Give outcome goals; do not freeze file ownership, original geometry or original appearance. The job must deliver the complete substantial brief, not a known partial build.',input:{job,canon,feedback,roster:roles.map(r=>({role:r.id,expertise:r.mission})),sourceIndex:contextFiles(current,'integrator',0).index},schema:planSchema,name:'production_plan',max:2600,budget,fetchImpl});
+   const executableRepair=attempt>0&&!visualFailure;plan.team=implementationTeam(plan,executableRepair?1:2,executableRepair?1:3);
   }
   const stages=plan.team;
   for(const stage of stages){
    const role=roles.find(r=>r.id===stage.role);
    const strong=['integrator','pixel_art_director','character_animator'].includes(stage.role)||attempt>=2;
    const draft=await ask({model:strong?'gpt-6.1-sol':'gpt-6.1-terra',effort:strong?'medium':'low',instructions:activeRules+' Act as '+stage.role+'; expertise: '+role.mission+'. '+stage.goal+' You can replace existing scenery and layout code rather than layering minor additions over a rejected composition. Complete the actual product contribution; explain uncertainty about execution honestly, but do not substitute a list of unfinished visual work for the requested implementation.',
-    input:{job,canon,plan,stage,handoffs,workspace:contextFiles(current,stage.role,stage.role==='integrator'?165000:125000,changedFiles(baseline,current).map(f=>f.path)),feedback:old.feedback,
+    input:{job,canon,plan,stage,handoffs,workspace:contextFiles(current,stage.role,stage.role==='integrator'?165000:125000,changedFiles(baseline,current).map(f=>f.path)),feedback,
      traversalContract:'Keep the public SCENES / VIEWPORT / drawScene and PlatformPlayer inspection interfaces usable for automated gameplay QA. Layouts are free. Represent physical stairs in scene.stairs as {x,y,w,h,direction:"left"|"right"}; y is the top and y+h the bottom. Actual steps are collision platforms, not decorative fake routes. Walking must climb those stairs. Keep existing physical station IDs or update all game callers and provide equivalent QA-observable stations. UI text and panels can be redesigned while preserving accessible control semantics.'},
     imagePaths:(attempt||seed)?[...(job.references??[]).slice(0,1),join(previousDir,'screens','mobile-world.jpg'),join(previousDir,'screens','production-backyard.jpg')]:(['environment_animator','pixel_art_director','character_animator','integrator','ux_designer'].includes(stage.role)?(job.references??[]).slice(0,2):[]),
     schema:editSchema,name:'production_'+stage.role,max:strong?24000:18000,budget,fetchImpl});
@@ -105,11 +106,11 @@ export async function generate(jobPath,attempt,outDir,previousDir=null,{fetchImp
    current.set('game/index.html',/<meta name="ice-production"[^>]*>/.test(index)?index.replace(/<meta name="ice-production"[^>]*>/,marker):index.replace('</head>',marker+'</head>'));
    candidate.files=changedFiles(baseline,current);save(join(outDir,'candidate.json'),candidate);}
   status='candidate';output('ready','true');
- }catch(e){error=String(e.message).slice(0,2000);console.error('PRODUCTION BLOCKED: '+error);output('ready',candidate?'true':'false');}
+ }catch(e){error=String(e.message).slice(0,2000);stopReason=/request may exceed reserved budget/.test(error)?'budget_exhausted':/Model provider HTTP/.test(error)?'provider_rejected':'';console.error('PRODUCTION BLOCKED: '+error);output('ready',candidate?'true':'false');}
  finally{
   // Persist useful earlier departments even if a later department failed.
-  save(join(outDir,'spend.json'),{runId:runId(),jobId:job.id,attempt,status,billingComplete:budget.accountingCertain,costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls,error});
-  save(join(outDir,'generation.json'),{attempt,status,error,ready:!!candidate});
+  save(join(outDir,'spend.json'),{runId:runId(),jobId:job.id,attempt,status,stopReason,billingComplete:budget.accountingCertain,costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls,error});
+  save(join(outDir,'generation.json'),{attempt,status,stopReason,error,ready:!!candidate});
   output('billing_certain',budget.accountingCertain?'true':'false');
  }
  return candidate;
@@ -131,7 +132,7 @@ export async function assess(jobPath,attempt,dir,{fetchImpl=fetch}={}){
  }catch(e){error=String(e.message).slice(0,1600);}
  const passed=verification.passed===true&&verdict?.approved===true&&verdict.visible_progress===true&&budget.accountingCertain;
  const report={version:1,runId:runId(),jobId:job.id,attempt,sourceSha:sourceSha(),passed,packageHash:candidate?packageHash(candidate):null,
-  verification,verdict,error,retryable:!passed&&budget.accountingCertain&&attempt+1<job.max_attempts&&budget.spent<job.max_cost_usd-.12};
+  verification,verdict,error,stopReason:spend.stopReason??'',retryable:!passed&&!['budget_exhausted','provider_rejected'].includes(spend.stopReason)&&budget.accountingCertain&&attempt+1<job.max_attempts&&budget.spent<job.max_cost_usd-.12};
  save(join(dir,'assessment.json'),report);
  save(join(dir,'spend.json'),{...spend,billingComplete:budget.accountingCertain,costUsd:Number(budget.spent.toFixed(7)),modelAudit:budget.calls});
  output('passed',passed?'true':'false');output('retryable',report.retryable?'true':'false');

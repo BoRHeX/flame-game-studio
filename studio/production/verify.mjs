@@ -3,15 +3,20 @@
 import {readFileSync,writeFileSync,existsSync,mkdirSync,cpSync,readdirSync} from 'node:fs';
 import {resolve,join,dirname} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {json,save,validateJob,validateCandidate,writeCandidate,packageHash,readWorkspace,digest} from './protocol.mjs';
+import {json,save,validateJob,validateCandidate,writeCandidate,packageHash,readWorkspace,digest,diagnosticLog} from './protocol.mjs';
 const safeEnv=()=>({...Object.fromEntries(['PATH','HOME','TMPDIR','LANG','CHROME_BIN','CI'].filter(k=>process.env[k]).map(k=>[k,process.env[k]])),ICE_PRODUCTION_MODE:'true'});
 function command(exe,args,cwd,timeout=360000){
  const r=spawnSync(exe,args,{cwd,env:safeEnv(),encoding:'utf8',timeout,maxBuffer:12*1024*1024});
- return {passed:r.status===0,exitCode:r.status,log:((r.stdout??'')+'\n'+(r.stderr??'')).slice(-20000),error:r.error?.message??''};
+ return {passed:r.status===0,exitCode:r.status,log:(r.stdout??'')+'\n'+(r.stderr??''),error:r.error?.message??''};
 }
 export function verify(jobPath,attempt,dir,{runCommand=command}={}){
  const root=process.cwd(),out=resolve(dir),job=validateJob(json(jobPath));mkdirSync(out,{recursive:true});
  const report={version:1,runId:String(process.env.GITHUB_RUN_ID),jobId:job.id,attempt,sourceSha:process.env.GITHUB_SHA,passed:false,failures:[],checks:[],screens:[]};
+ const record=(name,result)=>{
+  const logPath='logs/'+name+'.log';mkdirSync(join(out,'logs'),{recursive:true});writeFileSync(join(out,logPath),result.log??'');
+  const summary={name,...result,log:result.passed?String(result.log??'').slice(-1200):diagnosticLog(result.log),logPath};
+  report.checks.push(summary);if(!result.passed)report.failures.push(name+': '+summary.log+(result.error?'\n'+result.error:''));return result;
+ };
  if(existsSync(join(out,'generation.json')))report.generation=json(join(out,'generation.json'));
  try{
   if(process.env.OPENAI_API_KEY)throw Error('Model credentials are forbidden in executable verification');
@@ -25,17 +30,17 @@ export function verify(jobPath,attempt,dir,{runCommand=command}={}){
   const sourceDigest=()=>digest(JSON.stringify([...readWorkspace(root)].map(([p,c])=>[p,digest(c)]).sort()));
   const beforeTests=sourceDigest();
   for(const [name,args] of [['unit-and-production',['test']],]){
-   const check=runCommand('npm',args,root);report.checks.push({name,...check});if(!check.passed)report.failures.push(name+': '+check.log.slice(-14000));
+   record(name,runCommand('npm',args,root));
   }
   const gameTests=existsSync('tests/game')?readdirSync('tests/game').filter(x=>x.endsWith('.test.mjs')).map(x=>'tests/game/'+x):[];
-  if(gameTests.length){const c=runCommand(process.execPath,['--test',...gameTests],root);report.checks.push({name:'new-game-tests',...c});if(!c.passed)report.failures.push(c.log);}
+  if(gameTests.length)record('new-game-tests',runCommand(process.execPath,['--test',...gameTests],root));
   const acceptance=runCommand(process.execPath,['studio/production/acceptance.mjs',jobPath,join(out,'baseline-scenes.json')],root,30000);
-  report.checks.push({name:'production-outcomes',...acceptance});if(!acceptance.passed)report.failures.push(acceptance.log);
+  record('production-outcomes',acceptance);
   // Exercise the portable game without access to repository-parent assets.
   const portable=join(out,'portable');mkdirSync(portable,{recursive:true});cpSync('game',join(portable,'game'),{recursive:true});
   if(!report.failures.length){
    const browser=runCommand(process.execPath,[resolve('scripts/browser-smoke.mjs')],portable,540000);
-   report.checks.push({name:'chrome-physical-touch-route',...browser});if(!browser.passed)report.failures.push(browser.log);
+   record('chrome-physical-touch-route',browser);
   }
   const capture=join(portable,'artifacts');mkdirSync(join(out,'screens'),{recursive:true});
   if(existsSync(capture))for(const name of readdirSync(capture)){

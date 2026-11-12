@@ -7,6 +7,33 @@ export const PRODUCT_ROOTS=['game/','content/','assets/visual/','assets/audio/',
 export const MAX_ATTEMPTS=6;
 const TEXT=/\.(?:mjs|js|ts|json|html|css|svg|md|txt)$/;
 export const digest=content=>createHash('sha256').update(content).digest('hex');
+// Preserve the actual failing assertion before trimming verbose passing output
+// or large object diffs. Complete logs remain separate workflow artifacts.
+export function diagnosticLog(log,limit=6000){
+ const lines=String(log??'').split('\n'),starts=[];
+ for(let i=0;i<lines.length;i++)if(/^\s*not ok \d+/.test(lines[i]))starts.push(i);
+ if(starts.length){
+  const each=Math.max(500,Math.floor(limit/Math.min(starts.length,8)));
+  return starts.slice(0,8).map(start=>{
+   let end=start+1;while(end<lines.length&&!/^\s*\.\.\.\s*$/.test(lines[end])&&!/^\s*(?:not )?ok \d+/.test(lines[end]))end++;
+   const block=lines.slice(start,end),important=[];
+   for(let i=0;i<block.length;i++)if(/\b(?:location|failureType|error|code|name|operator|stack):/.test(block[i]))important.push(...block.slice(i,i+(/\b(?:error|stack):/.test(block[i])?8:1)));
+   return (block[0]+'\n'+[...new Set(important)].join('\n')+'\n'+block.slice(1).join('\n').slice(0,Math.floor(each/2))).slice(0,each);
+  }).join('\n\n').slice(0,limit);
+ }
+ const marker=lines.findIndex(l=>/failing tests:/.test(l));
+ if(marker>=0)return lines.slice(marker+1).join('\n').slice(0,limit);
+ const errors=[];for(let i=0;i<lines.length;i++)if(/(?:Error:|AssertionError|^FAIL\b|^\s*✖)/.test(lines[i]))errors.push(lines.slice(i,i+12).join('\n'));
+ return (errors.length?errors.slice(0,6).join('\n\n'):lines.slice(-35).join('\n')).slice(0,limit);
+}
+export function repairFeedback(report){
+ if(!report)return null;
+ const v=report.verification??{};
+ return {attempt:report.attempt,passed:report.passed,error:report.error,verdict:report.verdict,
+  verification:{passed:v.passed,generation:v.generation,
+   checks:(v.checks??[]).map(c=>({name:c.name,passed:c.passed,error:c.error,log:c.passed?undefined:diagnosticLog(c.log,4000)})),
+   failures:(v.failures??[]).map(f=>diagnosticLog(f,4000))}};
+}
 export const json=path=>JSON.parse(readFileSync(path,'utf8'));
 export function save(path,value){mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(value,null,2)+'\n');}
 export function output(key,value){if(process.env.GITHUB_OUTPUT)writeFileSync(process.env.GITHUB_OUTPUT,key+'='+String(value).replace(/[\r\n]/g,' ')+'\n',{flag:'a'});}
