@@ -1,0 +1,32 @@
+{
+  "id": "ICE-P2-ARRANGER-01",
+  "role": "orchestrator_instrumentalist",
+  "target_file": "assets/audio/original-score.json",
+  "allowed_paths": [
+    "assets/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Arrange the accepted original-themes.json as actual machine-renderable bounded scores for four scenes, with pad, bass, melody and suitable pulse/percussion layers. Follow ADR-0006 exactly and preserve the conductor motifs. Return actual note sequences and instrument data; runtime synthesis is an accepted downstream consumer, no blocker.",
+  "acceptance": [
+    "Implement exact accepted ADR-0006 exports and complete authored content.",
+    "Pass protected studio/acceptance/p2-arranger-final.mjs without changing it.",
+    "No DOM/import side effects, external assets, clocks, credentials or simulator mutation."
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "design/pass-two-operator.md",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio/original-themes.json",
+    "game/animation/operator.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-arranger-final.mjs",
+  "max_cost_usd": 0.65,
+  "max_attempts": 1,
+  "seed": 2112
+}

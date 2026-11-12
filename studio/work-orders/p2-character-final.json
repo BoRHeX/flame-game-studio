@@ -1,0 +1,32 @@
+{
+  "id": "ICE-P2-CHARACTER-02",
+  "role": "character_animator",
+  "target_file": "game/animation/operator.mjs",
+  "allowed_paths": [
+    "game/animation/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Implement all six complete approved 18 FPS character clips and sound markers in ADR-0006. Supply actual frame data and the two pure sampler/event functions, not comments or a future proposal. Every interface is authorized by this accepted decision; do not wait for an absent consumer. Original detailed PPE character offsets integrated downstream.",
+  "acceptance": [
+    "Implement exact accepted ADR-0006 exports and complete authored content.",
+    "Pass protected studio/acceptance/p2-character-final.mjs without changing it.",
+    "No DOM/import side effects, external assets, clocks, credentials or simulator mutation."
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "design/pass-two-operator.md",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio/original-themes.json",
+    "game/animation/operator.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-character-final.mjs",
+  "max_cost_usd": 0.65,
+  "max_attempts": 1,
+  "seed": 2112
+}

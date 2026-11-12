@@ -1,0 +1,32 @@
+{
+  "id": "ICE-P2-ENVIRONMENT-02",
+  "role": "environment_animator",
+  "target_file": "game/world/parallax.mjs",
+  "allowed_paths": [
+    "game/world/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Implement four authored industrial biome layer sets, deterministic meaningful process weather factors, and actual pixel drawing in the exact ADR-0006 API. Backyard wind, indoor warehouse atmosphere, workshop lighting and heater haze must be visibly distinct. Foreground protection is the approved caller contract, not a blocker. No placeholders or generic helper-only proposal.",
+  "acceptance": [
+    "Implement exact accepted ADR-0006 exports and complete authored content.",
+    "Pass protected studio/acceptance/p2-environment-final.mjs without changing it.",
+    "No DOM/import side effects, external assets, clocks, credentials or simulator mutation."
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "design/pass-two-operator.md",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio/original-themes.json",
+    "game/animation/operator.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-environment-final.mjs",
+  "max_cost_usd": 0.65,
+  "max_attempts": 1,
+  "seed": 2112
+}

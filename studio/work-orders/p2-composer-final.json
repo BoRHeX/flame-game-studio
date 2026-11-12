@@ -1,0 +1,32 @@
+{
+  "id": "ICE-P2-COMPOSER-01",
+  "role": "composer_conductor",
+  "target_file": "design/audio/original-themes.json",
+  "allowed_paths": [
+    "design/audio/"
+  ],
+  "forbidden_paths": [
+    "studio/",
+    "memory/",
+    ".github/"
+  ],
+  "dependencies": [],
+  "goal": "Compose all four finished original themes in the exact executable JSON contract in ADR-0006. Distinct, memorable melodic ideas with four-bar harmony, a calm industrial hub and liquid DnB job identities, using specified original provenance. These motifs will be rendered by a real Web Audio arrangement; do not return only production notes.",
+  "acceptance": [
+    "Implement exact accepted ADR-0006 exports and complete authored content.",
+    "Pass protected studio/acceptance/p2-composer-final.mjs without changing it.",
+    "No DOM/import side effects, external assets, clocks, credentials or simulator mutation."
+  ],
+  "required_contracts": [
+    "memory/decisions/ADR-0006-pass-two-delivery-contracts.md",
+    "design/pass-two-operator.md",
+    "game/world/industrial-yard.mjs",
+    "game/simulation/burner.mjs",
+    "design/audio/original-themes.json",
+    "game/animation/operator.mjs"
+  ],
+  "verification_script": "studio/acceptance/p2-composer-final.mjs",
+  "max_cost_usd": 0.65,
+  "max_attempts": 1,
+  "seed": 2112
+}
