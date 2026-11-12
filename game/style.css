@@ -35,3 +35,5 @@
 #device-panel{z-index:9}
 #device-panel #device-repair{flex:0 0 50px}
 #game #save-panel button,#game #operator-panel button{touch-action:manipulation}
+
+#mission-cue{position:absolute;top:6px;right:6px;z-index:4;display:grid;place-items:center;min-width:48px;min-height:48px;border-radius:13px;border:2px solid #e6b977;background:rgba(24,38,43,.87);color:#ffe1a0;font-size:28px;pointer-events:none}

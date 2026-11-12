@@ -2,6 +2,7 @@
 import {GameClocks} from './core/clocks.mjs';
 import {BurnerSolver} from './simulation/burner.mjs';
 import {JOBS,MissionEvaluator} from './missions/jobs.mjs';
+import {getJobTemplate,missionWarnings} from './missions/job-templates.mjs';
 import {CHAMBERS} from './chambers/flow.mjs';
 import {FlameParticles} from './flame/particles.mjs';
 import {ProcessSound} from './audio/sound.mjs';
@@ -349,9 +350,28 @@ function drawChamber(){
   particles.draw(fc,state,chamber);if(state.failed){fc.fillStyle='rgba(245,26,21,.29)';fc.fillRect(20,30,600,290);}
 }
 function renderWorld(){drawScene(wc,scene,{camera:camera(),player:player.state,time:worldTime,selectedId:selected?.id??player.nearby(scene)?.id??null,stage,jobId:job?.id??null});}
+const missionIcons={
+ 'burner-failed':'✕','funds-depleted':'◈','deadline':'⌛',
+ 'temperature-high':'♨','temperature-low':'❄','soot-high':'▧',
+ 'draft-restricted':'↻','draft-or-flame-unstable':'↻',
+ 'flame-unstable':'≋','pilot-unlit':'◇','restart-unlit':'◇','heater-unlit':'◇'
+};
+const missionPriority=['burner-failed','funds-depleted','deadline','temperature-high','soot-high','draft-restricted','draft-or-flame-unstable','flame-unstable','temperature-low','pilot-unlit','restart-unlit','heater-unlit'];
 function updateHUD(){
   $('cash').value=funds.toFixed(1);$('mission-clock').value=clocks.missionTime.toFixed(0);$('temperature').value=(burner?.temperature??.12).toFixed(2);
-  const pct=evaluator?Math.round(evaluator.progress()*100):0;$('progress-fill').style.width=pct+'%';$('progress').setAttribute('aria-valuenow',String(pct));updateControls();
+  const pct=evaluator?Math.round(evaluator.progress()*100):0;$('progress-fill').style.width=pct+'%';$('progress').setAttribute('aria-valuenow',String(pct));
+  const indicator=$('mission-cue');
+  if(stage==='mission'&&burner&&job){
+   const issues=missionWarnings(getJobTemplate(job.id),burner.snapshot(),{money:funds,elapsed:clocks.missionTime});
+   const warn=missionPriority.find(w=>issues.includes(w));
+   indicator.hidden=!warn;
+   if(warn){
+    indicator.textContent=missionIcons[warn]||'!';
+    if(indicator.getAttribute('aria-label')!=='Process warning: '+warn)
+     indicator.setAttribute('aria-label','Process warning: '+warn);
+   }
+  }else indicator.hidden=true;
+  updateControls();
 }
 function frame(now){
   if(!frameLast)frameLast=now;const dt=(now-frameLast)/1000;frameLast=now;worldTime+=Math.min(dt,.1);
