@@ -200,6 +200,14 @@
       "reservedUsd": 0.65,
       "actualUsd": 0.186781,
       "status": "settled"
+    },
+    {
+      "runId": "43135053599",
+      "orderId": "ICE-P2-NARRATIVE-01",
+      "date": "2026-11-12",
+      "reservedUsd": 0.65,
+      "actualUsd": null,
+      "status": "reserved"
     }
   ]
 }
