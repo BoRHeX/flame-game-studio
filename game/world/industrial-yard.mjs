@@ -4,9 +4,22 @@ export const VIEWPORT=Object.freeze({width:768,height:1152});
 const levels=[2300,1840,1380,920];
 function geometry(){return {platforms:levels.map((y,i)=>({id:'floor-'+i,x:i?80:0,y,w:i?1440:1600,h:20})),ladders:[{id:'ladder-0',x:410,y:1840,w:48,h:460},{id:'ladder-1',x:1040,y:1380,w:48,h:460},{id:'ladder-2',x:490,y:920,w:48,h:460}]};}
 const station=(id,type,x,y,icon,label,deviceId)=>({id,type,x,y,icon,label,...(deviceId?{deviceId}:{})});
-function scene(id,theme,interactions){return {id,width:1600,height:2700,spawn:{x:180,y:2248},...geometry(),interactions,theme};}
+function scene(id,theme,interactions){
+ const layout=geometry();
+ if(id==='monsoon'){
+  // Three storm-service mezzanines and secondary ladders create a distinct route.
+  layout.platforms.push({id:'storm-low',x:500,y:2070,w:660,h:18},
+   {id:'storm-mid',x:210,y:1600,w:600,h:18},
+   {id:'storm-high',x:740,y:1150,w:630,h:18});
+  layout.ladders.push({id:'storm-access-low',x:555,y:2070,w:44,h:230},
+   {id:'storm-access-upper',x:815,y:1840,w:44,h:230},
+   {id:'storm-access-mid',x:350,y:1380,w:44,h:220},
+   {id:'storm-access-high',x:870,y:920,w:44,h:230});
+ }
+ return {id,width:1600,height:2700,spawn:{x:180,y:2248},...layout,interactions,theme};
+}
 function jobStations(jobId){
- const placements={backyard:{x:750,y:1348},warehouse:{x:930,y:888},'heat-hold':{x:1130,y:1808},monsoon:{x:980,y:1348}};
+ const placements={backyard:{x:750,y:1348},warehouse:{x:930,y:888},'heat-hold':{x:1130,y:1808},monsoon:{x:930,y:888}};
  const operator=placements[jobId];
  return [station('spark','ignition',150,2268,'spark','Ignition'),station('port','observation',245,2268,'port','Observation port'),station('exit','exit',70,2268,'exit','Return to workshop'),station('pilotFuel','device',650,2268,'valve','Pilot fuel','pilotFuel'),station('pilotAir','device',820,1808,'damper','Pilot air','pilotAir'),station('mainFuel','device',1200,1808,'valve','Main fuel','mainFuel'),station('mainAir','device',700,1348,'damper','Main air','mainAir'),station('draft','device',1000,888,'damper','Draft','draft'),station('site-operator','npc',operator.x,operator.y,'operator','Site operator'),...(jobId==='backyard'?[station('intake-shield','repair',960,1808,'shield','Intake shield')]:[])];
 }
