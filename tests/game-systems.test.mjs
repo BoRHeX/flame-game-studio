@@ -28,8 +28,8 @@ test('rich and lean are distinct, soot follows excess fuel only when burning',()
  assert.ok(a.mainRatio<1);assert.ok(b.mainRatio>1);
  assert.equal(a.soot,0);assert.ok(b.soot>=0);
 });
-test('all three authored chambers produce finite, different velocities',()=>{
- assert.equal(JOBS.length,3);
+test('all four authored chambers produce finite, different velocities',()=>{
+ assert.equal(JOBS.length,4);
  const vectors=JOBS.map(j=>flowAt(CHAMBERS[j.chamber],330,160,0.2));
  vectors.forEach(v=>{assert.ok(Number.isFinite(v.vx));assert.ok(Number.isFinite(v.vy));});
  assert.notDeepEqual(vectors[0],vectors[1]);assert.notDeepEqual(vectors[1],vectors[2]);
