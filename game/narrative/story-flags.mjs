@@ -1,13 +1,14 @@
 // Pass Two narrative state contains no rewards or campaign finale.
 const FLAG_NAMES = [
   'metOperator', 'learnedDraft', 'backyardComplete',
-  'warehouseComplete', 'heatHoldComplete', 'assisted'
+  'warehouseComplete', 'heatHoldComplete', 'monsoonComplete', 'assisted'
 ];
 
 const JOB_FLAGS = Object.freeze({
   backyard: 'backyardComplete',
   warehouse: 'warehouseComplete',
-  'heat-hold': 'heatHoldComplete'
+  'heat-hold': 'heatHoldComplete',
+  monsoon: 'monsoonComplete'
 });
 
 const OPTIONS = Object.freeze({
@@ -85,6 +86,15 @@ export class StoryState {
           : mainLit
             ? 'The damper is repaired and the flame is lit. Verify the draft and hold steady.'
             : 'The damper is repaired. Return to the burner and check the flame as it lights.';
+    } else if (jobId === 'monsoon') {
+      icon = damperRepaired ? '☈' : '⚒';
+      text = this.flags.monsoonComplete
+        ? 'The monsoon stack is stable. The coast is still under storm watch.'
+        : !damperRepaired
+          ? 'The stack draft linkage seized in the rain. Inspect the flame, then free the linkage on the upper deck.'
+          : mainLit
+            ? 'The damper is clear. Check the exhaust draft under the gusts and hold the main flame.'
+            : 'The draft linkage is free. Re-light and verify from the observation port.';
     } else if (jobId === 'heat-hold') {
       icon = mainLit ? '◉' : 'ϟ';
       text = this.flags.heatHoldComplete
