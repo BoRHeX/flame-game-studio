@@ -29,8 +29,9 @@ Five accepted new specialist PRs and a recovered environment contribution form t
 - [x] Reviewed merge e1ee9d741123b73ba1fc1db2db29b13805dd1896 published through Pages run 43203983688; live title/ice-art marker and renderer content verified.
 - [ ] Physical Samsung visual/comfort/audio/performance acceptance remains a player observation.
 
-## Pass Three — campaign (not started)
-- [ ] Seven or more authored jobs, equipment-gated access and career progression.
+## Pass Three — campaign (development branch started 23 November 2026)
+- [x] First campaign expansion candidate: Monsoon Stack contract with new rain-exposed tower scene, three optional service mezzanines, repairable stack draft linkage, weather-dependent burner behaviour and integrated save/QA checks. Branch: feature/monsoon-stack-pass-three-01; not a published or phone-accepted release.
+- [ ] Six or more additional authored jobs, equipment-gated access and career progression.
 - [ ] Broader biomes, operator authority, cutscenes, story consequences and richer original adaptive orchestra.
 - [ ] Campaign balance, no-optional-upgrade solvability, save migration and mobile performance.
 
