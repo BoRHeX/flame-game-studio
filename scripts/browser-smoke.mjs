@@ -298,7 +298,7 @@ async function main(){
   if(!pauseAfter.paused||pauseBefore.funds!==pauseAfter.funds||pauseBefore.missionTime!==pauseAfter.missionTime)throw Error('Pause menu did not freeze game clocks');
   await tap('#menu-resume');
   const results=[];
-  for(const id of ['backyard','warehouse','heat-hold']){
+  for(const id of ['backyard','warehouse','heat-hold','monsoon']){
    await tap('[data-job="'+id+'"]');let state=await snapshot();if(state.job!==id||state.stage!=='mission')throw Error('Contract did not start '+id);
    if(productionMode)await screenshot('production-'+id+'.png');
    if(!state.kit?.allTools)throw Error('No free calibrated equipment preset');
@@ -314,7 +314,7 @@ async function main(){
     await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     state=await snapshot();if(state.solver.devices.mainAir<=before+.02||!state.contract.adjusted)throw Error('Real damper drag did not change authoritative air valve');
     await screenshot('mobile-device.png');await tap('#device-close');
-   }else if(id==='warehouse'){
+   }else if(id==='warehouse'||id==='monsoon'){
     await routeTo('draft');await tap('#interact');
     for(let n=0;n<7;n++)await tap('#device-more');
     if((await snapshot()).solver.devices.draft>.580001)throw Error('Jammed damper bypassed its mechanical stop');
@@ -344,7 +344,7 @@ async function main(){
    if(!state.contract.verified||state.objective<1)throw Error('Contract skipped its physical verification/hold');
    results.push({id,missionTime:state.missionTime,funds:state.funds,contract:state.contract});console.log('PASS PASS-TWO CONTRACT: '+id+' physical diagnosis/repair/adjust/verify/hold, payout and no purchases');await tap('#return');
   }
-  if((await snapshot()).completed.length!==3)throw Error('Completed contracts did not persist');
+  if((await snapshot()).completed.length!==4)throw Error('Completed contracts did not persist');
   // Explicit storage-fault input in the disposable browser profile. Recovery
   // itself uses the actual slot UI; no live game state or solver is mutated.
   await tap('#save-menu');await tap('[data-save-slot="2"]');await tap('[data-save-slot="2"]');await tap('#save-close');
@@ -352,7 +352,7 @@ async function main(){
   await tap('#save-menu');
   if(!(await evalJs("document.querySelector('#slot-2 output').textContent.includes('↶')")))throw Error('Corrupt slot did not expose backup recovery');
   await tap('[data-load-slot="2"]');
-  if((await snapshot()).completed.length!==3)throw Error('Browser backup recovery lost earned progression');
+  if((await snapshot()).completed.length!==4)throw Error('Browser backup recovery lost earned progression');
   console.log('PASS PASS-TWO RECOVERY: actual slot UI restores semantic backup after injected storage corruption');
   // Portrait, landscape and foldable layouts: no inaccessible tiny controls.
   for(const [width,height] of [[844,390],[768,1024],[390,844]]){
@@ -370,7 +370,7 @@ async function main(){
   if(state.audio.voices>24)throw Error('Audio voice bound exceeded');
   await writeFile('artifacts/pass-two-routes.json',JSON.stringify({results,completed:state.completed,story:state.story,audio:state.audio},null,2));
   if(exceptions.length)throw Error('Pass Two browser exceptions: '+exceptions.join('; '));
-  console.log('PASS PASS-TWO RELEASE: real touch repairs, lever and wheel drags, 3 no-purchase completed contracts, physical NPC assistance, pause clocks, fullscreen, cancelled joystick, portrait/landscape/foldable and bounded audio');
+  console.log('PASS PASS-TWO RELEASE: real touch repairs, lever and wheel drags, 4 no-purchase completed contracts, physical NPC assistance, pause clocks, fullscreen, cancelled joystick, portrait/landscape/foldable and bounded audio');
  }
 
  console.log('PASS: Android viewport, actual touch tutorial/job/ignition/observe/return, main flame particles, clock, screenshot, zero uncaught JS exceptions');
