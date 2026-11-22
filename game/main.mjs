@@ -470,7 +470,7 @@ function renderWorld(){drawScene(wc,scene,{camera:camera(),player:{...player.sta
 const missionIcons={
  'burner-failed':'✕','funds-depleted':'◈','deadline':'⌛',
  'temperature-high':'♨','temperature-low':'❄','soot-high':'▧',
- 'draft-restricted':'↻','draft-or-flame-unstable':'↻',
+ 'draft-restricted':'↻','draft-or-flame-unstable':'↻','gust-or-flame-unstable':'☈','stack-unlit':'◇',
  'flame-unstable':'≋','pilot-unlit':'◇','restart-unlit':'◇','heater-unlit':'◇'
 };
 const missionPriority=['burner-failed','funds-depleted','deadline','temperature-high','soot-high','draft-restricted','draft-or-flame-unstable','gust-or-flame-unstable','flame-unstable','temperature-low','pilot-unlit','restart-unlit','heater-unlit','stack-unlit'];
