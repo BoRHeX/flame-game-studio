@@ -10,6 +10,8 @@ export const BIOMES=Object.freeze({
     layer('near-canopy',.42,.20,'#153e35',170),layer('vines',.52,.24,'#102f2a',220)]),
   warehouse:biome('dust',{sky:'#222d39',haze:'#394755',shadow:'#202e35',trim:'#84908a',light:'#c6b78c'},[
     layer('trusses',.06,.04,'#263440',250),layer('bays',.17,.10,'#3b4a51',210),layer('ducts',.31,.19,'#58645f',260)]),
+  monsoon:biome('rain',{sky:'#243b50',haze:'#45647a',shadow:'#1a3944',trim:'#7599a6',light:'#b3dce6'},[
+    layer('coastal-ridge',.08,.04,'#405a70',240),layer('ocean',.12,.05,'#346474',180),layer('clouds',.22,.09,'#293f54',210)]),
   'heat-hold':biome('haze',{sky:'#322f3d',haze:'#594c52',shadow:'#302e36',trim:'#a28d7b',light:'#ffd5a0'},[
     layer('stacks',.09,.05,'#3b363e',220),layer('vessels',.22,.13,'#56494a',250),layer('coils',.38,.23,'#76625b',180)])
 });
@@ -27,6 +29,11 @@ export function environmentAt(sceneId,time){
     return {wind,airflowFactor:1+wind*.08,draftFactor:1+wind*.10,heatLossFactor:1+wind*.12,weather:b.weather};
   }
   if(sceneId==='warehouse') return {wind:0,airflowFactor:.94,draftFactor:.88,heatLossFactor:.98,weather:b.weather};
+  if(sceneId==='monsoon'){
+    const phase=time%(200*Math.PI);
+    const wind=.52+.15*Math.sin(phase*.29)+.09*Math.sin(phase*.83);
+    return {wind,airflowFactor:.96+wind*.07,draftFactor:.93+wind*.10,heatLossFactor:1.09+wind*.10,weather:b.weather};
+  }
   return {wind:.08,airflowFactor:1,draftFactor:1.02,heatLossFactor:1.12,weather:b.weather};
 }
 const mod=(n,m)=>{const r=n%m;return r<0?r+m:r;};
@@ -209,12 +216,16 @@ function weather(ctx,id,camera,time,options,areas){
   const w=camera.width,h=camera.height;
   if(w<=0||h<=0) return;
   const t=options.reducedMotion?0:time;
-  const wind=id==='backyard'?environmentAt(id,t).wind:0,gust=wind>.48;
-  const count=id==='backyard'?36:id==='heat-hold'?24:20,drift=t%1000000;
+  const wind=['backyard','monsoon'].includes(id)?environmentAt(id,t).wind:0,gust=wind>.48;
+  const count=id==='monsoon'?68:id==='backyard'?36:id==='heat-hold'?24:20,drift=t%1000000;
   for(let i=0;i<count;i++){
     const x=mod(i*127+drift*(id==='backyard'?24:4)-camera.x*.2,w);
     const y=mod(i*83+drift*(id==='backyard'?12:-3)-camera.y*.1,h);
-    if(id==='backyard'){
+    if(id==='monsoon'){
+      paint(ctx,'rgba(185,224,233,0.44)',x,y,2,17+i%16,areas);
+      paint(ctx,'rgba(225,239,235,0.27)',x+5,y-7,1,12+i%10,areas);
+      if(gust&&i%4===0)paint(ctx,'rgba(217,231,225,0.22)',x+12,y+5,24,2,areas);
+    }else if(id==='backyard'){
       paint(ctx,'rgba(218,224,207,0.35)',x,y,12+i%9+(gust?12:0),2,areas);
       paint(ctx,'rgba(218,224,207,0.22)',x+5,y+3,5+(gust?8:0),2,areas);
       if(gust&&i%6===0) paint(ctx,'rgba(235,235,215,0.32)',x+16,y-4,24,2,areas);
@@ -236,7 +247,10 @@ export function drawParallax(ctx,sceneId,camera,time,options={}){
   ctx.save();
   try{
     if(options.foreground) weather(ctx,sceneId,camera,time,options,areas);
-    else if(sceneId==='backyard') coast(ctx,camera,time,!!options.reducedMotion);
+    else if(sceneId==='backyard'||sceneId==='monsoon'){
+      coast(ctx,camera,time,!!options.reducedMotion);
+      if(sceneId==='monsoon')paint(ctx,'rgba(12,38,59,0.48)',0,0,camera.width,camera.height);
+    }
     else interior(ctx,sceneId,camera,b);
   }finally{ctx.restore();}
 }
