@@ -13,11 +13,12 @@ const run=(jobId,tune,limit=2500)=>{
  }
  return {job,burner,objective,state};
 };
-test('all three proposed contracts have a no-upgrade success path',()=>{
+test('all four proposed contracts have a no-upgrade success path',()=>{
  const examples=[
    ['backyard',{}],
    ['warehouse',{mainFuel:.44,mainAir:.60,draft:.60}],
-   ['heat-hold',{mainFuel:.35,mainAir:.45,draft:.48}]
+   ['heat-hold',{mainFuel:.35,mainAir:.45,draft:.48}],
+   ['monsoon',{mainFuel:.44,mainAir:.60,draft:.72}]
  ];
  for(const [name,tune] of examples){
    const {objective,state}=run(name,tune);
