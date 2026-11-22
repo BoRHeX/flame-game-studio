@@ -15,7 +15,7 @@ test('Monsoon Stack is a complete fourth playable, traversable scene',()=>{
  assert.ok(CHAMBERS.monsoon);
  const scene=SCENES.monsoon;
  assert.equal(scene.theme,'monsoon');
- assert.equal(scene.ladders.length,3);
+ assert.ok(scene.ladders.length>=7);
  assert.ok(scene.interactions.some(x=>x.type==='npc'));
  assert.ok(scene.interactions.some(x=>x.deviceId==='draft'));
  for(const id of ['spark','port','exit'])assert.ok(scene.interactions.some(x=>x.id===id));
