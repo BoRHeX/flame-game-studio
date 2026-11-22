@@ -124,7 +124,7 @@ const fixtures=[
   }
 ];
 const close=(actual,expected,label)=>assert.ok(Number.isFinite(actual)&&Math.abs(actual-expected)<1e-10,label);
-assert.deepEqual(Object.keys(CHAMBERS).sort(),['backyard','heat-hold','warehouse']);
+assert.deepEqual(Object.keys(CHAMBERS).sort(),['backyard','heat-hold','monsoon','warehouse']);
 const scratch={vx:NaN,vy:NaN,retained:'caller-owned'};
 for(let repeat=0;repeat<100;repeat++)for(const fixture of fixtures){
  const {id,x,y,seed,vx,vy}=fixture;
