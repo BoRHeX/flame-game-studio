@@ -7,6 +7,7 @@ import {CHAMBERS} from '../game/chambers/flow.mjs';
 import {ContractSession} from '../game/missions/contract-session.mjs';
 import {validGameState} from '../game/persistence/game-state.mjs';
 import {newGameSnapshot} from '../game/persistence/save-slots.mjs';
+import {StoryState} from '../game/narrative/story-flags.mjs';
 
 test('Monsoon Stack is a complete fourth playable, traversable scene',()=>{
  const job=JOBS.find(j=>j.id==='monsoon');
@@ -68,4 +69,10 @@ test('Monsoon Stack completion survives the v1 save-validation boundary',()=>{
   airFlow:0,peakTemperature:.12,overheatSeconds:0},
   evaluator:{elapsed:0,hold:0,status:'active'}};
  assert.equal(validGameState(s),true);
+});
+
+test('an assisted Warehouse job does not hide assistance at the next site',()=>{
+ const story=new StoryState();story.record('assist','warehouse');story.record('complete','warehouse');
+ const choices=story.dialogue({jobId:'monsoon',mainLit:false,damperRepaired:false}).options.map(x=>x.id);
+ assert.ok(choices.includes('assist'),'a prior assist must not block future local help');
 });
