@@ -113,7 +113,7 @@ export class StoryState {
 
     if (this.choice === 'assisted') {
       text += ' The operator can point out what to inspect; you still control the equipment.';
-      choices = ['diagnose', 'independent', 'leave'];
+      choices = ['diagnose', 'assist', 'independent'];
     } else if (this.choice === 'independent') {
       text += this.flags.learnedDraft
         ? ' Use your draft inspection and verify the flame yourself.'
