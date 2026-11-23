@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {JOBS,MissionEvaluator} from '../game/missions/jobs.mjs';
 import {BurnerSolver} from '../game/simulation/burner.mjs';
 import {JOB_TEMPLATES,getJobTemplate,missionWarnings,missionOutcome} from '../game/missions/job-templates.mjs';
-const tune={backyard:{},warehouse:{mainFuel:.44,mainAir:.60,draft:.60},'heat-hold':{mainFuel:.35,mainAir:.45,draft:.48}};
-test('three mission specialist templates reference the authoritative jobs',()=>{
- assert.equal(JOB_TEMPLATES.length,3);
+const tune={backyard:{},warehouse:{mainFuel:.44,mainAir:.60,draft:.60},'heat-hold':{mainFuel:.35,mainAir:.45,draft:.48},monsoon:{mainFuel:.44,mainAir:.60,draft:.72}};
+test('four mission specialist templates reference the authoritative jobs',()=>{
+ assert.equal(JOB_TEMPLATES.length,4);
  for(const j of JOBS){const t=getJobTemplate(j.id);assert.strictEqual(t.job,j);assert.strictEqual(t.objective,j.objective);}
 });
 test('every contract remains winnable without perks and clears process warning after tuning',()=>{

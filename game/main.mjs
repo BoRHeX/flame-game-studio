@@ -41,7 +41,8 @@ let activeOperator=null,operatorConsults=0,repairDone=false,feedbackUntil=0,save
 const advice={
  backyard:{deviceId:'mainAir',value:0.52,cue:'≋ ◇'},
  warehouse:{deviceId:'draft',value:0.72,cue:'↻ ⚒'},
- 'heat-hold':{deviceId:'mainFuel',value:0.35,cue:'◆ ◉'}
+ 'heat-hold':{deviceId:'mainFuel',value:0.35,cue:'◆ ◉'},
+  monsoon:{deviceId:'draft',value:0.72,cue:'☈ ↻'}
 };
 function cue(symbol,meaning){
  $('hint').textContent=symbol;$('hint').hidden=false;$('hint').setAttribute('aria-label',meaning);
@@ -238,7 +239,7 @@ function spark(){
 function showDevice(i){
   if(stage!=='mission'||!burner||distance(i)>112)return;
   selected=i;$('device-panel').hidden=false;$('device-symbol').textContent=icons[i.deviceId]||'◆';
-  const jammed=job?.id==='warehouse'&&i.deviceId==='draft'&&!contract?.repaired;
+  const jammed=['warehouse','monsoon'].includes(job?.id)&&i.deviceId==='draft'&&!contract?.repaired;
   $('device-slider').max=jammed?58:100;$('device-repair').hidden=!jammed;
   deviceControl=new DeviceControl({kind:/Air|draft/.test(i.deviceId)?'damper':'valve',value:burner.devices[i.deviceId],max:contract?.limit(i.deviceId)??1});
   $('device-name').textContent=i.label;$('device-feedback').textContent=jammed?'⚒ Inspect → repair → test full travel':deviceControl.kind==='valve'?'↻ Rotate the wheel · ± one detent':'↕ Drag the lever · ± one detent';
@@ -290,7 +291,7 @@ $('fault-repair').addEventListener('click',()=>{
 });
 $('device-close').addEventListener('click',()=>{closeDevice();playSound();});
 $('device-repair').addEventListener('click',()=>{
- if(job?.id!=='warehouse'||selected?.deviceId!=='draft'||contract?.repaired||distance(selected)>112)return;
+ if(!['warehouse','monsoon'].includes(job?.id)||selected?.deviceId!=='draft'||contract?.repaired||distance(selected)>112)return;
  if(!contract.repair('free-damper')){cue('◎ → ⚒','Inspect the flame at the observation port before repairing');return;}
  repairDone=true;$('device-slider').max=100;$('device-repair').hidden=true;if(deviceControl)deviceControl.max=1;
  $('device-feedback').textContent='⚒ ✓ Linkage freed. Test travel beyond the old stop.';
@@ -302,7 +303,7 @@ $('operator-guide').addEventListener('click',()=>{
  operatorConsults++;
  story.record('diagnose',job?.id??null);
  const state=burner?.snapshot();
- const hint=job?.id==='warehouse'?(contract?.repaired?'↻ ↑ ◎':'◎ ⚒ ↻'):
+ const hint=['warehouse','monsoon'].includes(job?.id)?(contract?.repaired?'↻ ↑ ◎':'◎ ⚒ ↻'):
   job?.id==='heat-hold'?'◆ ≋ ♨ ◎':
   job?.id==='backyard'?(contract?.repaired?'≋ ◎':'☂ ⚒'):
   state?.mainLit?'✓ ◎':'◇ △ ϟ';
@@ -469,10 +470,10 @@ function renderWorld(){drawScene(wc,scene,{camera:camera(),player:{...player.sta
 const missionIcons={
  'burner-failed':'✕','funds-depleted':'◈','deadline':'⌛',
  'temperature-high':'♨','temperature-low':'❄','soot-high':'▧',
- 'draft-restricted':'↻','draft-or-flame-unstable':'↻',
+ 'draft-restricted':'↻','draft-or-flame-unstable':'↻','gust-or-flame-unstable':'☈','stack-unlit':'◇',
  'flame-unstable':'≋','pilot-unlit':'◇','restart-unlit':'◇','heater-unlit':'◇'
 };
-const missionPriority=['burner-failed','funds-depleted','deadline','temperature-high','soot-high','draft-restricted','draft-or-flame-unstable','flame-unstable','temperature-low','pilot-unlit','restart-unlit','heater-unlit'];
+const missionPriority=['burner-failed','funds-depleted','deadline','temperature-high','soot-high','draft-restricted','draft-or-flame-unstable','gust-or-flame-unstable','flame-unstable','temperature-low','pilot-unlit','restart-unlit','heater-unlit','stack-unlit'];
 function updateHUD(){
   $('cash').value=funds.toFixed(1);$('mission-clock').value=clocks.missionTime.toFixed(0);$('temperature').value=(burner?.temperature??.12).toFixed(2);
   const pct=evaluator?Math.round(evaluator.progress()*100):0;$('progress-fill').style.width=pct+'%';$('progress').setAttribute('aria-valuenow',String(pct));
@@ -492,7 +493,7 @@ function updateHUD(){
   if(contract&&stage==='mission'){
    const markup=contract.steps().map(s=>'<span class="objective-step '+(s.done?'done':contract.next()===s.id?'current':'')+'" aria-label="'+s.id+' '+(s.done?'complete':'pending')+'">'+s.icon+(s.done?' ✓':'')+'</span>').join('');if(strip.innerHTML!==markup)strip.innerHTML=markup;
   }
-  const nearest=player.nearby(scene),context=watching?'':nearest?(nearest.type==='contracts'?'✦ ▤ ◉ · Contract board':nearest.type==='repair'?'☂ ⚒ · Intake shield':nearest.type==='npc'?'☻ · Operator':nearest.type==='workbench'?'⚒ · Calibrated kit':nearest.type==='device'?(icons[nearest.deviceId]+' · '+nearest.label):nearest.type==='observation'?'◎ · Inspect / verify':nearest.type==='ignition'?'ϟ · Ignite pilot':'✋ · '+nearest.label):'';
+  const nearest=player.nearby(scene),context=watching?'':nearest?(nearest.type==='contracts'?'✦ ▤ ◉ ☈ · Contract board':nearest.type==='repair'?'☂ ⚒ · Intake shield':nearest.type==='npc'?'☻ · Operator':nearest.type==='workbench'?'⚒ · Calibrated kit':nearest.type==='device'?(icons[nearest.deviceId]+' · '+nearest.label):nearest.type==='observation'?'◎ · Inspect / verify':nearest.type==='ignition'?'ϟ · Ignite pilot':'✋ · '+nearest.label):'';
   if(lastNear!==context){$('context-hint').textContent=context;lastNear=context;}
   if(watching&&burner){const s=burner.snapshot();$('gauge-heat').value=s.temperature;$('gauge-stability').value=s.stability;$('gauge-soot').value=s.soot;$('flame-status').textContent=s.mainLit?'◇ → ◆ ✓':s.pilotLit?'◇ ✓ → ◆':'◇ → ϟ';$('observation-note').textContent=contract?.steps().map(x=>x.icon+(x.done?'✓':'')).join(' → ')??'◎';$('diagnostics').textContent='CALIBRATED KIT · dimensionless game values\n'+['temperature','stability','soot','mainRatio','airFlow','fuelFlow'].map(k=>k.padEnd(12)+' '+s[k].toFixed(2)).join('\n');}
 }
@@ -504,7 +505,7 @@ function frame(now){
   if(frames.world)renderWorld();if(frames.flame&&watching)drawChamber();
   if(worldTime>feedbackUntil&&!$('hint').hidden)$('hint').hidden=true;
   if(clocks.simTime-saveAtSimTime>=18){saveAtSimTime=clocks.simTime;autosave();}
-  orchestra.update({sceneId:scene.id,tension:burner?.mainLit?Math.max(.35,1-burner.stability):.18,paused:frozen});
+  orchestra.update({sceneId:scene.id==='monsoon'?'warehouse':scene.id,tension:burner?.mainLit?Math.max(.35,1-burner.stability):.18,paused:frozen});
   updateHUD();requestAnimationFrame(frame);
 }
 resize();updateControls();renderWorld();

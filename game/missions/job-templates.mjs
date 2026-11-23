@@ -5,7 +5,8 @@ import {JOBS} from './jobs.mjs';
 const META=Object.freeze({
  backyard:{focus:'pilot-to-main',unlit:'pilot-unlit',unstable:'flame-unstable'},
  warehouse:{focus:'restricted-draft',unlit:'restart-unlit',unstable:'draft-or-flame-unstable'},
- 'heat-hold':{focus:'temperature-soot-stability',unlit:'heater-unlit',unstable:'flame-unstable'}
+ 'heat-hold':{focus:'temperature-soot-stability',unlit:'heater-unlit',unstable:'flame-unstable'},
+ monsoon:{focus:'storm-draft-recovery',unlit:'stack-unlit',unstable:'gust-or-flame-unstable'}
 });
 const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 function validateJob(j){
@@ -26,8 +27,8 @@ export const JOB_TEMPLATES=Object.freeze(JOBS.map(job=>{
  return Object.freeze({id:job.id,job,objective:job.objective,
   focus:META[job.id].focus,cues:Object.freeze({...META[job.id]})});
 }));
-if(JOB_TEMPLATES.length!==3||new Set(JOB_TEMPLATES.map(t=>t.id)).size!==3)
- throw new TypeError('Expected three different authored missions');
+if(JOB_TEMPLATES.length!==4||new Set(JOB_TEMPLATES.map(t=>t.id)).size!==4)
+ throw new TypeError('Expected four different authored missions');
 export function getJobTemplate(id){
  if(typeof id!=='string'||!id)throw new TypeError('Invalid mission identifier');
  return JOB_TEMPLATES.find(t=>t.id===id)||null;
@@ -49,7 +50,7 @@ export function missionWarnings(template,state,context={}){
   if(state.temperature>template.objective.maxTemp)warnings.push('temperature-high');
   if(state.soot>template.objective.maxSoot)warnings.push('soot-high');
  }
- if(template.id==='warehouse'&&Number.isFinite(state.devices?.draft)&&state.devices.draft<0.55)
+ if(['warehouse','monsoon'].includes(template.id)&&Number.isFinite(state.devices?.draft)&&state.devices.draft<0.55)
   warnings.push('draft-restricted');
  return warnings;
 }

@@ -19,6 +19,13 @@ export const JOBS=Object.freeze([
     initialCash:150,payout:125,deadline:185,
     objective:{type:'temperature-hold',seconds:8,minTemp:0.62,maxTemp:1.25,maxSoot:0.18,minStability:0.53},
     clue:['ϟ','◉','◎'],label:'Heat-hold contract'
+  },
+  {
+    id:'monsoon',symbol:'☈',chamber:'monsoon',
+    burner:{airflowFactor:0.84,draftFactor:0.88,heatLoss:0.36,mainAir:0.60},
+    initialCash:170,payout:170,deadline:210,
+    objective:{type:'light-hold',seconds:7,minStability:0.52},
+    clue:['◎','⚒','↻','ϟ'],label:'Monsoon Stack restart'
   }
 ]);
 export class MissionEvaluator{

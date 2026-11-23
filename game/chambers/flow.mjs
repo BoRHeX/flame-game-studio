@@ -5,7 +5,9 @@ export const CHAMBERS=Object.freeze({
   warehouse:{id:'warehouse',color:'#222731',portY:168,orientation:'horizontal',
     nozzle:{x:88,y:185},flowSpeed:0.76,recirculation:0.37,wind:-0.17,baffle:0.55,chimney:0.15},
   'heat-hold':{id:'heat-hold',color:'#231d27',portY:192,orientation:'updraft',
-    nozzle:{x:310,y:277},flowSpeed:0.65,recirculation:0.15,wind:0.08,baffle:0.23,chimney:0.90}
+    nozzle:{x:310,y:277},flowSpeed:0.65,recirculation:0.15,wind:0.08,baffle:0.23,chimney:0.90},
+  monsoon:{id:'monsoon',color:'#152b39',portY:177,orientation:'updraft',
+    nozzle:{x:300,y:276},flowSpeed:0.83,recirculation:0.31,wind:0.26,baffle:0.38,chimney:0.96}
 });
 export function flowAt(chamber,x,y,seed=0,out){
   const horizontal=chamber.orientation==='horizontal';

@@ -1,5 +1,5 @@
 // Semantic validation at the persistence boundary, before any live-state mutation.
-const ids=['backyard','warehouse','heat-hold'],stages=['hub','mission','won','failed'];
+const ids=['backyard','warehouse','heat-hold','monsoon'],stages=['hub','mission','won','failed'];
 const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const range=(x,a,b)=>Number.isFinite(x)&&x>=a&&x<=b;
 export function validGameState(s){

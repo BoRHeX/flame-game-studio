@@ -4,14 +4,27 @@ export const VIEWPORT=Object.freeze({width:768,height:1152});
 const levels=[2300,1840,1380,920];
 function geometry(){return {platforms:levels.map((y,i)=>({id:'floor-'+i,x:i?80:0,y,w:i?1440:1600,h:20})),ladders:[{id:'ladder-0',x:410,y:1840,w:48,h:460},{id:'ladder-1',x:1040,y:1380,w:48,h:460},{id:'ladder-2',x:490,y:920,w:48,h:460}]};}
 const station=(id,type,x,y,icon,label,deviceId)=>({id,type,x,y,icon,label,...(deviceId?{deviceId}:{})});
-function scene(id,theme,interactions){return {id,width:1600,height:2700,spawn:{x:180,y:2248},...geometry(),interactions,theme};}
+function scene(id,theme,interactions){
+ const layout=geometry();
+ if(id==='monsoon'){
+  // Three storm-service mezzanines and secondary ladders create a distinct route.
+  layout.platforms.push({id:'storm-low',x:500,y:2070,w:660,h:18},
+   {id:'storm-mid',x:210,y:1600,w:600,h:18},
+   {id:'storm-high',x:740,y:1150,w:630,h:18});
+  layout.ladders.push({id:'storm-access-low',x:555,y:2070,w:44,h:230},
+   {id:'storm-access-upper',x:815,y:1840,w:44,h:230},
+   {id:'storm-access-mid',x:350,y:1380,w:44,h:220},
+   {id:'storm-access-high',x:870,y:920,w:44,h:230});
+ }
+ return {id,width:1600,height:2700,spawn:{x:180,y:2248},...layout,interactions,theme};
+}
 function jobStations(jobId){
- const placements={backyard:{x:750,y:1348},warehouse:{x:930,y:888},'heat-hold':{x:1130,y:1808}};
+ const placements={backyard:{x:750,y:1348},warehouse:{x:930,y:888},'heat-hold':{x:1130,y:1808},monsoon:{x:930,y:888}};
  const operator=placements[jobId];
  return [station('spark','ignition',150,2268,'spark','Ignition'),station('port','observation',245,2268,'port','Observation port'),station('exit','exit',70,2268,'exit','Return to workshop'),station('pilotFuel','device',650,2268,'valve','Pilot fuel','pilotFuel'),station('pilotAir','device',820,1808,'damper','Pilot air','pilotAir'),station('mainFuel','device',1200,1808,'valve','Main fuel','mainFuel'),station('mainAir','device',700,1348,'damper','Main air','mainAir'),station('draft','device',1000,888,'damper','Draft','draft'),station('site-operator','npc',operator.x,operator.y,'operator','Site operator'),...(jobId==='backyard'?[station('intake-shield','repair',960,1808,'shield','Intake shield')]:[])];
 }
-export const SCENES={hub:scene('hub','workshop',[station('contracts','contracts',235,2268,'board','Contract board'),station('practice','practice',670,2268,'port','Home burner'),station('workbench','workbench',980,1808,'tools','Equipment bench'),station('npc','npc',1200,1348,'operator','Workshop operator')]),backyard:scene('backyard','yard',jobStations('backyard')),warehouse:scene('warehouse','warehouse',jobStations('warehouse')),'heat-hold':scene('heat-hold','heater',jobStations('heat-hold'))};
-const palettes={workshop:{wall:'#52656a',trim:'#82918a',accent:'#d29852',light:'#ffe1a0'},yard:{wall:'#728078',trim:'#a3a99a',accent:'#d78043',light:'#ffe5a3'},warehouse:{wall:'#58645f',trim:'#84908a',accent:'#bd7945',light:'#efcf8c'},heater:{wall:'#76625b',trim:'#a28d7b',accent:'#d07a48',light:'#ffd5a0'}};
+export const SCENES={hub:scene('hub','workshop',[station('contracts','contracts',235,2268,'board','Contract board'),station('practice','practice',670,2268,'port','Home burner'),station('workbench','workbench',980,1808,'tools','Equipment bench'),station('npc','npc',1200,1348,'operator','Workshop operator')]),backyard:scene('backyard','yard',jobStations('backyard')),warehouse:scene('warehouse','warehouse',jobStations('warehouse')),'heat-hold':scene('heat-hold','heater',jobStations('heat-hold')),monsoon:scene('monsoon','monsoon',jobStations('monsoon'))};
+const palettes={workshop:{wall:'#52656a',trim:'#82918a',accent:'#d29852',light:'#ffe1a0'},yard:{wall:'#728078',trim:'#a3a99a',accent:'#d78043',light:'#ffe5a3'},warehouse:{wall:'#58645f',trim:'#84908a',accent:'#bd7945',light:'#efcf8c'},heater:{wall:'#76625b',trim:'#a28d7b',accent:'#d07a48',light:'#ffd5a0'},monsoon:{wall:'#415a66',trim:'#6f9da5',accent:'#d69a62',light:'#b9eaf2'}};
 const rect=(c,color,x,y,w,h)=>{c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
 function rivets(c,x,y,w,spacing=32){for(let a=x+8;a<x+w-3;a+=spacing){rect(c,'#25343a',a,y,4,4);rect(c,'#b8b8a4',a,y,2,2);}}
 function panel(c,x,y,w,h,base='#566b6c'){rect(c,'#1d2c31',x,y,w,h);rect(c,base,x+4,y+4,w-8,h-8);rect(c,'#a3aba0',x+6,y+6,w-12,3);rect(c,'#34474a',x+6,y+h-9,w-12,3);rivets(c,x+4,y+10,w-8);rivets(c,x+4,y+h-13,w-8);}
@@ -61,6 +74,17 @@ function structure(c,s,p,v){
   for(let y=620;y<2150;y+=190){rect(c,'#4e5551',600,y,450,22);rect(c,'#d0a080',610,y+3,430,4);rivets(c,610,y+8,430,36);}
   for(let y=760;y<1900;y+=420){panel(c,715,y,230,150,'#434d4b');rect(c,'#1a2a30',765,y+30,130,90);if(v.process?.mainLit){rect(c,v.process.mainRatio>1.06?'#d67444':'#558c9c',775,y+45,110,65);rect(c,'#e9c99b',810,y+65,40,24);}else if(v.process?.pilotLit)rect(c,'#78aeb7',815,y+75,30,14);rect(c,'#718583',775,y+40,110,8);}
   chamber(c,675,1930,300,270,v.process);pipe(c,450,1000,115,34);pipe(c,1080,1560,260,42);wear(c,620,1120,410,320);
+ }else if(s.id==='monsoon'){
+  // A storm-battered coastal exhaust tower; collision decks remain independent scenery.
+  for(let x=85;x<1500;x+=335){rect(c,'#253d47',x,970,16,1270);rect(c,'#73929c',x+3,970,3,1270);}
+  rect(c,'#263b46',515,540,590,1700);rect(c,'#52717b',550,570,520,1600);
+  for(let y=615;y<2190;y+=145){rect(c,'#243d46',545,y,550,19);rect(c,'#91a4a5',562,y+3,510,4);rivets(c,565,y+8,495,40);}
+  pipe(c,800,215,112,435);panel(c,775,192,160,52,'#607783');smoke(c,860,200,v);
+  panel(c,620,1450,375,505,'#3d5b64');rect(c,'#203943',653,1480,310,440);
+  for(let k=0;k<6;k++){rect(c,'#7c9698',670,1515+k*57,272,14);rect(c,'#2f535d',685,1540+k*57,240,8);}
+  chamber(c,653,1990,320,255,v.process);pipe(c,430,1290,240,40);pipe(c,1000,1600,335,34);
+  panel(c,1110,730,255,210,'#456674');fan(c,1155,755,v.reducedMotion?0:Number.isFinite(v.time)?v.time:0);
+  cables(c,165,1165,1200);wear(c,550,570,500,330);vines(c,90,1010,510,1);
  }else if(s.id==='backyard'){
   // An open steel frame reveals the coastal parallax. These are scenery only;
   // the accepted platforms, ladders and interaction positions stay unchanged.

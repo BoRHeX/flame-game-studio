@@ -26,7 +26,7 @@ test('all authored Pass Two fault/adjust/verify paths complete with the free cal
   for(let i=0;i<350;i++){const state=b.step(1/60);ready=s.tick(1/60,state,true);e.tick(1/60,1/60,{...state,mainLit:ready&&state.mainLit},100);}
   assert.equal(e.status,'active',job.id+' must require physical work');
   s.inspect();if(job.id!=='heat-hold')assert.equal(s.repair(s.definition.repairAction),true);
-  const tune=job.id==='warehouse'?{mainFuel:.44,mainAir:.60,draft:.70}:job.id==='heat-hold'?{mainFuel:.35,mainAir:.45,draft:.48}:{mainAir:.55};
+  const tune=job.id==='warehouse'?{mainFuel:.44,mainAir:.60,draft:.70}:job.id==='monsoon'?{mainFuel:.44,mainAir:.60,draft:.72}:job.id==='heat-hold'?{mainFuel:.35,mainAir:.45,draft:.48}:{mainAir:.55};
   for(const [key,value] of Object.entries(tune)){s.adjust(key,b.devices[key],value);b.setDevice(key,value);}
   const base={...b.definition};
   for(let i=0;i<3000&&e.status==='active';i++){
